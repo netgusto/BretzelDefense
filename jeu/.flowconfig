@@ -1,0 +1,12 @@
+[ignore]
+.*/node_modules/.*
+
+[include]
+src
+
+[libs]
+interfaces/
+node_modules/pixi-flowtype/interfaces/
+
+[options]
+suppress_comment= \\(.\\|\n\\)*\\$FlowFixMe
