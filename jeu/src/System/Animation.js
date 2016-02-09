@@ -25,7 +25,7 @@ export default class AnimationSystem {
             item.rotation += radiansms * deltatime;
 
             // $FlowFixMe
-            const speedms = item.speed / 1000;
+            const speedms = item.getSpeed() / 1000;
             const itemBounds = item.getBounds();
 
             if(itemBounds.x < 0) {
@@ -44,10 +44,12 @@ export default class AnimationSystem {
                 item.flipDirectionY();
             }
 
+            const direction = item.getDirection();
+
             // $FlowFixMe
-            item.x += speedms * deltatime * item.direction.x;
+            item.x += speedms * deltatime * direction.x;
             // $FlowFixMe
-            item.y += speedms * deltatime * item.direction.y;
+            item.y += speedms * deltatime * direction.y;
         });
     }
 }

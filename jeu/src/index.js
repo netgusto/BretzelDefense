@@ -15,6 +15,8 @@ import CollisionSystem from './System/Collision';
 import CursorSystem from './System/Cursor';
 import DebugSystem from './System/Debug';
 
+import AnimationComponent from './Component/Animation';
+
 (function(viewwidth: number, viewheight: number) {
 
     loader.add('mummy', '/assets/sprites/metalslug_mummy37x45.png');
@@ -79,18 +81,20 @@ function buildEntities(resources: Object, viewwidth, viewheight) : Array<Display
     entities.push(tilingSprite);
 
     /* L'obstacle */
-    const baikal = new Baikal(resources.matriochka.texture);
+    let baikal = new Baikal(resources.matriochka.texture);
+    //baikal.addComponent('animation', new AnimationComponent())
     baikal.components = {
-        animation: true,
         collision: {
             group: 'hero'
         }
     };
+    baikal = AnimationComponent(baikal, {
+        speed: 500,
+        direction: { x: 3, y: 4 }
+    });
     baikal.setPivot(baikal.width / 2, baikal.height / 2);
     baikal.setAnchor(0);
-    baikal.setDirection(3, 4);
     baikal.setScale(.125);
-    baikal.setSpeed(50); // px/s
     baikal.setPosition(500, 500);
     baikal.setCollisionArea(new Polygon(resources.matriochka_meta.data.hitarea));
     entities.push(baikal);
