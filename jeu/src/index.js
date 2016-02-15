@@ -4,7 +4,7 @@
 
 import 'perfnow';   // Polyfill for high resolution timer
 
-import { Container as PixiContainer, extras as PixiExtras, loader, SCALE_MODES, Polygon } from 'pixi.js';
+import { Container as PixiContainer, extras as PixiExtras, loader, SCALE_MODES, Polygon, Sprite } from 'pixi.js';
 import { GameSet, cursorkeys } from 'bobo';
 
 import MummyFactory from './Entity/MummyFactory';
@@ -16,6 +16,15 @@ import CursorSystem from './System/Cursor';
 import DebugSystem from './System/Debug';
 
 import AnimationComponent from './Component/Animation';
+
+/*
+let someEntity = SomeEntityBuilder({
+    name: 'le gars',
+    weirdness: 'Swims like a cow.',
+}).setDisplayObject('hello');
+
+console.log(someEntity.getDisplayObject());
+*/
 
 (function(viewwidth: number, viewheight: number) {
 
@@ -81,23 +90,22 @@ function buildEntities(resources: Object, viewwidth, viewheight) : Array<Display
     entities.push(tilingSprite);
 
     /* L'obstacle */
-    let baikal = new Baikal(resources.matriochka.texture);
-    //baikal.addComponent('animation', new AnimationComponent())
-    baikal.components = {
-        collision: {
-            group: 'hero'
-        }
+    let baikal = Baikal()
+        .setDisplayObject(new Sprite(resources.matriochka.texture));
+    /*
+    baikal.components.collision = {
+        group: 'hero'
     };
-    baikal = AnimationComponent(baikal, {
-        speed: 500,
-        direction: { x: 3, y: 4 }
-    });
+    */
+
+    baikal.setSpeed(500);
+    baikal.setDirection({ x: 3, y: 4 });
     baikal.setPivot(baikal.width / 2, baikal.height / 2);
     baikal.setAnchor(0);
     baikal.setScale(.125);
     baikal.setPosition(500, 500);
     baikal.setCollisionArea(new Polygon(resources.matriochka_meta.data.hitarea));
-    entities.push(baikal);
+    entities.push(baikal.getDisplayObject());
 
     /* La momie */
     const mummytexture = resources.mummy.texture.baseTexture;

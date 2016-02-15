@@ -13,10 +13,11 @@ export default class AnimationSystem {
     }
 
     match(item: DisplayObject) : boolean {
-        return item.components && 'animation' in item.components;
+        return item.gum && item.gum.implements && item.gum.implements('Animable');
     }
 
     process(entities: Array<DisplayObject>, { deltatime } : { deltatime: number }) : void {
+        //console.log(entities);
         const radianssecond = (Math.PI * 2) * 1;
         const radiansms = radianssecond / 1000;
 
@@ -25,26 +26,26 @@ export default class AnimationSystem {
             item.rotation += radiansms * deltatime;
 
             // $FlowFixMe
-            const speedms = item.getSpeed() / 1000;
+            const speedms = item.gum.getSpeed() / 1000;
             const itemBounds = item.getBounds();
 
             if(itemBounds.x < 0) {
                 // $FlowFixMe
-                item.flipDirectionX();
+                item.gum.flipDirectionX();
             } else if(itemBounds.x + itemBounds.width >= this.viewwidth) {
                 // $FlowFixMe
-                item.flipDirectionX();
+                item.gum.flipDirectionX();
             }
 
             if(itemBounds.y < 0) {
                 // $FlowFixMe
-                item.flipDirectionY();
+                item.gum.flipDirectionY();
             } else if(itemBounds.y + itemBounds.height >= this.viewheight) {
                 // $FlowFixMe
-                item.flipDirectionY();
+                item.gum.flipDirectionY();
             }
 
-            const direction = item.getDirection();
+            const direction = item.gum.getDirection();
 
             // $FlowFixMe
             item.x += speedms * deltatime * direction.x;
