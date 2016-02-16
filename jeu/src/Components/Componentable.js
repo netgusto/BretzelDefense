@@ -3,7 +3,7 @@
 import stampit from 'stampit';
 
 const Componentable = stampit()
-    .refs({
+    .props({
         components: []
     })
     .methods({
@@ -11,8 +11,8 @@ const Componentable = stampit()
             this.components.push(name);
             return this;
         },
-        implements(name: string) : boolean {
-            return this.components.indexOf(name) !== -1;;
+        checkImplements(name: string) : boolean {
+            return this.components.indexOf(name) !== -1;
         }
     });
 

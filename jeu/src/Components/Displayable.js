@@ -5,7 +5,7 @@ import stampit from 'stampit';
 const Displayable = stampit()
     .init(function() {
 
-        let displayobject : DisplayObject = this.displayobject;
+        let displayobject : ?DisplayObject;
 
         this.setDisplayObject = (dispobj) : Object => {
             dispobj.gum = this;
@@ -16,6 +16,12 @@ const Displayable = stampit()
         this.getDisplayObject = () : DisplayObject => {
             return displayobject;
         };
+
+        if(typeof this.displayobject === 'undefined') {
+            throw new Error('Missing prop displayobject');
+        }
+
+        this.setDisplayObject(this.displayobject);
 
     })
     .methods({

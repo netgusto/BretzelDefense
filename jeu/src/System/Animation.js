@@ -12,45 +12,46 @@ export default class AnimationSystem {
         this.viewheight = viewheight;
     }
 
-    match(item: DisplayObject) : boolean {
-        return item.gum && item.gum.implements && item.gum.implements('Animable');
+    match(item: Object) : boolean {
+        return item.checkImplements && item.checkImplements('Animable');
     }
 
     process(entities: Array<DisplayObject>, { deltatime } : { deltatime: number }) : void {
-        //console.log(entities);
         const radianssecond = (Math.PI * 2) * 1;
         const radiansms = radianssecond / 1000;
 
         entities.map(item => {
 
-            item.rotation += radiansms * deltatime;
+            const displayObject = item.getDisplayObject();
+
+            displayObject.rotation += radiansms * deltatime;
 
             // $FlowFixMe
-            const speedms = item.gum.getSpeed() / 1000;
-            const itemBounds = item.getBounds();
+            const speedms = item.getSpeed() / 1000;
+            const itemBounds = displayObject.getBounds();
 
             if(itemBounds.x < 0) {
                 // $FlowFixMe
-                item.gum.flipDirectionX();
+                item.flipDirectionX();
             } else if(itemBounds.x + itemBounds.width >= this.viewwidth) {
                 // $FlowFixMe
-                item.gum.flipDirectionX();
+                item.flipDirectionX();
             }
 
             if(itemBounds.y < 0) {
                 // $FlowFixMe
-                item.gum.flipDirectionY();
+                item.flipDirectionY();
             } else if(itemBounds.y + itemBounds.height >= this.viewheight) {
                 // $FlowFixMe
-                item.gum.flipDirectionY();
+                item.flipDirectionY();
             }
 
-            const direction = item.gum.getDirection();
+            const direction = item.getDirection();
 
             // $FlowFixMe
-            item.x += speedms * deltatime * direction.x;
+            displayObject.x += speedms * deltatime * direction.x;
             // $FlowFixMe
-            item.y += speedms * deltatime * direction.y;
+            displayObject.y += speedms * deltatime * direction.y;
         });
     }
 }

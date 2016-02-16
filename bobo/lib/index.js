@@ -8,6 +8,7 @@ var _createClass = (function () { function defineProperties(target, props) { for
 
 exports.loadspritesheet = loadspritesheet;
 exports.cursorkeys = cursorkeys;
+exports.gameloop = gameloop;
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { 'default': obj }; }
 
@@ -16,6 +17,8 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
 /* @flow */
 
 var _pixiJs = require('pixi.js');
+
+// $FlowFixMe
 
 var _keyboardjs = require('keyboardjs');
 
@@ -128,3 +131,23 @@ _keyboardjs2['default'].bind('ctrl', function () {
 function cursorkeys() {
     return cursors;
 }
+
+function gameloop(_ref) {
+    var systems = _ref.systems;
+    var entities = _ref.entities;
+
+    var then = performance.now();
+    var now = undefined;
+
+    return function (g) {
+        var now = performance.now();
+        var deltatime = now - then;
+        then = now;
+
+        systems.map(function (system) {
+            system.process(system.match ? entities.filter(system.match) : entities, { deltatime: deltatime });
+        });
+    };
+}
+
+;

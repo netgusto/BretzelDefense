@@ -38,14 +38,17 @@ const Animable = stampit.
         flipDirection() {
             this.flipDirectionX();
             this.flipDirectionY();
+            return this;
         },
 
         flipDirectionX() {
             this.animation.direction.x = this.animation.direction.x * -1;
+            return this;
         },
 
         flipDirectionY() {
             this.animation.direction.y = this.animation.direction.y * -1;
+            return this;
         }
     });
 

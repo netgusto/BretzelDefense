@@ -15,34 +15,40 @@ export default class CollisionSystem {
     }
 
     match(item: DisplayObject): boolean {
-        return item.components && 'collision' in item.components;
+        return item.checkImplements && item.checkImplements('Collisionable');
     }
 
     process(entities : Array<DisplayObject>, { deltatime } : { deltatime: number }) {
 
         this.collisions.map(collision => {
-            entities.filter(entity => entity.components && entity.components.collision.group === collision.what).map(hero => {
-                const herobounds = hero.getBounds();
+            entities.filter(entity => entity.getCollisionGroup() === collision.what).map(hero => {
+
+                const heroDisplayObject = hero.getDisplayObject();
+                const herobounds = heroDisplayObject.getBounds();
+                const heroHitArea = hero.getCollisionArea();
                 let heropoly = null;
-                if(hero instanceof Sprite) {
-                    hero.tint = 0xFFFFFF;
+                if(heroDisplayObject instanceof Sprite) {
+                    heroDisplayObject.tint = 0xFFFFFF;
                 }
 
-                entities.filter(entity => entity.components && collision.with.indexOf(entity.components.collision.group) > -1).map(collider => {
-                    const colliderbounds = collider.getBounds();
+                entities.filter(entity => collision.with.indexOf(entity.getCollisionGroup()) > -1).map(collider => {
 
-                    if(collider instanceof Sprite) {
-                        collider.tint = 0xFFFFFF;
+                    const colliderDisplayObject = collider.getDisplayObject();
+                    const colliderbounds = colliderDisplayObject.getBounds();
+                    const colliderHitArea = collider.getCollisionArea();
+
+                    if(colliderDisplayObject instanceof Sprite) {
+                        colliderDisplayObject.tint = 0xFFFFFF;
                     }
 
                     if(!aabbCollision(herobounds, colliderbounds)) return;    // Bounding boxes do not collide; no collision !
 
                     if(heropoly === null) {
-                        if(hero.hitArea) {
+                        if(heroHitArea) {
                             // $FlowFixMe
                             heropoly = new SAT.Polygon(
                                 new SAT.Vector(0, 0),
-                                transformPoints(hero.hitArea.points, hero.worldTransform, true)
+                                transformPoints(heroHitArea.points, heroDisplayObject.worldTransform, true)
                             );
                         } else {
                             heropoly = (new SAT.Box(
@@ -55,14 +61,14 @@ export default class CollisionSystem {
 
                     let colliderpoly;
 
-                    if(collider.hitArea) {
-                        if(collider.hitArea instanceof Rectangle) {
+                    if(colliderHitArea) {
+                        if(colliderHitArea instanceof Rectangle) {
                             const transformedEntityPoints = transformPoints([
-                                collider.hitArea.x, collider.hitArea.y,
-                                collider.hitArea.x + collider.hitArea.width, collider.hitArea.y,
-                                collider.hitArea.x + collider.hitArea.width, collider.hitArea.y + collider.hitArea.height,
-                                collider.hitArea.x, collider.hitArea.y + collider.hitArea.height
-                            ], collider.worldTransform, false);
+                                colliderHitArea.x, colliderHitArea.y,
+                                colliderHitArea.x + colliderHitArea.width, colliderHitArea.y,
+                                colliderHitArea.x + colliderHitArea.width, colliderHitArea.y + colliderHitArea.height,
+                                colliderHitArea.x, colliderHitArea.y + colliderHitArea.height
+                            ], colliderDisplayObject.worldTransform, false);
 
                             const res = [];
                             let pindex;
@@ -74,11 +80,11 @@ export default class CollisionSystem {
                             colliderpoly = new SAT.Polygon(
                                 new SAT.Vector(0, 0), res
                             );
-                        } else if(colliderbounds.hitArea instanceof Polygon) {
+                        } else if(colliderHitArea instanceof Polygon) {
                             // $FlowFixMe
                             colliderpoly = new SAT.Polygon(
                                 new SAT.Vector(0, 0),
-                                transformPoints(collider.hitArea.points, collider.worldTransform, true)
+                                transformPoints(colliderHitArea.points, colliderDisplayObject.worldTransform, true)
                             );
                         }
                     } else {
@@ -90,16 +96,16 @@ export default class CollisionSystem {
                     }
 
                     if(colliderpoly && SAT.testPolygonPolygon(colliderpoly, heropoly)) {
-                        if(hero instanceof Sprite) {
-                            hero.tint = 0.4 * 0xFFFFFF;
+                        if(heroDisplayObject instanceof Sprite) {
+                            heroDisplayObject.tint = 0.4 * 0xFFFFFF;
                         }
 
-                        if(collider instanceof Sprite) {
-                            collider.tint = 0xFF00FF;
+                        if(colliderDisplayObject instanceof Sprite) {
+                            colliderDisplayObject.tint = 0xFF00FF;
                         }
                     } else {
-                        if(collider instanceof Sprite) {
-                            collider.tint = 0x00FF00;
+                        if(colliderDisplayObject instanceof Sprite) {
+                            colliderDisplayObject.tint = 0x00FF00;
                         }
                     }
                 });

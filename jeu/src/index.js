@@ -5,26 +5,15 @@
 import 'perfnow';   // Polyfill for high resolution timer
 
 import { Container as PixiContainer, extras as PixiExtras, loader, SCALE_MODES, Polygon, Sprite } from 'pixi.js';
-import { GameSet, cursorkeys } from 'bobo';
+import { GameSet, cursorkeys, loadspritesheet, gameloop } from 'bobo';
 
-import MummyFactory from './Entity/MummyFactory';
 import Baikal from './Entity/Baikal';
+import Mummy from './Entity/Mummy';
 
 import AnimationSystem from './System/Animation';
 import CollisionSystem from './System/Collision';
 import CursorSystem from './System/Cursor';
 import DebugSystem from './System/Debug';
-
-import AnimationComponent from './Component/Animation';
-
-/*
-let someEntity = SomeEntityBuilder({
-    name: 'le gars',
-    weirdness: 'Swims like a cow.',
-}).setDisplayObject('hello');
-
-console.log(someEntity.getDisplayObject());
-*/
 
 (function(viewwidth: number, viewheight: number) {
 
@@ -34,46 +23,33 @@ console.log(someEntity.getDisplayObject());
     loader.add('matriochka_meta', '/assets/sprites/matriochka_meta.json');
     loader.once('complete', (loader, resources) => {
 
-        const systems = [];
-        const stage = new PixiContainer(0xFF0000);  // white
-        const entities = buildEntities(resources, viewwidth, viewheight);
+        /* Les entités */
 
-        entities.map(entity => stage.addChild(entity));
+        const entities = buildEntities(resources, viewwidth, viewheight);
+        const hero = entities.filter(item => item.components && 'animation' in item.components)[0];
+
+        /* Le stage */
+
+        const stage = new PixiContainer(0xFF0000);  // white
+        entities.map(entity => stage.addChild(entity.getDisplayObject()));
 
         /* Les systèmes */
 
-        const hero = entities.filter(item => item.components && 'animation' in item.components)[0];
-
+        const systems = [];
         systems.push(new AnimationSystem(viewwidth, viewheight));
+        systems.push(new CursorSystem({ cursor: cursorkeys() }));
         systems.push(new CollisionSystem([
             { what: 'hero', with: ['mummy'] }
         ]));
-        systems.push(new CursorSystem({ cursor: cursorkeys() }));
         systems.push(new DebugSystem({ stage }));
 
         /* Game loop */
 
-        let then = performance.now();
-        let now;
-
-        const update = (g: GameSet) => {
-            const now = performance.now();
-            const deltatime = now - then;
-            then = now;
-
-            //tilingSprite.tilePosition.x += deltatime * (100/1000);
-            //tilingSprite.tilePosition.y += deltatime * (100/1000);
-
-            systems.map(system => {
-                system.process(
-                    system.match ? entities.filter(system.match) : entities,
-                    { deltatime }
-                );
-            });
-        };
-
         const game = new GameSet(document.body, viewwidth, viewheight);
-        game.run(stage, update);
+        game.run(stage, gameloop({
+            systems,
+            entities
+        }));
     });
 
     loader.load();
@@ -85,42 +61,38 @@ function buildEntities(resources: Object, viewwidth, viewheight) : Array<Display
     const entities = [];
 
     /* Le fond */
-    const bgimage = resources.background.texture;
-    const tilingSprite = new PixiExtras.TilingSprite(bgimage, viewwidth, viewheight);
-    entities.push(tilingSprite);
+    //const bgimage = resources.background.texture;
+    //const tilingSprite = new PixiExtras.TilingSprite(bgimage, viewwidth, viewheight);
+    //entities.push(tilingSprite);
 
     /* L'obstacle */
-    let baikal = Baikal()
-        .setDisplayObject(new Sprite(resources.matriochka.texture));
-    /*
-    baikal.components.collision = {
-        group: 'hero'
-    };
-    */
+    const baikal = Baikal({
+        displayobject: new Sprite(resources.matriochka.texture)
+    });
+    baikal
+        .setSpeed(500)
+        .setDirection({ x: 3, y: 4 })
+        .setPivot(baikal.getDisplayObject().width / 2, baikal.getDisplayObject().height / 2)
+        .setAnchor(0)
+        .setScale(.125)
+        .setPosition(500, 500)
+        .setCollisionArea(new Polygon(resources.matriochka_meta.data.hitarea))
+        .setCollisionGroup('hero');
 
-    baikal.setSpeed(500);
-    baikal.setDirection({ x: 3, y: 4 });
-    baikal.setPivot(baikal.width / 2, baikal.height / 2);
-    baikal.setAnchor(0);
-    baikal.setScale(.125);
-    baikal.setPosition(500, 500);
-    baikal.setCollisionArea(new Polygon(resources.matriochka_meta.data.hitarea));
-    entities.push(baikal.getDisplayObject());
+    entities.push(baikal);
 
     /* La momie */
     const mummytexture = resources.mummy.texture.baseTexture;
     mummytexture.scaleMode = SCALE_MODES.NEAREST;
-    const SlugMummyFactory = new MummyFactory(resources.mummy.texture.baseTexture);
+    const mummyframes = loadspritesheet(mummytexture, 37, 45, 18);
 
     for(let k = 0; k < 1000; k++) {
-        const mummy = SlugMummyFactory.spawn();
-        mummy.position.set(Math.floor(Math.random() * viewwidth), Math.floor(Math.random() * viewheight));
-        mummy.components = {
-            cursormover: true,
-            collision: {
-                group: 'mummy',
-            }
-        };
+        const mummy = Mummy({
+            displayobject: new PixiExtras.MovieClip(mummyframes)
+        })
+        .setPosition(Math.floor(Math.random() * viewwidth), Math.floor(Math.random() * viewheight))
+        .setCollisionGroup('mummy');
+
         entities.push(mummy);
     }
 

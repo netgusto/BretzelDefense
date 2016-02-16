@@ -11,13 +11,14 @@ export default class CursorSystem {
     }
 
     match(item : DisplayObject) : boolean {
-        return item.components && 'cursormover' in item.components;
+        return item.checkImplements && item.checkImplements('Walkable');
     }
 
     process(entities: Array<DisplayObject>, { deltatime } : { deltatime: number }) {
         const { cursor } = this;
 
         entities.map(entity => {
+
             if(
                 !entity.doStop ||
                 !entity.doWalk ||

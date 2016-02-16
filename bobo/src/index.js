@@ -79,3 +79,21 @@ export function cursorkeys() : {
     up: boolean; down: boolean; left: boolean; right: boolean;
     shift: boolean; alt: boolean; ctrl: boolean;
 } { return cursors; }
+
+export function gameloop({ systems, entities }) {
+    let then = performance.now();
+    let now;
+
+    return (g: GameSet) => {
+        const now = performance.now();
+        const deltatime = now - then;
+        then = now;
+
+        systems.map(system => {
+            system.process(
+                system.match ? entities.filter(system.match) : entities,
+                { deltatime }
+            );
+        });
+    };
+};
