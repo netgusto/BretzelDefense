@@ -4,8 +4,8 @@
 
 import stampit from 'stampit';
 
-import Entity from '../Components/Entity';
-import Animable from '../Components/Animable';
+import Entity from '../Component/Entity';
+import Animable from '../Component/Animable';
 
 let Baikal = stampit().compose(Entity, Animable);
 

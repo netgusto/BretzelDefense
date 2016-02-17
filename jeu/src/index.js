@@ -4,7 +4,7 @@
 
 import 'perfnow';   // Polyfill for high resolution timer
 
-import { Container as PixiContainer, extras as PixiExtras, loader, SCALE_MODES, Polygon, Sprite } from 'pixi.js';
+import { Container as PixiContainer, extras as PixiExtras, loader, SCALE_MODES, Polygon, Rectangle, Sprite } from 'pixi.js';
 import { GameSet, cursorkeys, loadspritesheet, gameloop } from 'bobo';
 
 import Baikal from './Entity/Baikal';
@@ -60,11 +60,6 @@ function buildEntities(resources: Object, viewwidth, viewheight) : Array<Display
 
     const entities = [];
 
-    /* Le fond */
-    //const bgimage = resources.background.texture;
-    //const tilingSprite = new PixiExtras.TilingSprite(bgimage, viewwidth, viewheight);
-    //entities.push(tilingSprite);
-
     /* L'obstacle */
     const baikal = Baikal({
         displayobject: new Sprite(resources.matriochka.texture)
@@ -91,6 +86,7 @@ function buildEntities(resources: Object, viewwidth, viewheight) : Array<Display
             displayobject: new PixiExtras.MovieClip(mummyframes)
         })
         .setPosition(Math.floor(Math.random() * viewwidth), Math.floor(Math.random() * viewheight))
+        .setCollisionArea(new Rectangle(10, 10, 20, 20))
         .setCollisionGroup('mummy');
 
         entities.push(mummy);
