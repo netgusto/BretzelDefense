@@ -27,9 +27,9 @@ export default class CollisionSystem {
                 const herobounds = heroDisplayObject.getBounds();
                 const heroHitArea = hero.getCollisionArea();
                 let heropoly = null;
-                if(heroDisplayObject instanceof Sprite) {
+                /*if(heroDisplayObject instanceof Sprite) {
                     heroDisplayObject.tint = 0xFFFFFF;
-                }
+                }*/
 
                 entities.filter(entity => collision.with.indexOf(entity.getCollisionGroup()) > -1).map(collider => {
 
@@ -37,9 +37,9 @@ export default class CollisionSystem {
                     const colliderbounds = colliderDisplayObject.getBounds();
                     const colliderHitArea = collider.getCollisionArea();
 
-                    if(colliderDisplayObject instanceof Sprite) {
+                    /*if(colliderDisplayObject instanceof Sprite) {
                         colliderDisplayObject.tint = 0xFFFFFF;
-                    }
+                    }*/
 
                     if(!aabbCollision(herobounds, colliderbounds)) return;    // Bounding boxes do not collide; no collision !
 
@@ -96,17 +96,14 @@ export default class CollisionSystem {
                     }
 
                     if(colliderpoly && SAT.testPolygonPolygon(colliderpoly, heropoly)) {
-                        if(heroDisplayObject instanceof Sprite) {
-                            heroDisplayObject.tint = 0.4 * 0xFFFFFF;
-                        }
-
-                        if(colliderDisplayObject instanceof Sprite) {
-                            colliderDisplayObject.tint = 0xFF00FF;
-                        }
+                        collision.onCollision({
+                            hero,
+                            collider
+                        });
                     } else {
-                        if(colliderDisplayObject instanceof Sprite) {
+                        /*if(colliderDisplayObject instanceof Sprite) {
                             colliderDisplayObject.tint = 0x00FF00;
-                        }
+                        }*/
                     }
                 });
             });

@@ -39,7 +39,17 @@ import DebugSystem from './System/Debug';
         systems.push(new AnimationSystem(viewwidth, viewheight));
         systems.push(new CursorSystem({ cursor: cursorkeys() }));
         systems.push(new CollisionSystem([
-            { what: 'hero', with: ['mummy'] }
+            { what: 'hero', with: ['mummy'], onCollision({ hero, collider }) {
+                if(hero.getDisplayObject() instanceof Sprite) {
+                    hero.getDisplayObject().tint = 0.4 * 0xFFFFFF;
+                }
+
+                if(collider.getDisplayObject() instanceof Sprite) {
+                    collider.getDisplayObject().tint = 0xFF00FF;
+                }
+
+                console.log(hero.getId(), collider.getId());
+            } }
         ]));
         systems.push(new DebugSystem({ stage }));
 
