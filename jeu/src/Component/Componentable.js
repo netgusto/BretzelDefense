@@ -3,6 +3,9 @@
 import stampit from 'stampit';
 
 const Componentable = stampit()
+    .init(function() {
+        this.declareImplements('Componentable');
+    })
     .props({
         components: []
     })

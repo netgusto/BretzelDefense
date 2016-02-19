@@ -6,8 +6,9 @@ import stampit from 'stampit';
 
 import Entity from '../Component/Entity';
 import Walkable from '../Component/Walkable';
+import Pathable from '../Component/Pathable';
 
-let Mummy = stampit().compose(Entity, Walkable).init(function() {
+let Mummy = stampit().compose(Entity, Walkable, Pathable).init(function() {
 
     const displayobject = this.getDisplayObject();
     displayobject.play();

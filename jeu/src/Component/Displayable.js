@@ -5,6 +5,8 @@ import stampit from 'stampit';
 const Displayable = stampit()
     .init(function() {
 
+        this.declareImplements('Displayable');
+
         let displayobject : ?DisplayObject;
 
         this.setDisplayObject = (dispobj) : Object => {

@@ -9,18 +9,21 @@ import { GameSet, cursorkeys, loadspritesheet, gameloop } from 'bobo';
 
 import Baikal from './Entity/Baikal';
 import Mummy from './Entity/Mummy';
+import GenericEntity from './Entity/Generic';
+import MapPathBuilder from './Entity/MapPathBuilder';
 
 import AnimationSystem from './System/Animation';
 import CollisionSystem from './System/Collision';
 import CursorSystem from './System/Cursor';
 import DebugSystem from './System/Debug';
+import PathfinderSystem from './System/Pathfinder';
+import CustomRenderSystem from './System/CustomRender';
 
-(function(viewwidth: number, viewheight: number) {
+(function(mountnode: HTMLElement, viewwidth: number, viewheight: number) {
 
     loader.add('mummy', '/assets/sprites/metalslug_mummy37x45.png');
-    loader.add('background', 'http://pixijs.github.io/examples/_assets/p2.jpeg');
-    loader.add('matriochka', '/assets/sprites/matriochka.png');
-    loader.add('matriochka_meta', '/assets/sprites/matriochka_meta.json');
+    loader.add('background', '/assets/sprites/level_pagras-v2.png');
+    loader.add('flag', '/assets/sprites/flag.png');
     loader.once('complete', (loader, resources) => {
 
         /* Les entités */
@@ -30,7 +33,7 @@ import DebugSystem from './System/Debug';
 
         /* Le stage */
 
-        const stage = new PixiContainer(0xFF0000);  // white
+        const stage = new PixiContainer(0xFF0000 /* white */, true /* interactive */);
         entities.map(entity => stage.addChild(entity.getDisplayObject()));
 
         /* Les systèmes */
@@ -48,14 +51,16 @@ import DebugSystem from './System/Debug';
                     collider.getDisplayObject().tint = 0xFF00FF;
                 }
 
-                console.log(hero.getId(), collider.getId());
+                //console.log(hero.getId(), collider.getId());
             } }
         ]));
         systems.push(new DebugSystem({ stage }));
+        systems.push(new PathfinderSystem());
+        systems.push(new CustomRenderSystem());
 
         /* Game loop */
 
-        const game = new GameSet(document.body, viewwidth, viewheight);
+        const game = new GameSet(mountnode, viewwidth, viewheight);
         game.run(stage, gameloop({
             systems,
             entities
@@ -64,43 +69,70 @@ import DebugSystem from './System/Debug';
 
     loader.load();
 
-})(1024, 768);
+})(document.getElementById('app'), 1280, 720);
 
 function buildEntities(resources: Object, viewwidth, viewheight) : Array<DisplayObject> {
 
     const entities = [];
 
-    /* L'obstacle */
-    const baikal = Baikal({
-        displayobject: new Sprite(resources.matriochka.texture)
+    const bgsprite = new PixiExtras.TilingSprite(resources.background.texture, viewwidth, viewheight);
+    bgsprite.tileScale.set(viewwidth / resources.background.texture.width, viewheight / resources.background.texture.height);
+
+    const pathbuilder = MapPathBuilder({
+        displayobject: bgsprite,
+        cellwidth: 20,
+        cellheight: 20
     });
-    baikal
-        .setSpeed(500)
-        .setDirection({ x: 3, y: 4 })
-        .setPivot(baikal.getDisplayObject().width / 2, baikal.getDisplayObject().height / 2)
-        .setAnchor(0)
-        .setScale(.125)
-        .setPosition(500, 500)
-        .setCollisionArea(new Polygon(resources.matriochka_meta.data.hitarea))
-        .setCollisionGroup('hero');
 
-    entities.push(baikal);
+    entities.push(pathbuilder);
 
-    /* La momie */
-    const mummytexture = resources.mummy.texture.baseTexture;
-    mummytexture.scaleMode = SCALE_MODES.NEAREST;
-    const mummyframes = loadspritesheet(mummytexture, 37, 45, 18);
-
-    for(let k = 0; k < 1000; k++) {
-        const mummy = Mummy({
-            displayobject: new PixiExtras.MovieClip(mummyframes)
-        })
-        .setPosition(Math.floor(Math.random() * viewwidth), Math.floor(Math.random() * viewheight))
-        .setCollisionArea(new Rectangle(10, 10, 20, 20))
-        .setCollisionGroup('mummy');
-
-        entities.push(mummy);
-    }
+    // // le drapeau
+    // const flag = GenericEntity({
+    //     id: 'flag',
+    //     displayobject: new Sprite(resources.flag.texture)
+    // });
+    // flag.setPivot(flag.getDisplayObject().width / 2, flag.getDisplayObject().height);
+    //
+    // // baikal
+    // //     .setSpeed(500)
+    // //     .setDirection({ x: 3, y: 4 })
+    // //     .setPivot(baikal.getDisplayObject().width / 2, baikal.getDisplayObject().height / 2)
+    // //     .setAnchor(0)
+    // //     .setScale(.125)
+    // //     .setPosition(500, 500)
+    // //     .setCollisionArea(new Polygon(resources.matriochka_meta.data.hitarea))
+    // //     .setCollisionGroup('hero');
+    //
+    // // Le fond
+    //
+    // const bgsprite = new PixiExtras.TilingSprite(resources.background.texture, viewwidth, viewheight);
+    // bgsprite.tileScale.set(viewwidth / resources.background.texture.width, viewheight / resources.background.texture.height);
+    // bgsprite.interactive = true;
+    // bgsprite.click = function(event) {
+    //     const clickpoint = event.data.getLocalPosition(bgsprite);
+    //     flag.setPosition(clickpoint.x, clickpoint.y);
+    //     mummy.setPathTarget(clickpoint.x, clickpoint.y);
+    // };
+    //
+    // const fond = new GenericEntity({ displayobject: bgsprite });
+    // fond.getDisplayObject().tileScale.set(viewwidth / resources.background.texture.width, viewheight / resources.background.texture.height);
+    //
+    // entities.push(fond);
+    // entities.push(flag);
+    //
+    // // La momie
+    // const mummytexture = resources.mummy.texture.baseTexture;
+    // mummytexture.scaleMode = SCALE_MODES.NEAREST;
+    // const mummyframes = loadspritesheet(mummytexture, 37, 45, 18);
+    //
+    // const mummy = Mummy({
+    //     displayobject: new PixiExtras.MovieClip(mummyframes)
+    // })
+    // .setPosition(Math.floor(Math.random() * viewwidth), Math.floor(Math.random() * viewheight))
+    // .setCollisionArea(new Rectangle(10, 10, 20, 20))
+    // .setCollisionGroup('mummy');
+    //
+    // entities.push(mummy);
 
     return entities;
 }
