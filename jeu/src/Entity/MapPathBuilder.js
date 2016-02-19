@@ -6,7 +6,7 @@ import { Graphics, Rectangle } from 'pixi.js';
 
 import stampit from 'stampit';
 
-import Entity from '../Component/Entity';
+import GenericEntity from './Generic';
 import CustomRenderable from '../Component/CustomRenderable';
 
 const MapPathBuilderable = stampit()
@@ -141,6 +141,6 @@ const MapPathBuilderable = stampit()
         });
     })
 
-const MapPathBuilder = stampit().compose(Entity, CustomRenderable, MapPathBuilderable);
+const MapPathBuilder = stampit().compose(GenericEntity, CustomRenderable, MapPathBuilderable);
 
 export default MapPathBuilder;

@@ -82,18 +82,21 @@ export function cursorkeys() : {
 
 export function gameloop({ systems, entities }) {
     let then = performance.now();
-    let now;
+    let start;
+    let costtime;
 
     return (g: GameSet) => {
-        const now = performance.now();
-        const deltatime = now - then;
-        then = now;
+        const start = performance.now();
+        const deltatime = start - then;
 
         systems.map(system => {
             system.process(
                 system.match ? entities.filter(system.match) : entities,
-                { deltatime }
+                { deltatime, costtime }
             );
         });
+
+        then = start;
+        costtime = performance.now() - start;
     };
 };

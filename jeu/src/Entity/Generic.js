@@ -1,11 +1,13 @@
 'use strict';
 
-/* @flow */
-
 import stampit from 'stampit';
 
-import Entity from '../Component/Entity';
+import Identifiable from '../Component/Displayable';
+import Displayable from '../Component/Displayable';
+import Collisionable from '../Component/Collisionable';
+import Componentable from '../Component/Componentable';
+//import Listenable from '../Component/Listenable';
 
-const Generic = stampit().compose(Entity);
+const GenericEntity = stampit.compose(Identifiable, Componentable, Displayable, Collisionable);
 
-export default Generic;
+export default GenericEntity;

@@ -137,16 +137,19 @@ function gameloop(_ref) {
     var entities = _ref.entities;
 
     var then = performance.now();
-    var now = undefined;
+    var start = undefined;
+    var costtime = undefined;
 
     return function (g) {
-        var now = performance.now();
-        var deltatime = now - then;
-        then = now;
+        var start = performance.now();
+        var deltatime = start - then;
 
         systems.map(function (system) {
-            system.process(system.match ? entities.filter(system.match) : entities, { deltatime: deltatime });
+            system.process(system.match ? entities.filter(system.match) : entities, { deltatime: deltatime, costtime: costtime });
         });
+
+        then = start;
+        costtime = performance.now() - start;
     };
 }
 

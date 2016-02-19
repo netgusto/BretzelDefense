@@ -37,6 +37,10 @@ const Displayable = stampit()
             return this;
         },
 
+        getPosition() : Object {
+            return this.getDisplayObject().position;
+        },
+
         setPivot(x: number, y: ?number) : Object {
             this.getDisplayObject().pivot.set(x, y);
             return this;

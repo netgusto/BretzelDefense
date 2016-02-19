@@ -4,9 +4,9 @@
 
 import stampit from 'stampit';
 
-import Entity from '../Component/Entity';
+import GenericEntity from './Generic';
 import Animable from '../Component/Animable';
 
-let Baikal = stampit().compose(Entity, Animable);
+let Baikal = stampit().compose(GenericEntity, Animable);
 
 export default Baikal;

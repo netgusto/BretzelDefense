@@ -20,11 +20,11 @@ export default class DebugSystem {
         stage.addChild(this.text);
     }
 
-    process(entities: Array<DisplayObject>, { deltatime } : { deltatime: number }) {
+    process(entities: Array<DisplayObject>, { deltatime, costtime }) {
         this.fps[this.count % 10] = Math.floor(1000 / deltatime);
 
         if(this.count % 10 === 0) {
-            this.text.text = Math.round(this.fps.reduce((a, b) => a + b, 0) / this.fps.length) + ' fps';
+            this.text.text = Math.round(this.fps.reduce((a, b) => a + b, 0) / this.fps.length) + ' fps; ' + parseFloat(costtime).toFixed(3) + 'ms cost/frame';
         }
 
         this.count++;
