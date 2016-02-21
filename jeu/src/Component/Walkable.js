@@ -14,9 +14,9 @@ const Walkable = stampit().
             state: null,
 
             stopVelocity: 0.0,
-            walkVelocity: 30.0,
-            runVelocity: 90.0,
-            animationToVelocityMsRatio: 5.0
+            walkVelocity: 20.0,
+            runVelocity: 60.0,
+            animationToVelocityMsRatio: 9
         }
     })
     .methods({

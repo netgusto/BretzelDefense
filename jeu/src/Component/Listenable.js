@@ -6,8 +6,7 @@ import stampit from 'stampit';
 const Listenable = stampit()
     .init(function() {
         this.declareImplements('Listenable');
-    })
-    .init(function() {
+
         const emitter = new Emitter();
         this.on = (eventname, cbk) => emitter.on(eventname, cbk);
         this.once = (eventname, cbk) => emitter.once(eventname, cbk);

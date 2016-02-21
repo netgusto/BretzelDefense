@@ -18,6 +18,8 @@ export default class Pathfinder {
 
     constructor({ map, cellwidth, cellheight} : { map: Array<number>, cellwidth: number, cellheight: number }) {
 
+        // ATTENTION : pour javascript-astar, map est en coordonnées y,x
+
         this.easystar = new EasyStar();
         this.easystar.setGrid(map);
         this.easystar.setAcceptableTiles([1]);

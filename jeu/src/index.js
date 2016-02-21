@@ -4,20 +4,21 @@
 
 import 'perfnow';   // Polyfill for high resolution timer
 
-import { Container as PixiContainer, extras as PixiExtras, loader, SCALE_MODES, Polygon, Rectangle, Sprite } from 'pixi.js';
+import { Container as PixiContainer, extras as PixiExtras, loader, SCALE_MODES, Rectangle, Sprite, Graphics } from 'pixi.js';
 import { GameSet, cursorkeys, loadspritesheet, gameloop } from 'bobo';
 
-import Baikal from './Entity/Baikal';
+import stampit from 'stampit';
+
 import Mummy from './Entity/Mummy';
 import GenericEntity from './Entity/Generic';
-//import MapPathBuilder from './Entity/MapPathBuilder';
 
-import AnimationSystem from './System/Animation';
-import CollisionSystem from './System/Collision';
 import CursorSystem from './System/Cursor';
 import DebugSystem from './System/Debug';
-import PathfinderSystem from './System/Pathfinder';
-import CustomRenderSystem from './System/CustomRender';
+import CollaborativeDiffusionFieldSystem from './System/CollaborativeDiffusionField';
+import CollaborativeDiffusionProcessorSystem from './System/CollaborativeDiffusionProcessor';
+import mapblocks from './map-blocks'
+
+const cursor = cursorkeys();
 
 (function(mountnode: HTMLElement, viewwidth: number, viewheight: number) {
 
@@ -26,78 +27,124 @@ import CustomRenderSystem from './System/CustomRender';
     loader.add('flag', '/assets/sprites/flag.png');
     loader.once('complete', (loader, resources) => {
 
-        /* Les entités */
-
-        const entities = buildEntities(resources, viewwidth, viewheight);
-        const hero = entities.filter(item => item.components && 'animation' in item.components)[0];
-
         /* Le stage */
-
         const stage = new PixiContainer(0xFF0000 /* white */, true /* interactive */);
-        entities.map(entity => stage.addChild(entity.getDisplayObject()));
+
+        /* Les entités */
+        const entities = [];
+        buildEntities({
+            resources,
+            viewwidth,
+            viewheight,
+            addEntity(entity) {
+                entity.remove = () => {
+                    entity.getDisplayObject().parent.removeChild(entity.getDisplayObject());
+                    const index = entities.indexOf(entity);
+                    if(index === -1) return;
+                    entities.splice(index, 1);
+
+                    //console.log('REMOVED', index, entities.length + ' left', entities);
+                };
+                entities.push(entity);
+                stage.addChild(entity.getDisplayObject());
+            },
+            getEntities() {
+                return entities;
+            }
+        });
+
+        const fielddebug = entities.filter(item => item.id === 'fielddebug')[0];
 
         /* Les systèmes */
 
+        let field = null;
+
         const systems = [];
-        systems.push(new AnimationSystem(viewwidth, viewheight));
-        systems.push(new CursorSystem({ cursor: cursorkeys() }));
-        systems.push(new CollisionSystem([
-            { what: 'hero', with: ['mummy'], onCollision({ hero, collider }) {
-                if(hero.getDisplayObject() instanceof Sprite) {
-                    hero.getDisplayObject().tint = 0.4 * 0xFFFFFF;
-                }
-
-                if(collider.getDisplayObject() instanceof Sprite) {
-                    collider.getDisplayObject().tint = 0xFF00FF;
-                }
-
-                //console.log(hero.getId(), collider.getId());
-            } }
-        ]));
-        systems.push(new DebugSystem({ stage }));
-        systems.push(new PathfinderSystem({
+        
+        systems.push(new CollaborativeDiffusionFieldSystem({
             cellwidth: 20,
             cellheight: 20,
-            map: [
-                [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
-                [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
-                [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
-                [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
-                [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
-                [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
-                [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
-                [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0],
-                [0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0],
-                [0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,1,1,1,1,0,0,0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,0,0,1,1,1,1,1,1,1,1,1,1,0,0,0,0,0,0,0],
-                [0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,0,0,0,0,0,0],
-                [0,0,0,0,0,0,0,0,0,0,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,0,0,0,0,0],
-                [0,0,0,0,0,0,0,0,0,0,1,1,1,1,0,0,0,0,1,1,1,1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,1,1,1,1,0,0,0,1,1,1,1,1,0,0,0,0,0],
-                [0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,0,0,0,0],
-                [0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,0,0,0,0,0],
-                [0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,1,1,0,0,0,0,0,0,0],
-                [0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0],
-                [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0],
-                [1,1,1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0,1,1,1,1,1],
-                [1,1,1,1,1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,1,0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,1],
-                [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,0,0,0,0,0,0,0,1,1,1,1,1,1,1,1,1,1,1],
-                [1,0,0,0,0,0,0,0,1,1,1,1,1,1,1,1,1,1,0,0,0,0,0,0,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,0,0,0,0,0,0,1,1,1,1,1,1,1,1,1,1,0,0,0],
-                [0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,0,0,0,0,0],
-                [0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0],
-                [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0],
-                [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
-                [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
-                [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
-                [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
-                [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
-                [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
-                [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
-                [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
-                [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
-                [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
-                [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]
-            ]
+            worldwidth: viewwidth,
+            worldheight: viewheight,
+            map: mapblocks,
+            onupdate: (newfield, oldfield) => {
+                field = newfield;
+
+                /*
+                let lightenColor = (color, percent) => {
+                    let amt = Math.round(2.55 * percent);
+                    //let amt = 0;
+                    let R = (color >> 16) + amt;
+                    let B = (color >> 8 & 0x00FF) + amt;
+                    let G = (color & 0x0000FF) + amt;
+
+                    return (
+                        (R < 255 ? R < 1 ? 0 : R : 255) * 0x10000 +
+                        (B < 255 ? B < 1 ? 0 : B : 255) * 0x100 +
+                        (G < 255 ? G < 1 ? 0 : G : 255)
+                    );
+                };
+
+                const peak = Math.pow(2, 32);
+                const fielddebuggraphics = fielddebug.getDisplayObject();
+
+                fielddebuggraphics.clear();
+                fielddebuggraphics.beginFill(0xFFFFFF);
+                fielddebuggraphics.alpha = 0.8;
+
+                field.field.map((xtiles, y) => {
+                    xtiles.map((cellvalue, x) => {
+                        if(cellvalue === 0) return;
+
+                        const basecolor = 0x000000;
+
+                        const cellalpha = cellvalue / peak;
+
+                        let color = lightenColor(basecolor, cellalpha * 10000);
+
+                        if(cellvalue === peak) {
+                            color = 0xFF0000;
+                        }
+
+                        if(cellvalue < 100000000) {
+                            color = lightenColor(0xFF00FF, 50);
+                        }
+
+                        if(cellvalue < 1000000) {
+                            color = lightenColor(0xFF0000, 50);
+                        }
+
+                        if(cellvalue < 10000) {
+                            color = 0x00FFFF;
+                        }
+
+                        if(cellvalue < 100) {
+                            color = 0xFF00FF;
+                        }
+
+                        if(cellvalue < 10) {
+                            color = 0x0000FF;
+                        }
+
+                        if(cellvalue < 1) {
+                            color = 0x00FF00;
+                        }
+
+                        if(cellvalue < 0.1) {
+                            color = 0xFFFF00;
+                        }
+
+                        fielddebuggraphics.beginFill(color);
+                        fielddebuggraphics.drawRect(x * 20, y * 20, 20, 20);
+                    });
+                });
+                */
+            }
         }));
-        systems.push(new CustomRenderSystem());
+        systems.push(new CollaborativeDiffusionProcessorSystem({
+            getField: () => field
+        }));
+        systems.push(new DebugSystem({ stage }));
 
         /* Game loop */
 
@@ -112,37 +159,9 @@ import CustomRenderSystem from './System/CustomRender';
 
 })(document.getElementById('app'), 1280, 720);
 
-function buildEntities(resources: Object, viewwidth, viewheight) : Array<DisplayObject> {
+function buildEntities({ resources , viewwidth, viewheight, addEntity, getEntities }) : Array<DisplayObject> {
 
     const entities = [];
-
-    /*const bgsprite = new PixiExtras.TilingSprite(resources.background.texture, viewwidth, viewheight);
-    bgsprite.tileScale.set(viewwidth / resources.background.texture.width, viewheight / resources.background.texture.height);
-
-    const pathbuilder = MapPathBuilder({
-        displayobject: bgsprite,
-        cellwidth: 20,
-        cellheight: 20
-    });
-
-    entities.push(pathbuilder);*/
-
-    // le drapeau
-    const flag = GenericEntity({
-        id: 'flag',
-        displayobject: new Sprite(resources.flag.texture)
-    });
-    flag.setPivot(flag.getDisplayObject().width / 2, flag.getDisplayObject().height);
-
-    // baikal
-    //     .setSpeed(500)
-    //     .setDirection({ x: 3, y: 4 })
-    //     .setPivot(baikal.getDisplayObject().width / 2, baikal.getDisplayObject().height / 2)
-    //     .setAnchor(0)
-    //     .setScale(.125)
-    //     .setPosition(500, 500)
-    //     .setCollisionArea(new Polygon(resources.matriochka_meta.data.hitarea))
-    //     .setCollisionGroup('hero');
 
     // Le fond
 
@@ -150,30 +169,65 @@ function buildEntities(resources: Object, viewwidth, viewheight) : Array<Display
     bgsprite.tileScale.set(viewwidth / resources.background.texture.width, viewheight / resources.background.texture.height);
     bgsprite.interactive = true;
     bgsprite.click = bgsprite.tap = function(event) {
+
         const clickpoint = event.data.getLocalPosition(bgsprite);
-        console.log(clickpoint);
-        flag.setPosition(clickpoint.x, clickpoint.y);
-        mummy.setPathTarget(clickpoint.x, clickpoint.y);
+
+        if(cursor.shift) {
+            const flag = GenericEntity({
+                displayobject: new Sprite(resources.flag.texture),
+                fieldobstacle: true
+            });
+            flag.setPivot(flag.getDisplayObject().width / 2, flag.getDisplayObject().height);
+            flag.setPosition(clickpoint.x, clickpoint.y);
+            flag.getDisplayObject().tint = 0xFF0000;
+
+            addEntity(flag);
+        } else {
+            const flag = GenericEntity({
+                displayobject: new Sprite(resources.flag.texture),
+                fieldtarget: true
+            });
+            flag.setPivot(flag.getDisplayObject().width / 2, flag.getDisplayObject().height);
+            flag.setPosition(clickpoint.x, clickpoint.y);
+
+            addEntity(flag);
+        }
+
     };
 
     const fond = new GenericEntity({ displayobject: bgsprite });
     fond.getDisplayObject().tileScale.set(viewwidth / resources.background.texture.width, viewheight / resources.background.texture.height);
 
-    entities.push(fond);
-    entities.push(flag);
+    addEntity(fond);
 
     // La momie
-    const mummytexture = resources.mummy.texture.baseTexture;
-    mummytexture.scaleMode = SCALE_MODES.NEAREST;
-    const mummyframes = loadspritesheet(mummytexture, 37, 45, 18);
-    const mummy = Mummy({
-        displayobject: new PixiExtras.MovieClip(mummyframes)
-    })
-    .setPosition(333, 309)
-    .setCollisionArea(new Rectangle(10, 10, 20, 20))
-    .setCollisionGroup('mummy');
 
-    entities.push(mummy);
+    // On génère des positions de momies aléatoires sur les espaces praticables
+    const positions = [];
+    while(positions.length < 200) {
+        const x = Math.floor(Math.random() * mapblocks[0].length);
+        const y = Math.floor(Math.random() * mapblocks.length);
+        if(mapblocks[y][x] === 1) positions.push({ x, y });
+    }
 
-    return entities;
+    positions.map(position => {
+        const mummytexture = resources.mummy.texture.baseTexture;
+        mummytexture.scaleMode = SCALE_MODES.NEAREST;
+        const mummyframes = loadspritesheet(mummytexture, 37, 45, 18);
+        const mummy = Mummy({
+            displayobject: new PixiExtras.MovieClip(mummyframes)
+        })
+        .setPosition(position.x * 20 + 10, position.y * 20 + 10)
+        .setCollisionArea(new Rectangle(10, 10, 20, 20))
+        .setCollisionGroup('mummy');
+
+        addEntity(mummy);
+    });
+
+    const fielddebug = GenericEntity({
+        id: 'fielddebug',
+        displayobject: new Graphics()
+    });
+    
+    addEntity(fielddebug);
 }

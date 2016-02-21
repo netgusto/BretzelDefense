@@ -10,7 +10,6 @@ const Displayable = stampit()
         let displayobject : ?DisplayObject;
 
         this.setDisplayObject = (dispobj) : Object => {
-            dispobj.gum = this;
             displayobject = dispobj;
             return this;
         };
