@@ -48,6 +48,11 @@ const Displayable = stampit()
         setAnchor(x: number, y: ?number) : Object {
             this.getDisplayObject().anchor.set(x, y);
             return this;
+        },
+
+        setTint(tint: number) : Object {
+            this.getDisplayObject().tint = tint;
+            return this;
         }
     });
 

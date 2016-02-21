@@ -24,18 +24,24 @@ const Walkable = stampit().
             this.walk.velocity = velocitypersecond;
             this.walk.velocityms = velocitypersecond / 1000;
             this.getDisplayObject().animationSpeed = this.walk.animationToVelocityMsRatio * this.walk.velocityms;
+
+            return this;
         },
 
         up(deltatime: number) : void {
             if(this.walk.state === 'idle') return;
 
             this.getDisplayObject().position.y -= this.walk.velocityms * deltatime;
+
+            return this;
         },
 
         down(deltatime: number) {
             if(this.walk.state === 'idle') return;
 
             this.getDisplayObject().position.y += this.walk.velocityms * deltatime;
+
+            return this;
         },
 
         left(deltatime: number) {
@@ -45,6 +51,8 @@ const Walkable = stampit().
 
             dispobj.position.x -= this.walk.velocityms * deltatime;
             dispobj.scale.x = Math.abs(dispobj.scale.x) * -1;
+
+            return this;
         },
 
         right(deltatime: number) {
@@ -54,24 +62,32 @@ const Walkable = stampit().
 
             dispobj.position.x += this.walk.velocityms * deltatime;
             dispobj.scale.x = Math.abs(dispobj.scale.x);
+
+            return this;
         },
 
         doStop() {
             if(this.walk.state === 'idle') return;
             this.setVelocityPerSecond(this.walk.stopVelocity);
             this.walk.state = 'idle';
+
+            return this;
         },
 
         doWalk() {
             if(this.walk.state === 'walk') return;
             this.setVelocityPerSecond(this.walk.walkVelocity);
             this.walk.state = 'walk';
+
+            return this;
         },
 
         doRun() {
             if(this.walk.state === 'run') return;
             this.setVelocityPerSecond(this.walk.runVelocity);
             this.walk.state = 'run';
+
+            return this;
         }
     });
 

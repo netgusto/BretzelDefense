@@ -32,28 +32,95 @@ const cursor = cursorkeys();
 
         /* Les entités */
         const entities = [];
-        buildEntities({
-            resources,
-            viewwidth,
-            viewheight,
-            addEntity(entity) {
-                entity.remove = () => {
-                    entity.getDisplayObject().parent.removeChild(entity.getDisplayObject());
-                    const index = entities.indexOf(entity);
-                    if(index === -1) return;
-                    entities.splice(index, 1);
 
-                    //console.log('REMOVED', index, entities.length + ' left', entities);
-                };
-                entities.push(entity);
-                stage.addChild(entity.getDisplayObject());
-            },
-            getEntities() {
-                return entities;
+        const addEntity = function(entity) {
+            entity.remove = () => {
+                entity.getDisplayObject().parent.removeChild(entity.getDisplayObject());
+                const index = entities.indexOf(entity);
+                if(index === -1) return;
+                entities.splice(index, 1);
+
+                //console.log('REMOVED', index, entities.length + ' left', entities);
+            };
+            entities.push(entity);
+            stage.addChild(entity.getDisplayObject());
+        };
+
+        /* Entities */
+
+        // Le fond
+
+        const buildFlag = function() {
+            const flag = GenericEntity({ displayobject: new Sprite(resources.flag.texture) });
+            flag.setPivot(flag.getDisplayObject().width / 2, flag.getDisplayObject().height);
+            return flag;
+        }
+
+        const exit = buildFlag().setPosition(-20, 400);
+        exit.fieldtarget = true;
+
+        addEntity(exit);
+
+        const bgsprite = new PixiExtras.TilingSprite(resources.background.texture, viewwidth, viewheight);
+        bgsprite.tileScale.set(viewwidth / resources.background.texture.width, viewheight / resources.background.texture.height);
+        bgsprite.interactive = true;
+        bgsprite.click = bgsprite.tap = function(event) {
+
+            const clickpoint = event.data.getLocalPosition(bgsprite);
+
+            if(cursor.shift) {
+                const flag = buildFlag()
+                    .setPosition(clickpoint.x, clickpoint.y)
+                    .setTint(0xFF0000);
+
+                flag.fieldobstacle = true;
+                addEntity(flag);
+            } else {
+                const flag = buildFlag()
+                    .setPosition(clickpoint.x, clickpoint.y);
+
+                flag.fieldtarget = true;
+                addEntity(flag);
             }
+        };
+
+        const fond = new GenericEntity({ displayobject: bgsprite });
+        fond.getDisplayObject().tileScale.set(viewwidth / resources.background.texture.width, viewheight / resources.background.texture.height);
+
+        addEntity(fond);
+
+        // La momie
+
+        // On génère des positions de momies aléatoires sur les espaces praticables
+        const positions = [];
+        while(positions.length < 20) {
+            const x = Math.floor(Math.random() * mapblocks[0].length);
+            const y = Math.floor(Math.random() * mapblocks.length);
+            if(mapblocks[y][x] === 1) positions.push({ x, y });
+        }
+
+        const buildMummy = function() {
+            const mummytexture = resources.mummy.texture.baseTexture;
+            mummytexture.scaleMode = SCALE_MODES.NEAREST;
+            const mummyframes = loadspritesheet(mummytexture, 37, 45, 18);
+            return Mummy({ displayobject: new PixiExtras.MovieClip(mummyframes) })
+                .setCollisionArea(new Rectangle(10, 10, 20, 20))
+                .setCollisionGroup('mummy')
+        }
+
+        positions.map(position => {
+            addEntity(
+                buildMummy()
+                    .setPosition(position.x * 20 + 10, position.y * 20 + 10)
+            );
         });
 
-        const fielddebug = entities.filter(item => item.id === 'fielddebug')[0];
+        const fielddebug = GenericEntity({
+            id: 'fielddebug',
+            displayobject: new Graphics()
+        });
+        
+        addEntity(fielddebug);
 
         /* Les systèmes */
 
@@ -146,6 +213,30 @@ const cursor = cursorkeys();
         }));
         systems.push(new DebugSystem({ stage }));
 
+        // Autospawn !
+        let timer = 0;
+        systems.push({
+            process: function(entities, { deltatime }) {
+                timer += deltatime;
+
+                if(timer >= 1000) {
+
+                    timer = timer - 1000;
+
+                    addEntity(
+                        buildMummy()
+                        .setPosition(1300, 400)
+                    );
+
+                    addEntity(
+                        buildMummy()
+                        .setPosition(900, 190)
+                        .setTint(0xFF0000)
+                    );
+                }
+            }
+        })
+
         /* Game loop */
 
         const game = new GameSet(mountnode, viewwidth, viewheight);
@@ -158,76 +249,3 @@ const cursor = cursorkeys();
     loader.load();
 
 })(document.getElementById('app'), 1280, 720);
-
-function buildEntities({ resources , viewwidth, viewheight, addEntity, getEntities }) : Array<DisplayObject> {
-
-    const entities = [];
-
-    // Le fond
-
-    const bgsprite = new PixiExtras.TilingSprite(resources.background.texture, viewwidth, viewheight);
-    bgsprite.tileScale.set(viewwidth / resources.background.texture.width, viewheight / resources.background.texture.height);
-    bgsprite.interactive = true;
-    bgsprite.click = bgsprite.tap = function(event) {
-
-        const clickpoint = event.data.getLocalPosition(bgsprite);
-
-        if(cursor.shift) {
-            const flag = GenericEntity({
-                displayobject: new Sprite(resources.flag.texture),
-                fieldobstacle: true
-            });
-            flag.setPivot(flag.getDisplayObject().width / 2, flag.getDisplayObject().height);
-            flag.setPosition(clickpoint.x, clickpoint.y);
-            flag.getDisplayObject().tint = 0xFF0000;
-
-            addEntity(flag);
-        } else {
-            const flag = GenericEntity({
-                displayobject: new Sprite(resources.flag.texture),
-                fieldtarget: true
-            });
-            flag.setPivot(flag.getDisplayObject().width / 2, flag.getDisplayObject().height);
-            flag.setPosition(clickpoint.x, clickpoint.y);
-
-            addEntity(flag);
-        }
-
-    };
-
-    const fond = new GenericEntity({ displayobject: bgsprite });
-    fond.getDisplayObject().tileScale.set(viewwidth / resources.background.texture.width, viewheight / resources.background.texture.height);
-
-    addEntity(fond);
-
-    // La momie
-
-    // On génère des positions de momies aléatoires sur les espaces praticables
-    const positions = [];
-    while(positions.length < 200) {
-        const x = Math.floor(Math.random() * mapblocks[0].length);
-        const y = Math.floor(Math.random() * mapblocks.length);
-        if(mapblocks[y][x] === 1) positions.push({ x, y });
-    }
-
-    positions.map(position => {
-        const mummytexture = resources.mummy.texture.baseTexture;
-        mummytexture.scaleMode = SCALE_MODES.NEAREST;
-        const mummyframes = loadspritesheet(mummytexture, 37, 45, 18);
-        const mummy = Mummy({
-            displayobject: new PixiExtras.MovieClip(mummyframes)
-        })
-        .setPosition(position.x * 20 + 10, position.y * 20 + 10)
-        .setCollisionArea(new Rectangle(10, 10, 20, 20))
-        .setCollisionGroup('mummy');
-
-        addEntity(mummy);
-    });
-
-    const fielddebug = GenericEntity({
-        id: 'fielddebug',
-        displayobject: new Graphics()
-    });
-    
-    addEntity(fielddebug);
-}
