@@ -25,25 +25,90 @@ var _keyboardjs = require('keyboardjs');
 var _keyboardjs2 = _interopRequireDefault(_keyboardjs);
 
 var GameSet = (function () {
-    function GameSet(node, width, height) {
+    function GameSet(node, width, height, canvas) {
         _classCallCheck(this, GameSet);
 
         this.width = width;
         this.height = height;
+        this.canvas = canvas;
         this.renderer = (0, _pixiJs.autoDetectRenderer)(width, height);
+        this.entities = new Array();
+        this.systems = new Array();
         node.appendChild(this.renderer.view);
     }
 
     _createClass(GameSet, [{
-        key: 'run',
-        value: function run(stage, cbk) {
+        key: 'addEntity',
+        value: function addEntity(entity) {
+            var _this = this;
 
-            var g = this;
+            this.entities.push(entity);
+            this.canvas.addChild(entity.getDisplayObject());
+            entity.remove = function () {
+                entity.getDisplayObject().parent.removeChild(entity.getDisplayObject());
+                var index = _this.entities.indexOf(entity);
+                if (index === -1) return;
+                _this.entities.splice(index, 1);
+            };
+
+            return this;
+        }
+    }, {
+        key: 'getEntities',
+        value: function getEntities() {
+            return this.entities;
+        }
+    }, {
+        key: 'addSystem',
+        value: function addSystem(system) {
+            this.systems.push(system);
+            return this;
+        }
+    }, {
+        key: 'requires',
+        value: function requires() {
+            for (var _len = arguments.length, entities = Array(_len), _key = 0; _key < _len; _key++) {
+                entities[_key] = arguments[_key];
+            }
+
+            console.log('requires', entities);
+            entities.map(function (entity) {
+                console.dir(entity);
+                entity.assets && entity.assets.map(function (cbk) {
+                    return cbk(_pixiJs.loader);
+                });
+            });
+
+            //loader.add('mummy', '/assets/sprites/metalslug_mummy37x45.png');
+            //loader.add('background', '/assets/sprites/level_pagras-v2.png');
+            //loader.add('flag', '/assets/sprites/flag.png');
+
+            return this;
+        }
+    }, {
+        key: 'load',
+        value: function load() {
+
+            var p = new Promise(function (resolve, reject) {
+                _pixiJs.loader.load();
+                _pixiJs.loader.once('complete', function (loader, resources) {
+                    console.log('ioci');
+                    resolve({ loader: loader, resources: resources });
+                });
+            });
+
+            return p;
+        }
+    }, {
+        key: 'run',
+        value: function run(cbk) {
+
+            var self = this;
 
             animate();
             function animate() {
-                cbk(g);
-                g.renderer.render(stage);
+                cbk(self);
+                self.renderer.render(self.canvas);
                 window.requestAnimationFrame(animate);
             }
         }
@@ -132,20 +197,19 @@ function cursorkeys() {
     return cursors;
 }
 
-function gameloop(_ref) {
-    var systems = _ref.systems;
-    var entities = _ref.entities;
-
+function gameloop() {
     var then = performance.now();
     var start = undefined;
     var costtime = undefined;
 
-    return function (g) {
+    // Systems
+
+    return function (game) {
         var start = performance.now();
         var deltatime = start - then;
 
-        systems.map(function (system) {
-            system.process(system.match ? entities.filter(system.match) : entities, { deltatime: deltatime, costtime: costtime });
+        game.systems.map(function (system) {
+            system.process(system.match ? game.entities.filter(system.match) : game.entities, { deltatime: deltatime, costtime: costtime });
         });
 
         then = start;

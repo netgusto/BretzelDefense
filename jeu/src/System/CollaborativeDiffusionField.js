@@ -6,22 +6,20 @@ export default class CollaborativeDiffusionField {
 
     constructor({ cellwidth, cellheight, worldwidth, worldheight, map, onupdate }) {
 
-        this.field = [];
-
         this.cellwidth = cellwidth;
         this.cellheight = cellheight;
 
         this.map = map;
-        
+
         this.nbcellsx = Math.ceil(worldwidth / cellwidth);
         this.nbcellsy = Math.ceil(worldheight / cellheight);
 
+        this.field = new Array(this.nbcellsy);
         for(let y = 0; y < this.nbcellsy; y++) {
-            const xtiles = [];
+            this.field[y] = new Array(this.nbcellsx);
             for(let x = 0; x < this.nbcellsx; x++) {
-                xtiles.push(0);
+                this.field[y][x] = 0;
             }
-            this.field.push(xtiles);
         }
 
         this.onupdate = onupdate;
@@ -174,7 +172,9 @@ export default class CollaborativeDiffusionField {
         const obstaclecells = [];
         const agentcells = [];
 
-        entities.map(entity => {
+        //entities.map(entity => {
+        for(let i = 0; i < entities.length; i++) {
+            let entity = entities[i];
             const pos = entity.getPosition();
             const cell = this.getFieldPositionForPixelPosition(pos.x, pos.y);
 
@@ -190,7 +190,8 @@ export default class CollaborativeDiffusionField {
                 cell.entity = entity;
                 agentcells.push(cell);
             }
-        });
+        }
+        //});
 
         const newfield = this.field.slice(0);
 

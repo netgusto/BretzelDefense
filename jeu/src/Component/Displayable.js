@@ -7,17 +7,6 @@ const Displayable = stampit()
 
         this.declareImplements('Displayable');
 
-        let displayobject : ?DisplayObject;
-
-        this.setDisplayObject = (dispobj) : Object => {
-            displayobject = dispobj;
-            return this;
-        };
-
-        this.getDisplayObject = () : DisplayObject => {
-            return displayobject;
-        };
-
         if(typeof this.displayobject === 'undefined') {
             throw new Error('Missing prop displayobject');
         }
@@ -25,7 +14,20 @@ const Displayable = stampit()
         this.setDisplayObject(this.displayobject);
 
     })
+    .props({
+        displayobject: null
+    })
     .methods({
+
+        setDisplayObject(dispobj) : Object {
+            this.displayobject = dispobj;
+            return this;
+        },
+
+        getDisplayObject() : DisplayObject {
+            return this.displayobject;
+        },
+
         setScale(x: number, y: ?number) : Object {
             this.getDisplayObject().scale.set(x, y);
             return this;

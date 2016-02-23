@@ -7,15 +7,15 @@ const Componentable = stampit()
         this.declareImplements('Componentable');
     })
     .props({
-        components: []
+        components: {}
     })
     .methods({
         declareImplements(name: string) : Object {
-            this.components.push(name);
+            this.components[name] = true;
             return this;
         },
         checkImplements(name: string) : boolean {
-            return this.components.indexOf(name) !== -1;
+            return this.components[name];
         }
     });
 

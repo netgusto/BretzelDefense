@@ -11,12 +11,14 @@ export default class DebugSystem {
     fps: Array<number>;
     text: Text;
 
-    constructor({ stage }: { stage: PixiContainer }) {
+    constructor({ stage, cbk }: { stage: PixiContainer, cbk: func}) {
         this.count = 0;
         this.fps = [];
         this.costs = [];
+        this.cbk = cbk;
 
         this.text = new Text('', { font: '30px Arial', fill: 'white' });
+        this.text.position.set(25);
         stage.addChild(this.text);
     }
 
@@ -30,6 +32,9 @@ export default class DebugSystem {
 
         if(this.count % 10 === 0) {
             this.text.text = Math.round(this.fps.reduce(this.sum, 0) / this.fps.length) + ' fps; ' + parseFloat(costtime).toFixed(3) + ' ms cost/frame; ' + parseFloat(this.costs.reduce(this.sum, 0) / this.costs.length).toFixed(2) + ' ms cost/frame mean';
+            if(this.cbk) {
+                this.text.text = this.cbk(this.text.text, { deltatime, costtime });
+            }
         }
 
         this.count++;

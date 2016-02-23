@@ -20,8 +20,9 @@ export default class AnimationSystem {
         const radianssecond = (Math.PI * 2) * 1;
         const radiansms = radianssecond / 1000;
 
-        entities.map(item => {
-
+        //entities.map(item => {
+        for(let k = 0; k < entities.length; k++) {
+            const item = entities[k];
             const displayObject = item.getDisplayObject();
 
             displayObject.rotation += radiansms * deltatime;
@@ -52,6 +53,6 @@ export default class AnimationSystem {
             displayObject.x += speedms * deltatime * direction.x;
             // $FlowFixMe
             displayObject.y += speedms * deltatime * direction.y;
-        });
+        }
     }
 }

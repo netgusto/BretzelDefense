@@ -15,9 +15,11 @@ export default class CollaborativeDiffusionProcessor {
     process(entities : Array<DisplayObject>, { deltatime } : { deltatime: number }) {
         const field = this.getField();
 
-        entities.map(entity => entity.collaborativeDiffusionFieldUpdate({
-            deltatime,
-            field
-        }));
+        for(let i = 0; i < entities.length; i++) {
+            entities[i].collaborativeDiffusionFieldUpdate({
+                deltatime,
+                field
+            });
+        };
     }
 }
