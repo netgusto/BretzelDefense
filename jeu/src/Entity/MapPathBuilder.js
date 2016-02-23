@@ -4,13 +4,14 @@
 
 import { Graphics, Rectangle } from 'pixi.js';
 
-import stampit from 'stampit';
+//import stampit from 'stampit';
+import compose from '../compose-js';
 
 import GenericEntity from './Generic';
 import CustomRenderable from '../Component/CustomRenderable';
 
-const MapPathBuilderable = stampit()
-    .init(function() {
+const MapPathBuilderable = compose({
+    init: function() {
 
         this.tiles = [
             [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
@@ -139,8 +140,9 @@ const MapPathBuilderable = stampit()
             const rect = getRectangleForGridCell(highlightcell);
             highlightgraphics.drawRect(rect.x, rect.y, rect.width, rect.height);
         });
-    })
+    }
+});
 
-const MapPathBuilder = stampit().compose(GenericEntity, CustomRenderable, MapPathBuilderable);
+const MapPathBuilder = compose(GenericEntity, CustomRenderable, MapPathBuilderable);
 
 export default MapPathBuilder;

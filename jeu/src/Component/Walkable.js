@@ -1,13 +1,14 @@
 'use strict';
 
-import stampit from 'stampit';
+//import stampit from 'stampit';
+import compose from '../compose-js';
 
-const Walkable = stampit().
-    init(function() {
+const Walkable = compose({
+    init: function() {
         this.declareImplements('Walkable');
         this.doStop();
-    })
-    .props({
+    },
+    props: {
         walk: {
             velocity: 0,
             velocityms: 0,
@@ -18,8 +19,8 @@ const Walkable = stampit().
             runVelocity: 60.0,
             animationToVelocityMsRatio: 9
         }
-    })
-    .methods({
+    },
+    methods: {
         setVelocityPerSecond(velocitypersecond: number) {
             this.walk.velocity = velocitypersecond;
             this.walk.velocityms = velocitypersecond / 1000;
@@ -89,6 +90,7 @@ const Walkable = stampit().
 
             return this;
         }
-    });
+    }
+});
 
 export default Walkable;

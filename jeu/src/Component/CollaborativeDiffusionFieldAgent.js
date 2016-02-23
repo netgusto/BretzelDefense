@@ -1,10 +1,11 @@
 'use strict';
 
-import stampit from 'stampit';
+import compose from '../compose-js';
 
-const CollaborativeDiffusionFieldAgent = stampit()
-    .init(function() {
+const CollaborativeDiffusionFieldAgent = compose({
+    init: function() {
         this.declareImplements('CollaborativeDiffusionFieldAgent');
-    });
+    }
+});
 
 export default CollaborativeDiffusionFieldAgent;

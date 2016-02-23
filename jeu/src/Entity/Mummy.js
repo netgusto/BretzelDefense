@@ -2,7 +2,10 @@
 
 /* @flow */
 
-import stampit from 'stampit';
+//import stampit from 'stampit';
+import compose from '../compose-js';
+
+import { loadspritesheet } from 'bobo';
 
 import GenericEntity from './Generic';
 import Walkable from '../Component/Walkable';
@@ -10,61 +13,75 @@ import Pathable from '../Component/Pathable';
 import CustomRenderable from '../Component/CustomRenderable';
 import CollaborativeDiffusionFieldAgent from '../Component/CollaborativeDiffusionFieldAgent';
 
-import { Graphics } from 'pixi.js';
+import { Container as PixiContainer, extras as PixiExtras, SCALE_MODES, Rectangle, Sprite, Graphics, loader } from 'pixi.js';
 
-let Mummy = stampit().compose(GenericEntity, Walkable, Pathable, CollaborativeDiffusionFieldAgent).init(function() {
+let Mummy = compose(GenericEntity, CollaborativeDiffusionFieldAgent).compose({
+    loadAssets(loader) {
 
-    const displayobject = this.getDisplayObject();
-    displayobject.play();
-    displayobject.pivot.set(displayobject.width/2, displayobject.height - 10);    // pas d'utilisation de la propriété anchor, car cause problème dans le calcul des déplacements de hitArea
+        loader.add('mummy', '/assets/sprites/metalslug_mummy37x45.png');
+        loader.once('complete', (_, resources) => {
+            Mummy.texture = resources.mummy.texture.baseTexture;
+            Mummy.texture.scaleMode = SCALE_MODES.NEAREST;
+            Mummy.spriteframes = loadspritesheet(Mummy.texture, 37, 45, 18);
+        });
+    },
+    init: function() {
 
-    this.doStop();
-}).methods({
-    collaborativeDiffusionFieldUpdate({ deltatime, field }) {
+        this.setDisplayObject(new PixiExtras.MovieClip(Mummy.spriteframes));
+        const displayobject = this.getDisplayObject();
 
-        const pixelposition = this.getPosition();
-        const fieldposition = field.getFieldPositionForPixelPosition(pixelposition.x, pixelposition.y);
-        const direction = field.climb(fieldposition.x, fieldposition.y);
+        displayobject.play();
+        displayobject.pivot.set(displayobject.width/2, displayobject.height - 10);    // pas d'utilisation de la propriété anchor, car cause problème dans le calcul des déplacements de hitArea
 
-        const reachedGoals = field.getGoalsAtPosition(fieldposition.x, fieldposition.y);
-        if(reachedGoals.length) {
-            this.remove();
-            return;
-        }
+        this.doStop();
+    },
+    methods: {
+        collaborativeDiffusionFieldUpdate({ deltatime, field }) {
 
-        if(direction === null) {
-            this.doStop();
-        } else {
-            this.doRun();
-        }
+            const pixelposition = this.getPosition();
+            const fieldposition = field.getFieldPositionForPixelPosition(pixelposition.x, pixelposition.y);
+            const direction = field.climb(fieldposition.x, fieldposition.y);
 
-        switch(direction) {
-            case 'n': {
-                this.up(deltatime); break;
+            const reachedGoals = field.getGoalsAtPosition(fieldposition.x, fieldposition.y);
+            if(reachedGoals.length) {
+                this.remove();
+                return;
             }
-            case 'ne': {
-                this.up(deltatime); this.right(deltatime); break;
+
+            if(direction === null) {
+                this.doStop();
+            } else {
+                this.doRun();
             }
-            case 'e': {
-                this.right(deltatime); break;
-            }
-            case 'se': {
-                this.down(deltatime); this.right(deltatime); break;
-            }
-            case 's': {
-                this.down(deltatime); break;
-            }
-            case 'sw': {
-                this.down(deltatime); this.left(deltatime); break;
-            }
-            case 'w': {
-                this.left(deltatime); break;
-            }
-            case 'nw': {
-                this.up(deltatime); this.left(deltatime); break;
+
+            switch(direction) {
+                case 'n': {
+                    this.up(deltatime); break;
+                }
+                case 'ne': {
+                    this.up(deltatime); this.right(deltatime); break;
+                }
+                case 'e': {
+                    this.right(deltatime); break;
+                }
+                case 'se': {
+                    this.down(deltatime); this.right(deltatime); break;
+                }
+                case 's': {
+                    this.down(deltatime); break;
+                }
+                case 'sw': {
+                    this.down(deltatime); this.left(deltatime); break;
+                }
+                case 'w': {
+                    this.left(deltatime); break;
+                }
+                case 'nw': {
+                    this.up(deltatime); this.left(deltatime); break;
+                }
             }
         }
     }
-});
+}).compose(Walkable, Pathable);
 
 export default Mummy;

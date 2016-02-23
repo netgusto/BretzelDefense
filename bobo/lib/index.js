@@ -71,12 +71,8 @@ var GameSet = (function () {
                 entities[_key] = arguments[_key];
             }
 
-            console.log('requires', entities);
             entities.map(function (entity) {
-                console.dir(entity);
-                entity.assets && entity.assets.map(function (cbk) {
-                    return cbk(_pixiJs.loader);
-                });
+                return entity.loadAssets && entity.loadAssets(_pixiJs.loader);
             });
 
             //loader.add('mummy', '/assets/sprites/metalslug_mummy37x45.png');

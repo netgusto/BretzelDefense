@@ -1,16 +1,17 @@
 'use strict';
 
-import stampit from 'stampit';
+//import stampit from 'stampit';
+import compose from '../compose-js';
 
-const Collisionable = stampit()
-    .init(function() {
+const Collisionable = compose({
+    init: function() {
         this.declareImplements('Collisionable');
-    })
-    .props({
+    },
+    props: {
         collisionArea: null,
         collisionGroup: null
-    })
-    .methods({
+    },
+    methods: {
         setCollisionArea(p: Polygon|Rectangle) : Object {
             this.collisionArea = p;
             return this;
@@ -26,6 +27,7 @@ const Collisionable = stampit()
         getCollisionGroup() : string {
             return this.collisionGroup;
         },
-    });
+    }
+});
 
 export default Collisionable;

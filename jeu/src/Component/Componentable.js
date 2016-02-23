@@ -1,15 +1,16 @@
 'use strict';
 
-import stampit from 'stampit';
+//import stampit from 'stampit';
+import compose from '../compose-js';
 
-const Componentable = stampit()
-    .init(function() {
+const Componentable = compose({
+    init: function() {
         this.declareImplements('Componentable');
-    })
-    .props({
+    },
+    props: {
         components: {}
-    })
-    .methods({
+    },
+    methods: {
         declareImplements(name: string) : Object {
             this.components[name] = true;
             return this;
@@ -17,6 +18,7 @@ const Componentable = stampit()
         checkImplements(name: string) : boolean {
             return this.components[name];
         }
-    });
+    }
+});
 
 export default Componentable;

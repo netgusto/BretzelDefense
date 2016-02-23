@@ -1,20 +1,20 @@
 'use strict';
 
-import stampit from 'stampit';
+import compose from '../compose-js';
 
 import { vec2 } from 'gl-matrix';
 
-const Animable = stampit.
-    init(function() {
+const Animable = compose({
+    init: function() {
         this.declareImplements('Animable');
-    })
-    .props({
+    },
+    props: {
         animation: {
             speed: 100,
             direction: { x: 0, y: 0 }
         }
-    })
-    .methods({
+    },
+    methods: {
         setSpeed(speed: number) : Object {
             this.animation.speed = speed;
             return this;
@@ -50,6 +50,7 @@ const Animable = stampit.
             this.animation.direction.y = this.animation.direction.y * -1;
             return this;
         }
-    });
+    }
+});
 
 export default Animable;

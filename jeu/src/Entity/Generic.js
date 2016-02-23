@@ -1,6 +1,7 @@
 'use strict';
 
-import stampit from 'stampit';
+//import stampit from 'stampit';
+import compose from '../compose-js';
 
 import Identifiable from '../Component/Displayable';
 import Displayable from '../Component/Displayable';
@@ -9,11 +10,12 @@ import Componentable from '../Component/Componentable';
 import AssetLoader from '../Component/AssetLoader';
 //import Listenable from '../Component/Listenable';
 
-const GenericEntity = stampit.compose(Identifiable, Componentable, AssetLoader, Displayable, Collisionable)
-    .methods({
+const GenericEntity = compose(Identifiable, Componentable, AssetLoader, Displayable, Collisionable).compose({
+    methods: {
         remove() {
             this.getDisplayObject().parent.removeChild(this.getDisplayObject());
         }
-    });
+    }
+});
 
 export default GenericEntity;

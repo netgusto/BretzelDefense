@@ -2,13 +2,14 @@
 
 /* @flow */
 
-import stampit from 'stampit';
+//import stampit from 'stampit';
+import compose from '../compose-js';
 
-const Pathable = stampit()
-    .init(function() {
+const Pathable = compose({
+    init: function() {
         this.declareImplements('Pathable');
-    })
-    .props({
+    },
+    props: {
         path: {
             target: null,
             route: {
@@ -16,8 +17,8 @@ const Pathable = stampit()
                 steps: null
             }
         }
-    })
-    .methods({
+    },
+    methods: {
         setPathTarget(x: number, y: number) {
             this.path.target = { x, y };
         },
@@ -52,6 +53,7 @@ const Pathable = stampit()
         getRoute() {
             return this.path.route.steps;
         }
-    });
+    }
+});
 
 export default Pathable;

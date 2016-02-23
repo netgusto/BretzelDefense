@@ -1,23 +1,20 @@
 'use strict';
 
-import stampit from 'stampit';
+//import stampit from 'stampit';
+import compose from '../compose-js';
 
-const Displayable = stampit()
-    .init(function() {
-
+const Displayable = compose({
+    //expects: {
+    //    displayobject: Object
+    //},
+    init: function() {
         this.declareImplements('Displayable');
-
-        if(typeof this.displayobject === 'undefined') {
-            throw new Error('Missing prop displayobject');
-        }
-
         this.setDisplayObject(this.displayobject);
-
-    })
-    .props({
+    },
+    props: {
         displayobject: null
-    })
-    .methods({
+    },
+    methods: {
 
         setDisplayObject(dispobj) : Object {
             this.displayobject = dispobj;
@@ -56,6 +53,7 @@ const Displayable = stampit()
             this.getDisplayObject().tint = tint;
             return this;
         }
-    });
+    }
+});
 
 export default Displayable;

@@ -46,11 +46,8 @@ export class GameSet {
     }
 
     requires(...entities) {
-        console.log('requires', entities);
-        entities.map(entity => {
-            console.dir(entity);
-            entity.assets && entity.assets.map(cbk => cbk(loader))
-        });
+
+        entities.map(entity => entity.loadAssets && entity.loadAssets(loader));
 
         //loader.add('mummy', '/assets/sprites/metalslug_mummy37x45.png');
         //loader.add('background', '/assets/sprites/level_pagras-v2.png');

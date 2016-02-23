@@ -1,15 +1,16 @@
 'use strict';
 
-import stampit from 'stampit';
+//import stampit from 'stampit';
+import compose from '../compose-js';
 
-const CustomRenderable = stampit()
-    .init(function() {
+const CustomRenderable = compose({
+    init: function() {
         this.declareImplements('CustomRenderable');
-    })
-    .props({
+    },
+    props: {
         customrender: { render: () => null }
-    })
-    .methods({
+    },
+    methods: {
         setCustomRenderMethod(method) {
             this.customrender.render = method;
             return this;
@@ -17,6 +18,7 @@ const CustomRenderable = stampit()
         render(params) {
             this.customrender.render(params);
         }
-    });
+    }
+});
 
 export default CustomRenderable;
