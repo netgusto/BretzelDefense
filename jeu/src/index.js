@@ -4,7 +4,7 @@
 
 import 'perfnow';   // Polyfill for high resolution timer
 import compose from './compose-js';
-
+/*
 let AspectOne = compose({
     init: function() {
         this.bof = 'yes';
@@ -58,6 +58,7 @@ const tania = GreeterTwelve({ name: 'Tania' });
 const tania2 = GreeterTwelve.create({ name: 'Tania 2' });
 
 console.log(jerome.sayHello(), tania.sayHello(), tania2.sayHello(), GreeterTwelve.hey(), GreeterTwelve.f(), GreeterTwelve.yo());
+*/
 
 import { Container as PixiContainer, extras as PixiExtras, SCALE_MODES, Rectangle, Sprite, Graphics, loader } from 'pixi.js';
 import { GameSet, cursorkeys, loadspritesheet, gameloop } from 'bobo';
@@ -69,6 +70,7 @@ import GenericEntity from './Entity/Generic';
 
 import CursorSystem from './System/Cursor';
 import DebugSystem from './System/Debug';
+import CustomRenderSystem from './System/CustomRender';
 import CollaborativeDiffusionFieldSystem from './System/CollaborativeDiffusionField';
 import CollaborativeDiffusionProcessorSystem from './System/CollaborativeDiffusionProcessor';
 import mapblocks from './map-blocks'
@@ -97,7 +99,7 @@ loader.add('background', '/assets/sprites/level_pagras-v2.png');
                 return flag;
             }*/
 
-            const exit = Flag().setPosition(-20, 400);
+            const exit = Flag.create().setPosition(-20, 400);
             exit.fieldtarget = true;
 
             game.addEntity(exit);
@@ -110,14 +112,14 @@ loader.add('background', '/assets/sprites/level_pagras-v2.png');
                 const clickpoint = event.data.getLocalPosition(bgsprite);
 
                 if(cursor.shift) {
-                    const flag = Flag()
+                    const flag = Flag.create()
                         .setPosition(clickpoint.x, clickpoint.y)
                         .setTint(0xFF0000);
 
                     flag.fieldobstacle = true;
                     game.addEntity(flag);
                 } else {
-                    const flag = Flag()
+                    const flag = Flag.create()
                         .setPosition(clickpoint.x, clickpoint.y);
 
                     flag.fieldtarget = true;
@@ -125,7 +127,7 @@ loader.add('background', '/assets/sprites/level_pagras-v2.png');
                 }
             };
 
-            const fond = new GenericEntity({ displayobject: bgsprite });
+            const fond = GenericEntity.create({ displayobject: bgsprite });
             fond.getDisplayObject().tileScale.set(viewwidth / resources.background.texture.width, viewheight / resources.background.texture.height);
 
             game.addEntity(fond);
@@ -134,14 +136,14 @@ loader.add('background', '/assets/sprites/level_pagras-v2.png');
 
             // On génère des positions de momies aléatoires sur les espaces praticables
             const positions = [];
-            while(positions.length < 20) {
+            while(positions.length < 4) {
                 const x = Math.floor(Math.random() * mapblocks[0].length);
                 const y = Math.floor(Math.random() * mapblocks.length);
                 if(mapblocks[y][x] === 1) positions.push({ x, y });
             }
 
             const buildMummy = function() {
-                return Mummy()
+                return Mummy.create()
                     .setCollisionArea(new Rectangle(10, 10, 20, 20))
                     .setCollisionGroup('mummy')
             }
@@ -153,7 +155,7 @@ loader.add('background', '/assets/sprites/level_pagras-v2.png');
                 );
             });
 
-            const fielddebug = GenericEntity({
+            const fielddebug = GenericEntity.create({
                 id: 'fielddebug',
                 displayobject: new Graphics()
             });
@@ -250,6 +252,7 @@ loader.add('background', '/assets/sprites/level_pagras-v2.png');
                 getField: () => field
             }));
             game.addSystem(new DebugSystem({ stage: canvas, cbk: (msg) => msg += '; '  + game.entities.length + ' entities' }));
+            game.addSystem(new CustomRenderSystem());
 
             // Autospawn !
             let timer = 0;

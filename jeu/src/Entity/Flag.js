@@ -6,8 +6,7 @@ import { Sprite } from 'pixi.js';
 
 import GenericEntity from './Generic';
 
-const Flag = GenericEntity
-    .compose({
+const Flag = compose(GenericEntity, {
         init: function() {
             const sprite = new Sprite(Flag.texture);
             sprite.pivot.set(sprite.width / 2, sprite.height);

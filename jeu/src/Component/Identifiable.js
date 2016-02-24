@@ -7,10 +7,15 @@ const uuid = () => 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, funct
     return v.toString(16);
 });
 
+let id = 0;
+
 const Identifiable = compose({
     init: function() {
         this.declareImplements('Identifiable');
-        if(!this.id) { this.id = uuid(); }
+        if(!this.id) {
+            //this.id = uuid();
+            this.id = id++;
+        }
     },
     props: {
         id: null
