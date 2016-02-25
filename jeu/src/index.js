@@ -256,7 +256,7 @@ loader.add('background', '/assets/sprites/level_pagras-v2.png');
 
             // Autospawn !
             let timer = 0;
-            let delay = 1000;
+            let delay = 250;
             game.addSystem({
                 process: function(entities, { deltatime }) {
                     timer += deltatime;

@@ -1,6 +1,6 @@
 'use strict';
 
-import { merge } from 'supermixer';
+import merge from 'merge';
 import clone from 'clone';
 
 const stdprops = ['init', 'expects', 'props', 'methods', 'create', 'compose'];
@@ -9,21 +9,29 @@ const sym = Symbol('compose');
 
 export default function compose(...factories) {
 
-    const basefactoryobject = Object.assign({}, ...factories.map(factory => Object.getOwnPropertyNames(factory).filter(name => stdprops.indexOf(name) === -1).reduce((obj, name) => {
+    const factobjects = factories.map(factory => {
+        if(typeof factory === 'function' && typeof factory[sym] === 'object') {
+            return factory[sym];
+        }
+
+        return factory;
+    });
+
+    const basefactoryobject = Object.assign({}, ...factobjects.map(factory => Object.getOwnPropertyNames(factory).filter(name => stdprops.indexOf(name) === -1).reduce((obj, name) => {
         obj[name] = factory[name];
         return obj;
     }, {})));
 
     const res = Object.assign({}, basefactoryobject, {
         init: function() {
-            factories.map(factory => 'init' in factory ? factory.init.apply(this) : null);
+            factobjects.map(factory => 'init' in factory ? factory.init.apply(this) : null);
         },
-        expects: Object.assign({}, ...factories.map(factory => 'expects' in factory ? factory.expects : {})),
-        props: merge({}, ...factories.map(factory => 'props' in factory ? factory.props : {})),
-        methods: Object.assign({}, ...factories.map(factory => 'methods' in factory ? factory.methods : {})),
+        expects: Object.assign({}, ...factobjects.map(factory => 'expects' in factory ? factory.expects : {})),
+        props: merge.recursive({}, ...factobjects.map(factory => 'props' in factory ? factory.props : {})),
+        methods: Object.assign({}, ...factobjects.map(factory => 'methods' in factory ? factory.methods : {})),
         create: function(buildprops = {}) {
 
-            const compiled = Object.assign({}, clone(this.props), this.methods, buildprops);
+            const compiled = Object.assign({}, clone(this.props, false), this.methods, buildprops);
 
             Object.keys(this.expects).map(expectationname => {
                 if(!(expectationname in compiled)) {
@@ -38,8 +46,17 @@ export default function compose(...factories) {
 
             this.init.apply(compiled);
             return compiled;
+        },
+        compose: function(...factoriez) {
+            return compose.apply(null, [this, ...factoriez]);
         }
     });
 
-    return res;
+    const f = function(buildprops = {}) { return res.create(buildprops); };
+    f[sym] = res;
+    f.create = f;
+    f.compose = function(...factoriez) { return compose(res, ...factoriez); };
+    Object.getOwnPropertyNames(basefactoryobject).map(name => f[name] = basefactoryobject[name]);
+
+    return f;
 };

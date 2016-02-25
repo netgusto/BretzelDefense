@@ -15,7 +15,7 @@ import CollaborativeDiffusionFieldAgent from '../Component/CollaborativeDiffusio
 
 import { Container as PixiContainer, extras as PixiExtras, SCALE_MODES, Rectangle, Sprite, Graphics, loader, Text } from 'pixi.js';
 
-let Mummy = compose(GenericEntity, CollaborativeDiffusionFieldAgent, CustomRenderable, {
+let Mummy = compose(GenericEntity, CollaborativeDiffusionFieldAgent, CustomRenderable).compose({
     loadAssets(loader) {
         loader.add('mummy', '/assets/sprites/metalslug_mummy37x45.png');
         loader.once('complete', (_, resources) => {
@@ -77,7 +77,7 @@ let Mummy = compose(GenericEntity, CollaborativeDiffusionFieldAgent, CustomRende
             if(direction === null) {
                 this.doStop();
             } else if(this.walk.state === 'idle') {
-                this.doWalk();
+                this.doRun();
             }
 
             switch(direction) {
@@ -108,6 +108,6 @@ let Mummy = compose(GenericEntity, CollaborativeDiffusionFieldAgent, CustomRende
             }
         }
     }
-}, Walkable, Pathable);
+}).compose(Walkable, Pathable);
 
 export default Mummy;
