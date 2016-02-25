@@ -17,7 +17,6 @@ import { Container as PixiContainer, extras as PixiExtras, SCALE_MODES, Rectangl
 
 let Mummy = compose(GenericEntity, CollaborativeDiffusionFieldAgent, CustomRenderable, {
     loadAssets(loader) {
-
         loader.add('mummy', '/assets/sprites/metalslug_mummy37x45.png');
         loader.once('complete', (_, resources) => {
             Mummy.texture = resources.mummy.texture.baseTexture;
@@ -39,8 +38,16 @@ let Mummy = compose(GenericEntity, CollaborativeDiffusionFieldAgent, CustomRende
         displayobject.addChild(text);
         displayobject.interactive = true;
         displayobject.click = () => {
-            //console.log(this.getId() + '; ' + this.walk.state);
+            console.log(this.getId() + '; ' + this.walk.state);
+            this.doRun();
         };
+
+        displayobject.mouseover = () => {
+            this.prevtint = displayobject.tint;
+            this.setTint(0x00FF00);
+        }
+
+        displayobject.mouseout = () => this.setTint(this.prevtint);
 
         this.setCustomRenderMethod(() => {
             //console.log(this.getId());
@@ -69,8 +76,8 @@ let Mummy = compose(GenericEntity, CollaborativeDiffusionFieldAgent, CustomRende
 
             if(direction === null) {
                 this.doStop();
-            } else {
-                this.doRun();
+            } else if(this.walk.state === 'idle') {
+                this.doWalk();
             }
 
             switch(direction) {
