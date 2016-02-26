@@ -1,6 +1,6 @@
 'use strict';
 
-import compose from '../compose-js';
+import compose from 'compose-js';
 
 const CollaborativeDiffusionFieldAgent = compose({
     init: function() {

@@ -4,7 +4,7 @@
 
 //import stampit from 'stampit';
 
-import compose from '../compose-js';
+import compose from 'compose-js';
 
 import GenericEntity from './Generic';
 import Animable from '../Component/Animable';

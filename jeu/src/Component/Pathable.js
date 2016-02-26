@@ -3,7 +3,7 @@
 /* @flow */
 
 //import stampit from 'stampit';
-import compose from '../compose-js';
+import compose from 'compose-js';
 
 const Pathable = compose({
     init: function() {

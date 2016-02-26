@@ -3,8 +3,9 @@
 /* @flow */
 
 import 'perfnow';   // Polyfill for high resolution timer
-import compose from './compose-js';
 /*
+import compose from 'compose-js';
+
 let AspectOne = compose({
     init: function() {
         this.bof = 'yes';

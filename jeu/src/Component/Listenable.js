@@ -2,7 +2,7 @@
 
 import Emitter from 'tiny-emitter';
 //import stampit from 'stampit';
-import compose from '../compose-js';
+import compose from 'compose-js';
 
 const Listenable = compose({
     init: function() {

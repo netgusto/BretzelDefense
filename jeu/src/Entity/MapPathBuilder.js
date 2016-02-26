@@ -5,7 +5,7 @@
 import { Graphics, Rectangle } from 'pixi.js';
 
 //import stampit from 'stampit';
-import compose from '../compose-js';
+import compose from 'compose-js';
 
 import GenericEntity from './Generic';
 import CustomRenderable from '../Component/CustomRenderable';

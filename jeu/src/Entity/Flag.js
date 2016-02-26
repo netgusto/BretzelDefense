@@ -1,7 +1,7 @@
 'use strict';
 
 //import stampit from 'stampit';
-import compose from '../compose-js';
+import compose from 'compose-js';
 import { Sprite } from 'pixi.js';
 
 import GenericEntity from './Generic';

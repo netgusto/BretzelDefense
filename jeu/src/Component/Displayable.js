@@ -1,7 +1,7 @@
 'use strict';
 
 //import stampit from 'stampit';
-import compose from '../compose-js';
+import compose from 'compose-js';
 
 const Displayable = compose({
     //expects: {
