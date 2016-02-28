@@ -6,7 +6,7 @@ import { vec2 } from 'gl-matrix';
 
 const Animable = compose({
     init: function() {
-        this.declareImplements('Animable');
+        this.tag('Animable');
     },
     props: {
         animation: {

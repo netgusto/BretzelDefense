@@ -5,7 +5,7 @@ import compose from 'compose-js';
 
 const CustomRenderable = compose({
     init: function() {
-        this.declareImplements('CustomRenderable');
+        this.tag('CustomRenderable');
     },
     props: {
         customrender: { render: () => null }

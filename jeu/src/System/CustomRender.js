@@ -5,7 +5,7 @@
 export default class CustomRender {
 
     match(item: DisplayObject): boolean {
-        return item.checkImplements && item.checkImplements('CustomRenderable');
+        return item.hasTag('CustomRenderable');
     }
 
     process(entities: Array<DisplayObject>, params) {

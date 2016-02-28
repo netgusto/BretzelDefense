@@ -9,7 +9,7 @@ export default class CollaborativeDiffusionProcessor {
     }
 
     match(item: DisplayObject): boolean {
-        return item.checkImplements('CollaborativeDiffusionFieldAgent');
+        return item.hasTag('CollaborativeDiffusionFieldAgent');
     }
 
     process(entities : Array<DisplayObject>, { deltatime } : { deltatime: number }) {

@@ -5,7 +5,7 @@ import compose from 'compose-js';
 
 const Collisionable = compose({
     init: function() {
-        this.declareImplements('Collisionable');
+        this.tag('Collisionable');
     },
     props: {
         collisionArea: null,

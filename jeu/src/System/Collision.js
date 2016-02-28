@@ -15,7 +15,7 @@ export default class CollisionSystem {
     }
 
     match(item: DisplayObject): boolean {
-        return item.checkImplements && item.checkImplements('Collisionable');
+        return item.hasTag('Collisionable');
     }
 
     process(entities : Array<DisplayObject>, { deltatime } : { deltatime: number }) {
@@ -23,7 +23,7 @@ export default class CollisionSystem {
         this.collisions.map(collision => {
             entities.filter(entity => entity.getCollisionGroup() === collision.what).map(hero => {
 
-                const heroDisplayObject = hero.getDisplayObject();
+                const heroDisplayObject = hero.displayobject;
                 const herobounds = heroDisplayObject.getBounds();
                 const heroHitArea = hero.getCollisionArea();
                 let heropoly = null;
@@ -33,7 +33,7 @@ export default class CollisionSystem {
 
                 entities.filter(entity => collision.with.indexOf(entity.getCollisionGroup()) > -1).map(collider => {
 
-                    const colliderDisplayObject = collider.getDisplayObject();
+                    const colliderDisplayObject = collider.displayobject;
                     const colliderbounds = colliderDisplayObject.getBounds();
                     const colliderHitArea = collider.getCollisionArea();
 

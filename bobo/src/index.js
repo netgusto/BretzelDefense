@@ -25,9 +25,9 @@ export class GameSet {
 
     addEntity(entity: Object) {
         this.entities.push(entity);
-        this.canvas.addChild(entity.getDisplayObject());
+        this.canvas.addChild(entity.displayobject);
         entity.remove = () => {
-            entity.getDisplayObject().parent.removeChild(entity.getDisplayObject());
+            entity.displayobject.parent.removeChild(entity.displayobject);
             const index = this.entities.indexOf(entity);
             if(index === -1) return;
             this.entities.splice(index, 1);
@@ -38,6 +38,10 @@ export class GameSet {
 
     getEntities() {
         return this.entities;
+    }
+
+    sortStage(cbk) {
+        this.canvas.children.sort(cbk);
     }
 
     addSystem(system: Object) {

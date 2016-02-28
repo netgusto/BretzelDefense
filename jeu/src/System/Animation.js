@@ -13,7 +13,7 @@ export default class AnimationSystem {
     }
 
     match(item: Object) : boolean {
-        return item.checkImplements && item.checkImplements('Animable');
+        return item.hasTag && item.hasTag('Animable');
     }
 
     process(entities: Array<DisplayObject>, { deltatime } : { deltatime: number }) : void {
@@ -23,7 +23,7 @@ export default class AnimationSystem {
         //entities.map(item => {
         for(let k = 0; k < entities.length; k++) {
             const item = entities[k];
-            const displayObject = item.getDisplayObject();
+            const displayObject = item.displayObject;
 
             displayObject.rotation += radiansms * deltatime;
 

@@ -11,7 +11,7 @@ export default class CursorSystem {
     }
 
     match(item : DisplayObject) : boolean {
-        return item.checkImplements && item.checkImplements('Walkable');
+        return item.hasTag('Walkable');
     }
 
     process(entities: Array<DisplayObject>, { deltatime } : { deltatime: number }) {

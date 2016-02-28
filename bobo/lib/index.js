@@ -1,37 +1,37 @@
 'use strict';
 
-Object.defineProperty(exports, '__esModule', {
+Object.defineProperty(exports, "__esModule", {
     value: true
 });
+exports.GameSet = undefined;
 
-var _createClass = (function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ('value' in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; })();
+var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
+// $FlowFixMe
+
 
 exports.loadspritesheet = loadspritesheet;
 exports.cursorkeys = cursorkeys;
 exports.gameloop = gameloop;
 
-function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { 'default': obj }; }
-
-function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError('Cannot call a class as a function'); } }
-
-/* @flow */
-
-var _pixiJs = require('pixi.js');
-
-// $FlowFixMe
+var _pixi = require('pixi.js');
 
 var _keyboardjs = require('keyboardjs');
 
 var _keyboardjs2 = _interopRequireDefault(_keyboardjs);
 
-var GameSet = (function () {
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+var GameSet = exports.GameSet = function () {
     function GameSet(node, width, height, canvas) {
         _classCallCheck(this, GameSet);
 
         this.width = width;
         this.height = height;
         this.canvas = canvas;
-        this.renderer = (0, _pixiJs.autoDetectRenderer)(width, height);
+        this.renderer = (0, _pixi.autoDetectRenderer)(width, height);
         this.entities = new Array();
         this.systems = new Array();
         node.appendChild(this.renderer.view);
@@ -43,9 +43,9 @@ var GameSet = (function () {
             var _this = this;
 
             this.entities.push(entity);
-            this.canvas.addChild(entity.getDisplayObject());
+            this.canvas.addChild(entity.displayobject);
             entity.remove = function () {
-                entity.getDisplayObject().parent.removeChild(entity.getDisplayObject());
+                entity.displayobject.parent.removeChild(entity.displayobject);
                 var index = _this.entities.indexOf(entity);
                 if (index === -1) return;
                 _this.entities.splice(index, 1);
@@ -57,6 +57,11 @@ var GameSet = (function () {
         key: 'getEntities',
         value: function getEntities() {
             return this.entities;
+        }
+    }, {
+        key: 'sortStage',
+        value: function sortStage(cbk) {
+            this.canvas.children.sort(cbk);
         }
     }, {
         key: 'addSystem',
@@ -72,7 +77,7 @@ var GameSet = (function () {
             }
 
             entities.map(function (entity) {
-                return entity.loadAssets && entity.loadAssets(_pixiJs.loader);
+                return entity.loadAssets && entity.loadAssets(_pixi.loader);
             });
 
             //loader.add('mummy', '/assets/sprites/metalslug_mummy37x45.png');
@@ -86,8 +91,8 @@ var GameSet = (function () {
         value: function load() {
 
             var p = new Promise(function (resolve, reject) {
-                _pixiJs.loader.load();
-                _pixiJs.loader.once('complete', function (loader, resources) {
+                _pixi.loader.load();
+                _pixi.loader.once('complete', function (loader, resources) {
                     console.log('ioci');
                     resolve({ loader: loader, resources: resources });
                 });
@@ -111,9 +116,8 @@ var GameSet = (function () {
     }]);
 
     return GameSet;
-})();
+}();
 
-exports.GameSet = GameSet;
 ;
 
 function loadspritesheet(basetexture, width, height, nbframes) {
@@ -125,6 +129,7 @@ function loadspritesheet(basetexture, width, height, nbframes) {
     var realWidth = basetexture.realWidth;
     var realHeight = basetexture.realHeight;
 
+
     var maxX = Math.floor(realWidth / width);
     var maxY = Math.floor(realHeight / height);
 
@@ -135,7 +140,7 @@ function loadspritesheet(basetexture, width, height, nbframes) {
     for (var y = 0; y < maxY; y++) {
         for (var x = 0; x < maxX; x++) {
             if (counter >= nbframes) break;
-            frames.push(new _pixiJs.Texture(basetexture, new _pixiJs.Rectangle(x * width, y * height, width, height)));
+            frames.push(new _pixi.Texture(basetexture, new _pixi.Rectangle(x * width, y * height, width, height)));
             counter++;
         }
     }
@@ -153,37 +158,37 @@ var cursors = {
     ctrl: false
 };
 
-_keyboardjs2['default'].bind('left', function () {
+_keyboardjs2.default.bind('left', function () {
     return cursors.left = true;
 }, function () {
     return cursors.left = false;
 });
-_keyboardjs2['default'].bind('right', function () {
+_keyboardjs2.default.bind('right', function () {
     return cursors.right = true;
 }, function () {
     return cursors.right = false;
 });
-_keyboardjs2['default'].bind('up', function () {
+_keyboardjs2.default.bind('up', function () {
     return cursors.up = true;
 }, function () {
     return cursors.up = false;
 });
-_keyboardjs2['default'].bind('down', function () {
+_keyboardjs2.default.bind('down', function () {
     return cursors.down = true;
 }, function () {
     return cursors.down = false;
 });
-_keyboardjs2['default'].bind('shift', function () {
+_keyboardjs2.default.bind('shift', function () {
     return cursors.shift = true;
 }, function () {
     return cursors.shift = false;
 });
-_keyboardjs2['default'].bind('alt', function () {
+_keyboardjs2.default.bind('alt', function () {
     return cursors.alt = true;
 }, function () {
     return cursors.alt = false;
 });
-_keyboardjs2['default'].bind('ctrl', function () {
+_keyboardjs2.default.bind('ctrl', function () {
     return cursors.ctrl = true;
 }, function () {
     return cursors.ctrl = false;
@@ -211,6 +216,4 @@ function gameloop() {
         then = start;
         costtime = performance.now() - start;
     };
-}
-
-;
+};

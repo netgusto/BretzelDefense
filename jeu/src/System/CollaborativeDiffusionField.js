@@ -2,12 +2,20 @@
 
 /* @flow */
 
+// Pour la construction des maps de lane
+//let count = 0;
+//let selectedlane = 3;
+
 export default class CollaborativeDiffusionField {
 
-    constructor({ cellwidth, cellheight, worldwidth, worldheight, map, onupdate }) {
+    constructor({ cellwidth, cellheight, worldwidth, worldheight, map, onupdate, mapstartcellx, mapstartcelly, mapendcellx, mapendcelly }) {
 
         this.cellwidth = cellwidth;
         this.cellheight = cellheight;
+        this.mapstartcellx = mapstartcellx;
+        this.mapstartcelly = mapstartcelly;
+        this.mapendcellx = mapendcellx;
+        this.mapendcelly = mapendcelly;
 
         this.map = map;
 
@@ -28,7 +36,7 @@ export default class CollaborativeDiffusionField {
     }
 
     match(item: DisplayObject): boolean {
-        return item.fieldtarget || item.fieldobstacle || item.checkImplements('CollaborativeDiffusionFieldAgent');
+        return item.fieldtarget || item.fieldobstacle || item.hasTag('CollaborativeDiffusionFieldAgent');
     }
 
     getRectangleForGridCell(gridcell) {
@@ -186,7 +194,7 @@ export default class CollaborativeDiffusionField {
                 this.field[cell.y][cell.x] = 0;
                 cell.entity = entity;
                 obstaclecells.push(cell);
-            } else if(entity.checkImplements('CollaborativeDiffusionFieldAgent')) {
+            } else if(entity.hasTag('CollaborativeDiffusionFieldAgent')) {
                 cell.entity = entity;
                 agentcells.push(cell);
             }
@@ -195,8 +203,11 @@ export default class CollaborativeDiffusionField {
 
         const newfield = this.field.slice(0);
 
-        for(let y = 0; y < this.nbcellsy; y++) {
-            for(let x = 0; x < this.nbcellsx; x++) {
+        const yend = this.mapendcelly;
+        const xend = this.mapendcellx;
+
+        for(let y = this.mapstartcelly; y < yend; y++) {
+            for(let x = this.mapstartcellx; x < xend; x++) {
 
                 let isgoal = false;
                 let isobstacle = false;
@@ -215,6 +226,9 @@ export default class CollaborativeDiffusionField {
                 }
 
                 if(isgoal || isobstacle) { continue; }
+
+                const val = this.map[y][x];
+                if(!val) continue;
 
                 /* NOT using getNeighbours here, because it's faster inlined */
 
@@ -243,12 +257,73 @@ export default class CollaborativeDiffusionField {
                 }
 
                 const curval = newfield[y][x];
-                newfield[y][x] = ((n + s + w + e) / 4) * this.map[y][x];    // 1: walkable; 0: wall; used as diffusion coefficient
+                newfield[y][x] = ((n + s + w + e) / 4);    // 1: walkable; 0: wall; used as diffusion coefficient
             }
         }
 
         goalcells.map(cell => newfield[cell.y][cell.x] = this.peak);
         obstaclecells.map(cell => newfield[cell.y][cell.x] = 0);
+
+        // Pour la construction des maps de lane
+        // if(count++ === 300) {
+
+        //     const res = [];
+
+        //     // On filtre le champ pour ne conserver que les cellules de la lane qui nous intéresse
+        //     const lanefield = [];
+        //     for(let y = 0; y < this.nbcellsy; y++) {
+        //         const row = [];
+
+        //         for(let x = 0; x < this.nbcellsx; x++) {
+        //             //const val = this.field[y][x];
+        //             if(this.map[y][x] !== selectedlane) {
+        //                 row[x] = 0;
+        //             } else {
+        //                 row[x] = newfield[y][x];
+        //             }
+        //         }
+
+        //         lanefield[y] = row;
+        //     }
+
+        //     this.field = lanefield;
+
+        //     // On calcule la direction pour chaque cellule de la lane
+        //     for(let y = 0; y < this.nbcellsy; y++) {
+
+        //         const row = [];
+
+        //         for(let x = 0; x < this.nbcellsx; x++) {
+        //             const val = this.field[y][x];
+        //             if(!val) {
+        //                 row[x] = 0;
+        //                 continue;
+        //             };
+
+        //             // 1 2 3
+        //             // 4 5 6
+        //             // 7 8 9
+
+        //             const direction = this.climb(x, y);
+        //             switch(direction) {
+        //                 case 'nw': row[x] = 1; break;
+        //                 case 'n': row[x] = 2; break;
+        //                 case 'ne': row[x] = 3; break;
+        //                 case 'e': row[x] = 6; break;
+        //                 case 'se': row[x] = 9; break;
+        //                 case 's': row[x] = 8; break;
+        //                 case 'sw': row[x] = 7; break;
+        //                 case 'w': row[x] = 4; break;
+        //                 default: row[x] = 5;
+        //             }
+        //         }
+
+        //         res[y] = row;
+        //     }
+
+        //     console.log(JSON.stringify(res));
+        //     throw new Error('Lane directions determination completed.');
+        // }
 
         this.onupdate({
             field: newfield,
@@ -265,3 +340,4 @@ export default class CollaborativeDiffusionField {
         this.field = newfield;
     }
 }
+console.dir(CollaborativeDiffusionField);

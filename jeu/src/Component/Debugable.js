@@ -4,42 +4,41 @@ import compose from 'compose-js';
 
 import CustomRenderable from './CustomRenderable';
 
-import { Text } from 'pixi.js';
+import { DisplayObject, Text } from 'pixi.js';
 
 const Debugable = compose(CustomRenderable, {
     expects: {
         getId: Function,
-        getDisplayObject: Function,
+        displayobject: DisplayObject,
         setCustomRenderMethod: Function,
         setTint: Function
     },
     init: function() {
 
-        const displayobject = this.getDisplayObject();
-
-        const text = new Text('', { font: '10px Arial', fill: 'red' });
+        const text = new Text('', { font: '15px Arial', fill: 'red' });
 
         text.position.set(0, -25);
         text.text = this.getId();
 
-        displayobject.addChild(text);
-        displayobject.interactive = true;
-        displayobject.click = () => {
-            console.log(this.getId() + '; ' + this.walk.state);
-            this.doRun();
+        this.displayobject.addChild(text);
+        this.displayobject.interactive = true;
+        this.displayobject.click = () => {
+            console.log(this.getId() + '; ' + this.walk.state + ';' + this.getFieldPositionForPixelPosition(this.getPosition().x, this.getPosition().y));
+            //this.doRun();
         };
 
-        displayobject.mouseover = () => {
-            this.prevtint = displayobject.tint;
+        this.displayobject.mouseover = () => {
+            this.prevtint = this.displayobject.tint;
+            console.log(this.getId() + '; ' + this.walk.state, this.getFieldPositionForPixelPosition(this.getPosition().x, this.getPosition().y));
             this.setTint(0x00FF00);
         }
 
-        displayobject.mouseout = () => this.setTint(this.prevtint);
+        this.displayobject.mouseout = () => this.setTint(this.prevtint);
 
         this.setCustomRenderMethod(() => {
             //console.log(this.getId());
             text.text = this.getId() + '; ' + this.walk.state;
-            if(displayobject.scale.x === -1) {
+            if(this.displayobject.scale.x === -1) {
                 text.scale.set(-1, 1);
             } else {
                 text.scale.set(1);

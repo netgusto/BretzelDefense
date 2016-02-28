@@ -6,7 +6,7 @@ import compose from 'compose-js';
 
 const Listenable = compose({
     init: function() {
-        this.declareImplements('Listenable');
+        this.tag('Listenable');
 
         const emitter = new Emitter();
         

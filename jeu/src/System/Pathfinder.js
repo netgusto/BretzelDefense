@@ -36,7 +36,7 @@ export default class Pathfinder {
     }
 
     match(item: DisplayObject): boolean {
-        return item.checkImplements && item.checkImplements('Pathable');
+        return item.hasTag('Pathable');
     }
 
     process(entities: Array<DisplayObject>, { deltatime } : { deltatime: number }) {

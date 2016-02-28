@@ -2,7 +2,7 @@
 
 import compose from 'compose-js';
 
-const AssetLoader = compose({
+export default compose({
     assetHandlers: [],
     loadAssets(loader) {
         this.assetHandlers.map(cbk => cbk(loader));
@@ -16,5 +16,3 @@ const AssetLoader = compose({
         return {};
     }
 });
-
-export default AssetLoader;

@@ -7,7 +7,7 @@ import compose from 'compose-js';
 
 const Pathable = compose({
     init: function() {
-        this.declareImplements('Pathable');
+        this.tag('Pathable');
     },
     props: {
         path: {

@@ -11,7 +11,7 @@ let id = 0;
 
 const Identifiable = compose({
     init: function() {
-        this.declareImplements('Identifiable');
+        this.tag('Identifiable');
         if(!this.id) {
             //this.id = uuid();
             this.id = id++;

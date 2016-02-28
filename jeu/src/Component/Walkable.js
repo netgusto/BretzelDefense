@@ -3,9 +3,14 @@
 //import stampit from 'stampit';
 import compose from 'compose-js';
 
+import { DisplayObject } from 'pixi.js';
+
 const Walkable = compose({
+    expects: {
+        displayobject: DisplayObject
+    },
     init: function() {
-        this.declareImplements('Walkable');
+        this.tag('Walkable');
         this.doStop();
     },
     props: {
@@ -15,7 +20,7 @@ const Walkable = compose({
             state: null,
 
             stopVelocity: 0.0,
-            walkVelocity: 20.0,
+            walkVelocity: 10.0,
             runVelocity: 60.0,
             animationToVelocityMsRatio: 9
         }
@@ -24,7 +29,7 @@ const Walkable = compose({
         setVelocityPerSecond(velocitypersecond: number) {
             this.walk.velocity = velocitypersecond;
             this.walk.velocityms = velocitypersecond / 1000;
-            this.getDisplayObject().animationSpeed = this.walk.animationToVelocityMsRatio * this.walk.velocityms;
+            this.displayobject.animationSpeed = this.walk.animationToVelocityMsRatio * this.walk.velocityms;
 
             return this;
         },
@@ -32,7 +37,7 @@ const Walkable = compose({
         up(deltatime: number) : void {
             if(this.walk.state === 'idle') return;
 
-            this.getDisplayObject().position.y -= this.walk.velocityms * deltatime;
+            this.displayobject.position.y -= this.walk.velocityms * deltatime;
 
             return this;
         },
@@ -40,7 +45,7 @@ const Walkable = compose({
         down(deltatime: number) {
             if(this.walk.state === 'idle') return;
 
-            this.getDisplayObject().position.y += this.walk.velocityms * deltatime;
+            this.displayobject.position.y += this.walk.velocityms * deltatime;
 
             return this;
         },
@@ -48,10 +53,8 @@ const Walkable = compose({
         left(deltatime: number) {
             if(this.walk.state === 'idle') return;
 
-            const dispobj = this.getDisplayObject();
-
-            dispobj.position.x -= this.walk.velocityms * deltatime;
-            dispobj.scale.x = Math.abs(dispobj.scale.x) * -1;
+            this.displayobject.position.x -= this.walk.velocityms * deltatime;
+            this.displayobject.scale.x = Math.abs(this.displayobject.scale.x) * -1;
 
             return this;
         },
@@ -59,10 +62,8 @@ const Walkable = compose({
         right(deltatime: number) {
             if(this.walk.state === 'idle') return;
 
-            const dispobj = this.getDisplayObject();
-
-            dispobj.position.x += this.walk.velocityms * deltatime;
-            dispobj.scale.x = Math.abs(dispobj.scale.x);
+            this.displayobject.position.x += this.walk.velocityms * deltatime;
+            this.displayobject.scale.x = Math.abs(this.displayobject.scale.x);
 
             return this;
         },

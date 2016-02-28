@@ -3,55 +3,75 @@
 //import stampit from 'stampit';
 import compose from 'compose-js';
 
+import { DisplayObject } from 'pixi.js';
+
+/*
+// Décorateur ?
+// https://github.com/CocktailJS/traits-decorator
+
+// Plugin babel ?
+Trait Displayable {
+
+    use Something;
+    use SomethingElse { hello as world };
+
+    need Deps;
+    need Deps2;
+
+    init({ prop, prop2 }) {
+        // ...
+    }
+
+    setPosition() {
+
+    }
+
+    getPosition() {
+        
+    }
+
+    static loadAssets() {
+
+    }
+}
+*/
+
 const Displayable = compose({
-    //expects: {
-    //    displayobject: Object
-    //},
-    init: function() {
-        this.declareImplements('Displayable');
-        this.setDisplayObject(this.displayobject);
+    expects: {
+        displayobject: DisplayObject
     },
-    props: {
-        displayobject: null
+    init: function({ displayobject }) {
+        this.tag('Displayable');
+        this.displayobject = displayobject;
     },
     methods: {
 
-        setDisplayObject(dispobj) : Object {
-            this.displayobject = dispobj;
-            return this;
-        },
-
-        getDisplayObject() : DisplayObject {
-            return this.displayobject;
-        },
-
-        setScale(x: number, y: ?number) : Object {
-            this.getDisplayObject().scale.set(x, y);
-            return this;
-        },
-
         setPosition(x: number, y: ?number) : Object {
-            this.getDisplayObject().position.set(x, y);
+            this.displayobject.position.set(x, y);
             return this;
         },
 
         getPosition() : Object {
-            return this.getDisplayObject().position;
+            return this.displayobject.position;
         },
 
         setPivot(x: number, y: ?number) : Object {
-            this.getDisplayObject().pivot.set(x, y);
+            this.displayobject.pivot.set(x, y);
             return this;
         },
 
         setAnchor(x: number, y: ?number) : Object {
-            this.getDisplayObject().anchor.set(x, y);
+            this.displayobject.anchor.set(x, y);
             return this;
         },
 
         setTint(tint: number) : Object {
-            this.getDisplayObject().tint = tint;
+            this.displayobject.tint = tint;
             return this;
+        },
+
+        getZIndex() {
+            return this.getPosition().y;
         }
     }
 });
