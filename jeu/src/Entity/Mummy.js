@@ -14,6 +14,7 @@ import Debugable from '../Component/Debugable';
 import CustomRenderable from '../Component/CustomRenderable';
 
 import { lanes } from '../map-blocks';
+const nblanes = 3;
 
 let Mummy = compose(GenericEntity, CollaborativeDiffusionFieldAgent, Walkable, CustomRenderable).compose({
     expects: {

@@ -27,6 +27,7 @@ loader.add('background', '/assets/sprites/level_pagras-v2.png');
 const cellwidth = 10;
 const cellheight = 10;
 const debug = true;
+let dospawn = false;
 
 const zindexsort = function(a, b) { return a.y - b.y; };
 
@@ -64,6 +65,8 @@ const zindexsort = function(a, b) { return a.y - b.y; };
             bgsprite.tileScale.set(viewwidth / resources.background.texture.width, viewheight / resources.background.texture.height);
             bgsprite.interactive = true;
             bgsprite.click = bgsprite.tap = function(event) {
+
+                dospawn = !dospawn;
 
                 const clickpoint = event.data.getLocalPosition(bgsprite);
 
@@ -230,6 +233,7 @@ const zindexsort = function(a, b) { return a.y - b.y; };
             //const randomlane = () => 1;
             game.addSystem({
                 process: function(entities, { deltatime }) {
+                    if(!dospawn) return;
                     timer += deltatime;
 
                     if(timer >= delay) {
@@ -263,6 +267,14 @@ const zindexsort = function(a, b) { return a.y - b.y; };
                             .setLane(lane)
                         );
                     }
+                }
+            });
+
+            game.addSystem({
+                process: function(entities, { deltatime }) {
+                    entities.map(entity => {
+                        if(entity.displayobject.x < 0) entity.remove();
+                    })
                 }
             });
 

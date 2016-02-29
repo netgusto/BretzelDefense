@@ -24,6 +24,7 @@
   },
   "dependencies": {
     "clone": "^1.0.2",
+    "compose-js": "^0.1.0",
     "easystarjs": "^0.2.3",
     "javascript-astar": "^0.4.1",
     "javascript-state-machine": "^2.3.5",
