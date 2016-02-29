@@ -23,6 +23,7 @@
     "build": "node ./scripts/build.js"
   },
   "dependencies": {
+    "bezier-js": "^1.7.3",
     "clone": "^1.0.2",
     "compose-js": "^0.1.0",
     "easystarjs": "^0.2.3",

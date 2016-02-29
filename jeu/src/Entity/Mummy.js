@@ -30,7 +30,7 @@ let Mummy = compose(GenericEntity, CollaborativeDiffusionFieldAgent, Walkable, C
     },
     init: function() {
 
-        this.displayobject.scale.set((25/37)*(1280/1680), (35/45)*(720/945));
+        this.displayobject.scale.set(1/this.displayobject.width*20);
         //console.log(this.displayobject.scale);
         this.displayobject.play();
         this.displayobject.pivot.set(this.displayobject.width/2, this.displayobject.height);    // pas d'utilisation de la propriété anchor, car cause problème dans le calcul des déplacements de hitArea
