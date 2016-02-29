@@ -28,10 +28,7 @@ const cursor = cursorkeys();
 
 loader.add('background', '/assets/sprites/level_pagras-v2.png');
 
-const cellwidth = 10;
-const cellheight = 10;
 const debug = true;
-let dospawn = false;
 
 const zindexsort = function(a, b) { return a.y - b.y; };
 
@@ -143,18 +140,10 @@ const drawSVGPath = function(graphics, path, color, offsetx, offsety) {
 
             const bgsprite = new PixiExtras.TilingSprite(resources.background.texture, viewwidth, viewheight);
             bgsprite.tileScale.set(viewwidth / resources.background.texture.width, viewheight / resources.background.texture.height);
-            /*game.addEntity(MapPathBuilder({
-                displayobject: bgsprite,
-                cellwidth: cellwidth,
-                cellheight: cellheight,
-                cursor: cursor
-            }));*/
 
             game.addEntity(GenericEntity({
-                displayobject: bgsprite
+               displayobject: bgsprite
             }));
-
-            //game.addSystem(new CustomRenderSystem());
 
             var graphics = new PIXI.Graphics();
             graphics.lineStyle(5, 0xFFFF00);
@@ -183,36 +172,36 @@ const drawSVGPath = function(graphics, path, color, offsetx, offsety) {
 
                 const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
                 path.setAttribute('d', curve.path);
+                const totallength = path.getTotalLength();
 
-                const memoized = [];
+                const memoized = new Array(Math.floor(totallength));
 
                 return {
                     path: curve.path,
                     color: curve.color,
-                    pathlength: path.getTotalLength(),
+                    pathlength: totallength,
                     getPointAtRatio: function(ratio) { return this.getPointAtLength(ratio * this.pathlength); },
                     getPointAtLengthLoop: function(lengthpx) { return this.getPointAtLength(lengthpx % this.pathlength); },
                     getPointAtLength: function(lengthpx) {
                         //let roundlengthpx = parseFloat(lengthpx).toFixed(1);
                         let roundlengthpx = Math.floor(lengthpx);
-                        let prevroundlength = roundlengthpx > 0 ? roundlengthpx - 1 : 0;
-                        const floatpart = lengthpx - roundlengthpx;
 
-                        if(roundlengthpx in memoized) {
-                            //console.log('hit', roundlengthpx);
+                        if(memoized[roundlengthpx] !== undefined) {
                             return memoized[roundlengthpx];
                         }
+
+                        let prevroundlength = roundlengthpx > 0 ? roundlengthpx - 1 : 0;
+                        const floatpart = lengthpx - roundlengthpx;
 
                         const posforroundedlength = path.getPointAtLength(roundlengthpx);
                         if(floatpart === 0) {
                             return memoized[roundlengthpx] = posforroundedlength;
                         }
 
-                        // Interpolating results
+                        // Interpolating results (direction vector * factionnal part)
 
-                        //console.error('miss', roundlengthpx);
                         let prevval = null;
-                        if(prevroundlength in memoized) {
+                        if(memoized[prevroundlength] !== undefined) {
                             prevval = memoized[prevroundlength];
                         } else {
                             prevval = memoized[prevroundlength] = path.getPointAtLength(prevroundlength);
@@ -222,79 +211,43 @@ const drawSVGPath = function(graphics, path, color, offsetx, offsety) {
                             x: posforroundedlength.x + ((posforroundedlength.x - prevval.x) * floatpart),
                             y: posforroundedlength.y + ((posforroundedlength.y - prevval.y) * floatpart)
                         };
-                    },
+                    }
+                };
+            });
+
+            // pre-memoizing lanes
+            const beforememoization = performance.now();
+            lanes.map(lane => {
+                for(let length = 0; length < lane.pathlength; length++) {
+                    lane.getPointAtLength(length);
                 }
             });
+            console.info('Path memoization took', performance.now() - beforememoization, 'ms');
 
             lanes.map(lane => drawSVGPath(graphics, lane.path, lane.color, offsetx, offsety));
 
-            /*graphics.lineStyle(5, 0x0000FF);
-            drawSVGPath(graphics, `
-                M1372.16992,395.082031
-                C1372.16992,395.082031 1303.55273,390.339844 1260.9668,399.011719
-                C1218.38086,407.683594 1100.86914,466.511718 1042.06055,470.992188
-                C983.251953,475.472657 955.443361,470.992188 931.771484,455.457031
-                C908.099608,439.921875 908.791016,409.980468 941.806641,390.445312
-                C974.822266,370.910157 1017.41797,370.02539 1073.69336,339.912111
-                C1129.96875,309.798833 1192.10937,295.007813 1185.27344,220.761719
-                C1178.4375,146.515625 948.826172,169.634766 740.482422,167.291016
-                C532.138672,164.947266 324.482422,161.34375 306.128906,213.357421
-                C287.775391,265.371092 307.785156,281.605475 365.480469,314.595709
-                C423.175781,347.585944 576.767578,370.85547 570.130859,433.90625
-                C563.494141,496.95703 415.412109,470.937501 361.517578,448.992188
-                C307.623047,427.046874 266.391684,404.566551 208.224609,395.08203
-                C150.057535,385.59751 65.703125,390.44531 0,390.445311
-            `, -55, 0);*/
-
-            /*
-            const bez = Bezier.fromSVG(`
-                M1372.16992,395.203125
-                C1372.16992,395.203125 1303.55273,390.460938 1260.9668,399.132813
-                C1218.38086,407.804688 1100.86914,466.632812 1042.06055,471.113281
-                C983.251953,475.593751 955.443361,471.113281 931.771484,455.578125
-                C908.099608,440.042969 908.791016,410.101562 941.806641,390.566406
-                C974.822266,371.031251 1027.78126,369.851561 1069.03516,332.234374
-                C1110.28906,294.617186 1058.53516,271.072265 999.451172,266.978515
-                C940.367188,262.884765 791.039063,308.25195 744.523438,308.251952
-                C698.007812,308.251954 558.447266,258.121094 505.857422,258.121094
-                C453.267578,258.121094 393.228516,284.521486 398.289062,315.958986
-                C403.349609,347.396486 576.767578,370.976564 570.130859,434.027344
-                C563.494141,497.078124 415.412109,471.058595 361.517578,449.113281
-                C307.623047,427.167968 266.391684,404.687645 208.224609,395.203124
-                C150.057535,385.718603 65.703125,390.566404 0,390.566405
-            `);
-
-            points.lineStyle(2, 0xFFFFFF);
-
-            for(let t = 0; t < 1; t += 0.01) {
-                const middle = bez.compute(t);
-                points.drawCircle(middle.x + offsetx, middle.y + offsety, 2);
-            }
-            */
-
             let mummies = [];
 
-            for(let mummyindex = 0; mummyindex < lanes.length; mummyindex++) {
+            for(let mummyindex = 0; mummyindex < lanes.length * 30; mummyindex++) {
                 const mummy = Mummy.create({
                     displayobject: new PixiExtras.MovieClip(Mummy.spriteframes)
-                }).doRun().left();
+                }).doRun().setVelocityPerSecond(20 + Math.floor(Math.random() * 100));
                 game.addEntity(mummy);
-                mummy.lane = lanes[mummyindex];
+                mummy.lane = lanes[mummyindex % lanes.length];
                 mummy.prevpos = { x: 0, y: 0 };
+                mummy.pixelswalked = 0;
                 mummies.push(mummy);
             }
 
-            const mummypxpersecond = 60;
-            const mummypxpermillisecond = mummypxpersecond/1000;
-
-            let pixelswalked = 0;
+            //const mummypxpersecond = 50;
+            //const mummypxpermillisecond = mummypxpersecond/1000;
 
             game.addSystem({
                 process: (entities, { deltatime }) => {
 
                     mummies.map(mummy => {
 
-                        const newpos = mummy.lane.getPointAtLengthLoop(pixelswalked);
+                        const newpos = mummy.lane.getPointAtLengthLoop(mummy.pixelswalked);
                         const prevpos = mummy.prevpos;
                         newpos.x += offsetx;
                         newpos.y += offsety;
@@ -316,7 +269,7 @@ const drawSVGPath = function(graphics, path, color, offsetx, offsety) {
 
                         if(left) {
                             mummy.displayobject.scale.x = Math.abs(mummy.displayobject.scale.x) * -1;
-                        } else {
+                        } else if(right) {
                             mummy.displayobject.scale.x = Math.abs(mummy.displayobject.scale.x);
                         }
 
@@ -337,60 +290,24 @@ const drawSVGPath = function(graphics, path, color, offsetx, offsety) {
                         mummy.setPosition(newpos.x, newpos.y);
 
                         mummy.prevpos = newpos;
-                    });
 
-                    pixelswalked += deltatime * mummypxpermillisecond;
+                        mummy.pixelswalked += deltatime * mummy.walk.velocityms;
+                    });
+                }
+            });
+
+            game.addSystem({
+                process: function(entities, { deltatime }) {
+                    game.sortStage(zindexsort);
                 }
             });
 
             game.addSystem(new DebugSystem({ stage: canvas, cbk: (msg) => msg += '; '  + game.entities.length + ' entities' }));
 
-            /*
-            for(let t = 0; t < 1; t += 0.1) {
-                const pointatlength = path.getPointAtLength(t * pathlength);
-                points.drawCircle(pointatlength.x + offsetx, pointatlength.y + offsety, 2);
-            }
-            */
+            // ////////////////
 
-
-            /*// draw line
-
-            points.lineStyle(2, 0xFFFFFF);
-
-            graphics.moveTo(100, 200);
-            points.drawCircle(100, 200, 10);
-
-
-            graphics.lineStyle(5, 0xFF0000);
-            points.lineStyle(2, 0xFF0000);
-            graphics.quadraticCurveTo(300, 300, 200, 100);
-            points.drawCircle(300, 300, 5);
-            points.drawCircle(200, 100, 10);
-
-            graphics.lineStyle(5, 0x00FF00);
-            points.lineStyle(2, 0x00FF00);
-
-            graphics.quadraticCurveTo(50, 30, 80, 200);
-            points.drawCircle(50, 30, 5);
-            points.drawCircle(80, 200, 10);
-
-            graphics.endFill();*/
-
-            /*
-            // Les entités
-            const exit = Flag.create({
-                displayobject: new Sprite(Flag.texture)
-            }).setPosition(-20, 400);
-            exit.fieldtarget = true;
-
-            game.addEntity(exit);
-
-            const bgsprite = new PixiExtras.TilingSprite(resources.background.texture, viewwidth, viewheight);
-            bgsprite.tileScale.set(viewwidth / resources.background.texture.width, viewheight / resources.background.texture.height);
             bgsprite.interactive = true;
             bgsprite.click = bgsprite.tap = function(event) {
-
-                dospawn = !dospawn;
 
                 const clickpoint = event.data.getLocalPosition(bgsprite);
 
@@ -414,106 +331,7 @@ const drawSVGPath = function(graphics, path, color, offsetx, offsety) {
                 }
             };
 
-            const fond = GenericEntity.create({ displayobject: bgsprite });
 
-            game.addEntity(fond);
-
-            // La momie
-
-            const buildMummy = function() {
-                return Mummy.create({
-                    displayobject: new PixiExtras.MovieClip(Mummy.spriteframes)
-                });
-                    //.setCollisionArea(new Rectangle(10, 10, 20, 20))
-                    //.setCollisionGroup('mummy')
-            }
-
-            // On génère des positions de momies aléatoires sur les espaces praticables
-            // const positions = [];
-            // while(positions.length < 4) {
-            //     const x = Math.floor(Math.random() * mapblocks[0].length);
-            //     const y = Math.floor(Math.random() * mapblocks.length);
-            //     if(mapblocks[y][x] === 1) positions.push({ x, y });
-            // }
-
-            // positions.map(position => {
-            //     game.addEntity(
-            //         buildMummy()
-            //             .setPosition(position.x * cellwidth + (cellwidth/2), position.y * cellheight + (cellheight/2))
-            //     );
-            // });
-
-            const fielddebug = GenericEntity.create({
-                id: 'fielddebug',
-                displayobject: new Graphics()
-            });
-
-            game.addEntity(fielddebug);
-
-            // Les systèmes
-
-            game.addSystem(new DebugSystem({ stage: canvas, cbk: (msg) => msg += '; '  + game.entities.length + ' entities' }));
-            game.addSystem(new CustomRenderSystem());
-
-            // Autospawn !
-            let timer = 0;
-            let delay = 1000/3 / 10;
-
-            const randomlane = () => Math.floor(Math.random() * 3) + 1;
-            //const randomlane = () => 1;
-            game.addSystem({
-                process: function(entities, { deltatime }) {
-                    if(!dospawn) return;
-                    timer += deltatime;
-
-                    if(timer >= delay) {
-
-                        timer = timer - delay;
-
-                        // game.addEntity(
-                        //     buildMummy()
-                        //     .setPosition(1300, 400)
-                        //     .setLane(randomlane())
-                        // );
-
-                        let y, tint;
-
-                        const lane = randomlane();
-                        if(lane === 1) {
-                            y = 140;
-                            tint = 0xFF0000;
-                        } else if(lane === 2) {
-                            y = 160;
-                            tint = 0x00FF00;
-                        } else if(lane === 3) {
-                            y = 180;
-                            tint = 0x0000FF;
-                        }
-
-                        game.addEntity(
-                            buildMummy()
-                            .setPosition(900, y)
-                            .setTint(tint)
-                            .setLane(lane)
-                        );
-                    }
-                }
-            });
-
-            game.addSystem({
-                process: function(entities, { deltatime }) {
-                    entities.map(entity => {
-                        if(entity.displayobject.x < 0) entity.remove();
-                    })
-                }
-            });
-
-            game.addSystem({
-                process: function(entities, { deltatime }) {
-                    game.sortStage(zindexsort);
-                }
-            });
-            */
         }).then(() => game.run(gameloop()));
 
 })(document.getElementById('app'), 1280, 720);
