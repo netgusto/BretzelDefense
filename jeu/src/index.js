@@ -4,12 +4,15 @@
 
 import 'perfnow';   // Polyfill for high resolution timer
 
-import { Container as PixiContainer, extras as PixiExtras, SCALE_MODES, Rectangle, Sprite, Graphics, loader } from 'pixi.js';
+import { Container as PixiContainer, extras as PixiExtras, SCALE_MODES, Rectangle, Sprite, Graphics, loader, Text } from 'pixi.js';
 import { GameSet, cursorkeys, loadspritesheet, gameloop } from 'bobo';
 
 import { vec2 } from 'gl-matrix';
 import { path2js, drawSVGPath } from './Utils/svg';
 import { curveToLane } from './Utils/lane';
+
+import SpatialHash from './spatialhash';
+import SpatialHash2 from './spatialhash2';
 
 import Mummy from './Entity/Mummy';
 import Flag from './Entity/Flag';
@@ -30,9 +33,24 @@ loader.add('background', '/assets/sprites/level_pagras-v2.png');
 
 const debug = true;
 
-const zindexsort = function(a, b) { return a.y - b.y; };
+const zindexsort = function(a, b) { let pos = a.y - b.y; return pos === 0 ? a.id - b.id : pos; };
+
+const tree = new SpatialHash();
+
+function aabbCollision(a: Rectangle, b: Rectangle) : boolean {
+    return (
+        (a.x < b.x + b.width) &&
+        (a.x + a.width > b.x) &&
+        (a.y < b.y + b.height) &&
+        (a.height + a.y > b.y)
+   );
+}
+
+const gridcellsize = 20;
 
 (function(mountnode: HTMLElement, viewwidth: number, viewheight: number) {
+
+    const tree2 = new SpatialHash2({ cellwidth: gridcellsize, cellheight: gridcellsize, worldwidth: viewwidth, worldheight: viewheight });
 
     /* Le stage */
     const canvas = new PixiContainer(0xFF0000 /* white */, true /* interactive */);
@@ -186,6 +204,86 @@ const zindexsort = function(a, b) { return a.y - b.y; };
                     game.addEntity(flag);
                 }
             };
+
+            let first = true;
+
+            game.addSystem({
+                process: function(entities, { deltatime }) {
+
+                    if(first) {
+                        first = false;
+                        //tree2.clear();
+                        mummies.map(function(entity) {
+                            entity.setTint(0xFFFFFF);
+                            const bounds = entity.displayobject.getBounds();
+                            tree2.insert({
+                                x: bounds.x,
+                                y: bounds.y,
+                                width: bounds.width,
+                                height: bounds.height,
+                                id: entity.id,
+                                entity
+                            });
+                        });
+                    } else {
+                        mummies.map(function(entity) {
+                            entity.setTint(0xFFFFFF);
+                            const bounds = entity.displayobject.getBounds();
+                            tree2.update({
+                                x: bounds.x,
+                                y: bounds.y,
+                                width: bounds.width,
+                                height: bounds.height,
+                                id: entity.id,
+                                entity
+                            });
+                        });
+                    }
+
+                    points.clear();
+                    points.lineStyle(2, 0xFF0000);
+
+                    //retrieve all objects in the bounds of the hero
+                    //console.log();
+                    for(let k = 0; k < 100; k++) {
+                        const mummy = mummies[k];
+                        const mummybounds = mummy.displayobject.getBounds();
+                        //points.drawRect(mummybounds.x, mummybounds.y, mummybounds.width, mummybounds.height);
+
+                        tree2.retrieve(mummybounds).filter(collision => aabbCollision(collision.entity.displayobject.getBounds(), mummybounds)).map(collision => {
+                            collision.entity.setTint(0x00FF00);
+                        });
+                    }
+                }
+            });
+
+            // var grid = new PIXI.Graphics();
+            // grid.lineStyle(1, 0xFFFF00);
+            // game.addEntity(GenericEntity({
+            //     displayobject: grid
+            // }));
+
+            // for(let x = 0; x < viewwidth; x += gridcellsize) {
+            //     grid.moveTo(x, 0);
+            //     grid.lineTo(x, viewheight);
+            // }
+
+            // for(let y = 0; y < viewheight; y += gridcellsize) {
+            //     grid.moveTo(0, y);
+            //     grid.lineTo(viewwidth, y);
+            // }
+
+            // const nbcellsx = Math.ceil(viewwidth / gridcellsize);
+            // const nbcellsy = Math.ceil(viewheight / gridcellsize);
+
+            // for(let y = 0; y < nbcellsy; y++) {
+            //     for(let x = 0; x < nbcellsx; x++) {
+            //         const text = new Text('', { font: '15px Arial', fill: 'yellow' });
+            //         text.text = y * nbcellsx + x;
+            //         text.position.set(x * gridcellsize + 5, y * gridcellsize + 5);
+            //         grid.addChild(text);
+            //     }
+            // }
 
 
         }).then(() => game.run(gameloop()));
