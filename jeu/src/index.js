@@ -11,7 +11,7 @@ import { vec2 } from 'gl-matrix';
 import { path2js, drawSVGPath } from './Utils/svg';
 import { curveToLane } from './Utils/lane';
 
-import SpatialHash from './spatialhash';
+//import SpatialHash from './spatialhash';
 import SpatialHash2 from './spatialhash2';
 
 import Mummy from './Entity/Mummy';
@@ -35,8 +35,6 @@ const debug = true;
 
 const zindexsort = function(a, b) { let pos = a.y - b.y; return pos === 0 ? a.id - b.id : pos; };
 
-const tree = new SpatialHash();
-
 function aabbCollision(a: Rectangle, b: Rectangle) : boolean {
     return (
         (a.x < b.x + b.width) &&
@@ -46,7 +44,7 @@ function aabbCollision(a: Rectangle, b: Rectangle) : boolean {
    );
 }
 
-const gridcellsize = 20;
+const gridcellsize = 64;
 
 (function(mountnode: HTMLElement, viewwidth: number, viewheight: number) {
 
@@ -96,7 +94,7 @@ const gridcellsize = 20;
 
             if(debug) {
                 // Drawing lanes
-                lanes.map(lane => drawSVGPath(graphics, lane.path, lane.color, lane.offsetx, lane.offsety));
+                //lanes.map(lane => drawSVGPath(graphics, lane.path, lane.color, lane.offsetx, lane.offsety));
             }
 
             let mummies = [];
@@ -180,29 +178,32 @@ const gridcellsize = 20;
 
             // ////////////////
 
+            let circle = new PIXI.Graphics();
+            circle.lineStyle(1, 0xFFFF00);
+            game.addEntity(GenericEntity({
+                displayobject: circle
+            }));
+
             bgsprite.interactive = true;
             bgsprite.click = bgsprite.tap = function(event) {
 
                 const clickpoint = event.data.getLocalPosition(bgsprite);
+                const flag = Flag.create({
+                        displayobject: new Sprite(Flag.texture)
+                    })
+                    .setPosition(clickpoint.x, clickpoint.y);
+
+                flag.hunter = true;
+                flag.range = 30;
 
                 if(cursor.shift) {
-                    const flag = Flag.create({
-                        displayobject: new Sprite(Flag.texture)
-                    })
-                        .setPosition(clickpoint.x, clickpoint.y)
-                        .setTint(0xFF0000);
-
-                    flag.fieldobstacle = true;
-                    game.addEntity(flag);
-                } else {
-                    const flag = Flag.create({
-                        displayobject: new Sprite(Flag.texture)
-                    })
-                        .setPosition(clickpoint.x, clickpoint.y);
-
-                    flag.fieldtarget = true;
-                    game.addEntity(flag);
+                    flag.setTint(0xFF0000);
+                    flag.range = 150;
                 }
+                //flag.displayobject.addChild(circle);
+                game.addEntity(flag);
+
+                circle.drawCircle(flag.displayobject.x, flag.displayobject.y, flag.range);
             };
 
             let first = true;
@@ -216,44 +217,53 @@ const gridcellsize = 20;
                         mummies.map(function(entity) {
                             entity.setTint(0xFFFFFF);
                             const bounds = entity.displayobject.getBounds();
-                            tree2.insert({
-                                x: bounds.x,
-                                y: bounds.y,
-                                width: bounds.width,
-                                height: bounds.height,
-                                id: entity.id,
+                            tree2.insert(
+                                bounds.x,
+                                bounds.y,
+                                bounds.width,
+                                bounds.height,
+                                entity.id,
                                 entity
-                            });
+                            );
                         });
                     } else {
                         mummies.map(function(entity) {
                             entity.setTint(0xFFFFFF);
                             const bounds = entity.displayobject.getBounds();
-                            tree2.update({
-                                x: bounds.x,
-                                y: bounds.y,
-                                width: bounds.width,
-                                height: bounds.height,
-                                id: entity.id,
+                            tree2.update(
+                                bounds.x,
+                                bounds.y,
+                                bounds.width,
+                                bounds.height,
+                                entity.id,
                                 entity
-                            });
+                            );
                         });
                     }
 
-                    points.clear();
-                    points.lineStyle(2, 0xFF0000);
+                    //points.clear();
+                    //points.lineStyle(2, 0xFF0000);
 
                     //retrieve all objects in the bounds of the hero
-                    //console.log();
-                    for(let k = 0; k < 100; k++) {
+                    /*
+                    for(let k = 0; k < 50; k++) {
                         const mummy = mummies[k];
                         const mummybounds = mummy.displayobject.getBounds();
-                        //points.drawRect(mummybounds.x, mummybounds.y, mummybounds.width, mummybounds.height);
+                        mummy.setTint(0xFF0000);
+                        points.drawRect(mummybounds.x, mummybounds.y, mummybounds.width, mummybounds.height);
 
-                        tree2.retrieve(mummybounds).filter(collision => aabbCollision(collision.entity.displayobject.getBounds(), mummybounds)).map(collision => {
+                        tree2.retrieve(mummybounds.x, mummybounds.y).filter(collision => aabbCollision(collision, mummybounds)).map(collision => {
+                            if(collision.entity === mummy) return;
                             collision.entity.setTint(0x00FF00);
                         });
-                    }
+                    }*/
+
+                    entities.filter(entity => entity.hunter).map(hunter => {
+                        //const bounds = hunter.displayobject.getBounds();
+                        tree2.retrieve(hunter.displayobject.x, hunter.displayobject.y, hunter.range)/*.filter(collision => aabbCollision(collision, mummybounds))*/.map(collision => {
+                            collision.entity.setTint(0x00FF00);
+                        });
+                    });
                 }
             });
 

@@ -12,12 +12,7 @@ export default class SpatialHash2 {
         this.nbcellsx = Math.ceil(this.worldwidth / cellwidth);
         this.nbcellsy = Math.ceil(this.worldheight / cellheight);
 
-        this.grid = new Array(this.nbcellsx * this.nbcellsy);
-        this.list = new Uint16Array(maxentityid);
-        this.stackindex = new Uint16Array(maxentityid);
-        for(let k = 0; k < this.grid.length; k++) {
-            this.grid[k] = [];
-        }
+        this.clear();
     }
 
     clear() {
@@ -30,63 +25,118 @@ export default class SpatialHash2 {
         }
     }
 
-    insert(item) {
-        const cellx = parseInt(item.x / this.cellwidth);
-        const celly = parseInt(item.y / this.cellheight);
+    insert(x, y, width, height, id, entity) {
+        const cellx = parseInt(x / this.cellwidth);
+        const celly = parseInt(y / this.cellheight);
 
         const gridcell = celly * this.nbcellsx + cellx;
-        this.grid[gridcell].push(item);
-        this.list[item.id] = gridcell;
-        this.stackindex[item.id] = this.grid[gridcell].length - 1;
+        this.grid[gridcell].push({
+            x,
+            y,
+            width,
+            height,
+            id,
+            entity
+        });
+        this.list[id] = gridcell;
+        this.stackindex[id] = this.grid[gridcell].length - 1;
     }
 
-    retrieve(item) {
-        const cellx = parseInt(item.x / this.cellwidth);
-        const celly = parseInt(item.y / this.cellheight);
-        //console.log(cellx, celly, celly * this.nbcellsx + cellx);
-        return this.grid[celly * this.nbcellsx + cellx];
+    retrieve(centerx, centery, range) {
+
+        // on récupère toutes les boîtes dans lesquelles le cercle est inscrit
+        
+        let rangeboundx = centerx - range;
+        let rangeboundy = centery - range;
+
+        let rangeboundxend = rangeboundx + (range * 2);
+        let rangeboundyend = rangeboundy + (range * 2);
+
+        if(rangeboundx < 0) rangeboundx = 0;
+        if(rangeboundy < 0) rangeboundy = 0;
+
+        if(rangeboundxend >= this.worldwidth) rangeboundxend = this.worldwidth - 1;
+        if(rangeboundyend >= this.worldheight) rangeboundyend = this.worldwidth - 1;
+
+        let firstcellx = Math.floor(rangeboundx / this.cellwidth);
+        let firstcelly = Math.floor(rangeboundy / this.cellheight);
+
+        if(firstcellx < 0) firstcellx = 0;
+        if(lastcellx < 0) lastcellx = 0;
+
+        let lastcellx = Math.floor(rangeboundxend / this.cellwidth);
+        let lastcelly = Math.floor(rangeboundyend / this.cellheight);
+
+        if(lastcellx >= this.nbcellsx) lastcellx = this.nbcellsx;
+        if(lastcelly >= this.nbcellsy) lastcelly = this.nbcellsy;
+
+        let result = [];
+
+        //console.log({ first: firstcelly * this.nbcellsx + firstcellx, last: lastcelly * this.nbcellsx + lastcellx });
+
+        const radiussq = Math.pow(range, 2);
+
+        for(let gridy = firstcelly; gridy <= lastcelly; gridy++) {
+            for(let gridx = firstcellx; gridx <= lastcellx; gridx++) {
+                result = result.concat((this.grid[gridy * this.nbcellsx + gridx]||[]).filter(item => {
+                    const dxsq = Math.pow(centerx - item.x, 2);
+                    const dysq = Math.pow(centery - item.y, 2);
+                    const distancesq = dxsq + dysq;
+                    return distancesq <= radiussq;
+                }));
+            }
+        }
+
+        return result;
     }
 
-    update(item) {
+    update(x, y, width, height, id, entity) {
 
-        const previousgridcell = this.list[item.id];
+        const previousgridcell = this.list[id];
         if(!previousgridcell) {
-            this.insert(item);
+            this.insert(x, y, width, height, id, entity);
             return;
         }
 
-        const cellx = parseInt(item.x / this.cellwidth);
-        const celly = parseInt(item.y / this.cellheight);
+        const cellx = parseInt(x / this.cellwidth);
+        const celly = parseInt(y / this.cellheight);
         const gridcell = celly * this.nbcellsx + cellx;
+
+        const cell = this.grid[previousgridcell];
+        const item = cell[this.stackindex[id]];
+        item.x = x;
+        item.y = y;
 
         if(previousgridcell === gridcell) return;
 
-        this.grid[previousgridcell].splice(this.stackindex[item.id], 1);
+        cell.splice(this.stackindex[id], 1);
         let newindex = 0;
-        this.grid[previousgridcell].map(item => {
+        cell.map(item => {
             this.stackindex[item.id] = newindex;
             newindex++;
         });
         this.grid[gridcell].push(item);
-        this.list[item.id] = gridcell;
-        this.stackindex[item.id] = this.grid[gridcell].length - 1;
+        this.list[id] = gridcell;
+        this.stackindex[id] = this.grid[gridcell].length - 1;
 
         //console.log(this.list);
     }
 
-    remove(item) {
-        const gridcell = this.list[item.id];
+    remove(id) {
+        const gridcell = this.list[id];
         if(!gridcell) {
             return;
         }
 
-        this.grid[gridcell].splice(this.stackindex[item.id], 1);
+        const cell = this.grid[gridcell];
+
+        cell.splice(this.stackindex[item.id], 1)
         let newindex = 0;
         this.grid[gridcell].map(item => {
             this.stackindex[item.id] = newindex;
             newindex++;
         });
-        this.list[item.id] = undefined;
-        this.stackindex[item.id] = undefined;
+        this.list[id] = undefined;
+        this.stackindex[id] = undefined;
     }
 }

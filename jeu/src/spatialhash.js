@@ -119,4 +119,4 @@ export default class SpatialHash {
 
         return ret;
     }
-}
+};
