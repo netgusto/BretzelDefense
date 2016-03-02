@@ -194,16 +194,16 @@ const gridcellsize = 64;
                     .setPosition(clickpoint.x, clickpoint.y);
 
                 flag.hunter = true;
-                flag.range = 30;
+                flag.range = 150;
 
                 if(cursor.shift) {
                     flag.setTint(0xFF0000);
-                    flag.range = 150;
+                    flag.range = 30;
                 }
                 //flag.displayobject.addChild(circle);
                 game.addEntity(flag);
 
-                circle.drawCircle(flag.displayobject.x, flag.displayobject.y, flag.range);
+                //circle.drawCircle(flag.displayobject.x, flag.displayobject.y, flag.range);
             };
 
             let first = true;

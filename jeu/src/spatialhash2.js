@@ -22,7 +22,7 @@ export default class SpatialHash2 {
         this.list = new Uint16Array(this.maxentityid);
         this.stackindex = new Uint16Array(this.maxentityid);
 
-        for(let k = 0; k < this.grid.length; k++) {
+        for(let k = 0; k < this.nbcellsx * this.nbcellsy; k++) {
             this.grid[k] = [];
         }
     }
@@ -73,33 +73,36 @@ export default class SpatialHash2 {
         if(lastcellx >= this.nbcellsx) lastcellx = this.nbcellsx;
         if(lastcelly >= this.nbcellsy) lastcelly = this.nbcellsy;
 
-        let result = [];
-
         //console.log({ first: firstcelly * this.nbcellsx + firstcellx, last: lastcelly * this.nbcellsx + lastcellx });
 
         const radiussq = Math.pow(range, 2);
+        const matching = [];
 
         for(let gridy = firstcelly; gridy <= lastcelly; gridy++) {
             for(let gridx = firstcellx; gridx <= lastcellx; gridx++) {
-                result = result.concat((this.grid[gridy * this.nbcellsx + gridx]||[]).filter(item => {
+                const cell = this.grid[gridy * this.nbcellsx + gridx];
+                for(let k = 0; k < cell.length; k++) {
+                    let item = cell[k];
                     const dxsq = Math.pow(centerx - item.x, 2);
                     const dysq = Math.pow(centery - item.y, 2);
-                    const distancesq = dxsq + dysq;
-                    return distancesq <= radiussq;
-                }));
+                    if((dxsq + dysq) <= radiussq) {
+                        matching.push(item);
+                    }
+                }
+                //result = result.concat(matching);
             }
         }
 
-        return result;
+        return matching;
     }
 
     update(x, y, width, height, id, entity) {
 
         const previousgridcell = this.list[id];
-        if(!previousgridcell) {
-            this.insert(x, y, width, height, id, entity);
-            return;
-        }
+        //if(previousgridcell === undefined) {
+        //    this.insert(x, y, width, height, id, entity);
+        //    return;
+        //}
 
         const cellx = parseInt(x / this.cellwidth);
         const celly = parseInt(y / this.cellheight);
@@ -111,16 +114,18 @@ export default class SpatialHash2 {
         item.y = y;
 
         if(previousgridcell === gridcell) return;
+        const newcell = this.grid[gridcell];
 
         cell.splice(this.stackindex[id], 1);
         let newindex = 0;
-        cell.map(item => {
-            this.stackindex[item.id] = newindex;
+        for(let k = 0; k < cell.length; k++) {
+            this.stackindex[cell[k].id] = newindex;
             newindex++;
-        });
-        this.grid[gridcell].push(item);
+        }
+
+        newcell.push(item);
         this.list[id] = gridcell;
-        this.stackindex[id] = this.grid[gridcell].length - 1;
+        this.stackindex[id] = newcell.length - 1;
 
         //console.log(this.list);
     }
