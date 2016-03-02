@@ -1,5 +1,7 @@
 'use strict';
 
+// TODO: tester avec une liste doublement liée; tester avec un tableau à 2 dimensions x, y
+
 export default class SpatialHash2 {
 
     constructor({ cellwidth, cellheight, worldwidth, worldheight, maxentityid=16384 }) {
@@ -45,18 +47,19 @@ export default class SpatialHash2 {
     retrieve(centerx, centery, range) {
 
         // on récupère toutes les boîtes dans lesquelles le cercle est inscrit
-        
+        let diameter = range * 2;
+
         let rangeboundx = centerx - range;
         let rangeboundy = centery - range;
 
-        let rangeboundxend = rangeboundx + (range * 2);
-        let rangeboundyend = rangeboundy + (range * 2);
+        let rangeboundxend = rangeboundx + diameter;
+        let rangeboundyend = rangeboundy + diameter;
 
         if(rangeboundx < 0) rangeboundx = 0;
         if(rangeboundy < 0) rangeboundy = 0;
 
         if(rangeboundxend >= this.worldwidth) rangeboundxend = this.worldwidth - 1;
-        if(rangeboundyend >= this.worldheight) rangeboundyend = this.worldwidth - 1;
+        if(rangeboundyend >= this.worldheight) rangeboundyend = this.worldheight - 1;
 
         let firstcellx = Math.floor(rangeboundx / this.cellwidth);
         let firstcelly = Math.floor(rangeboundy / this.cellheight);
