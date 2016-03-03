@@ -27,9 +27,9 @@ export default class SpatialHash2 {
         }
     }
 
-    insert(x, y, width, height, id, entity) {
-        const cellx = parseInt(x / this.cellwidth);
-        const celly = parseInt(y / this.cellheight);
+    insert(x, y, width, height, centerx, centery, id, entity) {
+        const cellx = (x / this.cellwidth)|0;
+        const celly = (y / this.cellheight)|0;
 
         const gridcell = celly * this.nbcellsx + cellx;
         this.grid[gridcell].push({
@@ -38,6 +38,8 @@ export default class SpatialHash2 {
             width,
             height,
             id,
+            centerx,
+            centery,
             entity
         });
         this.list[id] = gridcell;
@@ -61,14 +63,14 @@ export default class SpatialHash2 {
         if(rangeboundxend >= this.worldwidth) rangeboundxend = this.worldwidth - 1;
         if(rangeboundyend >= this.worldheight) rangeboundyend = this.worldheight - 1;
 
-        let firstcellx = Math.floor(rangeboundx / this.cellwidth);
-        let firstcelly = Math.floor(rangeboundy / this.cellheight);
+        let firstcellx = (rangeboundx / this.cellwidth)|0;
+        let firstcelly = (rangeboundy / this.cellheight)|0;
 
         if(firstcellx < 0) firstcellx = 0;
         if(lastcellx < 0) lastcellx = 0;
 
-        let lastcellx = Math.floor(rangeboundxend / this.cellwidth);
-        let lastcelly = Math.floor(rangeboundyend / this.cellheight);
+        let lastcellx = (rangeboundxend / this.cellwidth)|0;
+        let lastcelly = (rangeboundyend / this.cellheight)|0;
 
         if(lastcellx >= this.nbcellsx) lastcellx = this.nbcellsx;
         if(lastcelly >= this.nbcellsy) lastcelly = this.nbcellsy;
@@ -83,8 +85,8 @@ export default class SpatialHash2 {
                 const cell = this.grid[gridy * this.nbcellsx + gridx];
                 for(let k = 0; k < cell.length; k++) {
                     let item = cell[k];
-                    const dxsq = Math.pow(centerx - item.x, 2);
-                    const dysq = Math.pow(centery - item.y, 2);
+                    const dxsq = Math.pow(centerx - item.centerx, 2);
+                    const dysq = Math.pow(centery - item.centery, 2);
                     if((dxsq + dysq) <= radiussq) {
                         matching.push(item);
                     }
@@ -96,7 +98,7 @@ export default class SpatialHash2 {
         return matching;
     }
 
-    update(x, y, width, height, id, entity) {
+    update(x, y, width, height, centerx, centery, id, entity) {
 
         const previousgridcell = this.list[id];
         //if(previousgridcell === undefined) {
@@ -104,14 +106,16 @@ export default class SpatialHash2 {
         //    return;
         //}
 
-        const cellx = parseInt(x / this.cellwidth);
-        const celly = parseInt(y / this.cellheight);
+        const cellx = (x / this.cellwidth)|0;
+        const celly = (y / this.cellheight)|0;
         const gridcell = celly * this.nbcellsx + cellx;
 
         const cell = this.grid[previousgridcell];
         const item = cell[this.stackindex[id]];
         item.x = x;
         item.y = y;
+        item.centerx = centerx;
+        item.centery = centery;
 
         if(previousgridcell === gridcell) return;
         const newcell = this.grid[gridcell];

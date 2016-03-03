@@ -36,15 +36,6 @@ const debug = true;
 
 const zindexsort = function(a, b) { let pos = a.y - b.y; return pos === 0 ? a.id - b.id : pos; };
 
-function aabbCollision(a: Rectangle, b: Rectangle) : boolean {
-    return (
-        (a.x < b.x + b.width) &&
-        (a.x + a.width > b.x) &&
-        (a.y < b.y + b.height) &&
-        (a.height + a.y > b.y)
-   );
-}
-
 const gridcellsize = 128;
 
 (function(mountnode: HTMLElement, viewwidth: number, viewheight: number) {
@@ -114,9 +105,10 @@ const gridcellsize = 128;
             }
 
             game.addSystem({
-                process: (entities, { deltatime }) => {
+                process(entities, { deltatime }) {
 
-                    mummies.map(mummy => {
+                    for(let i = 0; i < mummies.length; i++) {
+                        const mummy = mummies[i];
 
                         const newpos = mummy.lane.getPointAtLengthLoop(mummy.pixelswalked);
                         const prevpos = mummy.prevpos;
@@ -163,7 +155,7 @@ const gridcellsize = 128;
                         mummy.prevpos = newpos;
 
                         mummy.pixelswalked += deltatime * mummy.walk.velocityms;
-                    });
+                    }
                 }
             });
 
@@ -217,54 +209,45 @@ const gridcellsize = 128;
                         //tree2.clear();
                         mummies.map(function(entity) {
                             entity.setTint(0xFFFFFF);
-                            const bounds = entity.displayobject.getBounds();
+                            const displayobject = entity.displayobject;
+                            const bounds = displayobject.getBounds();
                             tree2.insert(
                                 bounds.x,
                                 bounds.y,
                                 bounds.width,
                                 bounds.height,
+                                displayobject.x,
+                                displayobject.y,
                                 entity.id,
                                 entity
                             );
                         });
                     } else {
-                        mummies.map(function(entity) {
+                        for(let i = 0; i < mummies.length; i++) {
+                            const entity = mummies[i];
                             entity.setTint(0xFFFFFF);
-                            const bounds = entity.displayobject.getBounds();
+                            const displayobject = entity.displayobject;
+                            const bounds = displayobject.getBounds();
                             tree2.update(
                                 bounds.x,
                                 bounds.y,
                                 bounds.width,
                                 bounds.height,
+                                displayobject.x,
+                                displayobject.y,
                                 entity.id,
                                 entity
                             );
-                        });
+                        }
                     }
 
-                    //points.clear();
-                    //points.lineStyle(2, 0xFF0000);
-
-                    //retrieve all objects in the bounds of the hero
-                    /*
-                    for(let k = 0; k < 50; k++) {
-                        const mummy = mummies[k];
-                        const mummybounds = mummy.displayobject.getBounds();
-                        mummy.setTint(0xFF0000);
-                        points.drawRect(mummybounds.x, mummybounds.y, mummybounds.width, mummybounds.height);
-
-                        tree2.retrieve(mummybounds.x, mummybounds.y).filter(collision => aabbCollision(collision, mummybounds)).map(collision => {
-                            if(collision.entity === mummy) return;
+                    for(let i = 0; i < entities.length; i++) {
+                        if(!entities[i].hunter) continue;
+                        const hunter = entities[i];
+                        tree2.retrieve(hunter.displayobject.x, hunter.displayobject.y, hunter.range).map(collision => {
                             collision.entity.setTint(0x00FF00);
                         });
-                    }*/
-
-                    entities.filter(entity => entity.hunter).map(hunter => {
-                        //const bounds = hunter.displayobject.getBounds();
-                        tree2.retrieve(hunter.displayobject.x, hunter.displayobject.y, hunter.range)/*.filter(collision => aabbCollision(collision, mummybounds))*/.map(collision => {
-                            collision.entity.setTint(0x00FF00);
-                        });
-                    });
+                    }
                 }
             });
 
