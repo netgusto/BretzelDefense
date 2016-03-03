@@ -2,6 +2,7 @@
 
 /* @flow */
 
+import 'babel-polyfill';
 import 'perfnow';   // Polyfill for high resolution timer
 
 import { Container as PixiContainer, extras as PixiExtras, SCALE_MODES, Rectangle, Sprite, Graphics, loader, Text } from 'pixi.js';
@@ -44,7 +45,7 @@ function aabbCollision(a: Rectangle, b: Rectangle) : boolean {
    );
 }
 
-const gridcellsize = 64;
+const gridcellsize = 128;
 
 (function(mountnode: HTMLElement, viewwidth: number, viewheight: number) {
 
