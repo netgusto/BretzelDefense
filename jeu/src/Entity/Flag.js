@@ -2,7 +2,7 @@
 
 //import stampit from 'stampit';
 import compose from 'compose-js';
-import { DisplayObject, Sprite } from 'pixi.js';
+import { DisplayObject } from 'pixi.js';
 
 import GenericEntity from './Generic';
 

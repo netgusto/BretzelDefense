@@ -210,7 +210,7 @@ function gameloop() {
         var deltatime = start - then;
 
         game.systems.map(function (system) {
-            system.process(system.match ? game.entities.filter(system.match) : game.entities, { deltatime: deltatime, costtime: costtime });
+            system.process(system.match ? game.entities.filter(system.match) : game.entities, { deltatime: deltatime, costtime: costtime, game: game });
         });
 
         then = start;

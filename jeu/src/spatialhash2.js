@@ -1,4 +1,5 @@
 'use strict';
+/*global Uint16Array*/
 
 // TODO: tester avec une liste doublement liée; tester avec un tableau à 2 dimensions x, y
 
@@ -98,7 +99,7 @@ export default class SpatialHash2 {
         return matching;
     }
 
-    update(x, y, width, height, centerx, centery, id, entity) {
+    update(x, y, width, height, centerx, centery, id) {
 
         const previousgridcell = this.list[id];
         //if(previousgridcell === undefined) {
@@ -142,7 +143,7 @@ export default class SpatialHash2 {
 
         const cell = this.grid[gridcell];
 
-        cell.splice(this.stackindex[item.id], 1)
+        cell.splice(this.stackindex[id], 1)
         let newindex = 0;
         this.grid[gridcell].map(item => {
             this.stackindex[item.id] = newindex;

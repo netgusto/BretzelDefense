@@ -12,11 +12,11 @@ const Collisionable = compose({
         collisionGroup: null
     },
     methods: {
-        setCollisionArea(p: Polygon|Rectangle) : Object {
+        setCollisionArea(p) : Object {
             this.collisionArea = p;
             return this;
         },
-        getCollisionArea() : Polygon|Rectangle {
+        getCollisionArea() {
             return this.collisionArea;
         },
 
@@ -26,7 +26,7 @@ const Collisionable = compose({
         },
         getCollisionGroup() : string {
             return this.collisionGroup;
-        },
+        }
     }
 });
 

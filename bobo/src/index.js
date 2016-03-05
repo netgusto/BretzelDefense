@@ -147,7 +147,7 @@ export function gameloop() {
         game.systems.map(system => {
             system.process(
                 system.match ? game.entities.filter(system.match) : game.entities,
-                { deltatime, costtime }
+                { deltatime, costtime, game }
             );
         });
 

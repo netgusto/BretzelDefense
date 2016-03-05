@@ -2,7 +2,7 @@
 
 /* @flow */
 
-import { Text, Container as PixiContainer } from 'pixi.js';
+import { Text, Container as PixiContainer, DisplayObject } from 'pixi.js';
 
 export default class DebugSystem {
 
@@ -11,7 +11,7 @@ export default class DebugSystem {
     fps: Array<number>;
     text: Text;
 
-    constructor({ stage, cbk }: { stage: PixiContainer, cbk: func}) {
+    constructor({ stage, cbk }: { stage: PixiContainer, cbk: Function}) {
         this.count = 0;
         this.fps = [];
         this.costs = new Array(300);

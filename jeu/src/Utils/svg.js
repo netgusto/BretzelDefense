@@ -64,7 +64,7 @@ export function path2js(path) {
     }
 
     return pathData;
-};
+}
 
 export function drawSVGPath(graphics, path, color, offsetx, offsety) {
     const instructions = path2js(path);
@@ -94,4 +94,4 @@ export function drawSVGPath(graphics, path, color, offsetx, offsety) {
             }
         }
     });
-};
+}

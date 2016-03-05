@@ -5,36 +5,27 @@
 import 'babel-polyfill';
 import 'perfnow';   // Polyfill for high resolution timer
 
-import { Container as PixiContainer, extras as PixiExtras, SCALE_MODES, Rectangle, Sprite, Graphics, loader, Text } from 'pixi.js';
-import { GameSet, cursorkeys, loadspritesheet, gameloop } from 'bobo';
+import { Container as PixiContainer, extras as PixiExtras, Graphics, Sprite, loader } from 'pixi.js';
+import { GameSet, cursorkeys, gameloop } from 'bobo';
 
-import { vec2 } from 'gl-matrix';
-import { path2js, drawSVGPath } from './Utils/svg';
+//import { vec2 } from 'gl-matrix';
 import { curveToLane } from './Utils/lane';
 
-//import SpatialHash from './spatialhash';
 import SpatialHash2 from './spatialhash2';
 
 import Mummy from './Entity/Mummy';
 import Flag from './Entity/Flag';
 import Baikal from './Entity/Baikal';
 import GenericEntity from './Entity/Generic';
-import MapPathBuilder from './Entity/MapPathBuilder';
 
-import CursorSystem from './System/Cursor';
 import DebugSystem from './System/Debug';
-import CustomRenderSystem from './System/CustomRender';
-import CollaborativeDiffusionFieldSystem from './System/CollaborativeDiffusionField';
-import CollaborativeDiffusionProcessorSystem from './System/CollaborativeDiffusionProcessor';
-import mapblocks from './map-blocks'
+import ZIndexSystem from './System/ZIndex';
 
 const cursor = cursorkeys();
 
 loader.add('background', '/assets/sprites/level_pagras-v2.png');
 
 const debug = true;
-
-const zindexsort = function(a, b) { let pos = a.y - b.y; return pos === 0 ? a.id - b.id : pos; };
 
 const gridcellsize = 128;
 
@@ -48,7 +39,7 @@ const gridcellsize = 128;
     game
         .requires(Flag, Mummy, Baikal)
         .load()
-        .then(function({ loader, resources }) {
+        .then(function({ /*loader,*/ resources }) {
 
             const bgsprite = new PixiExtras.TilingSprite(resources.background.texture, viewwidth, viewheight);
             bgsprite.tileScale.set(viewwidth / resources.background.texture.width, viewheight / resources.background.texture.height);
@@ -57,13 +48,13 @@ const gridcellsize = 128;
                displayobject: bgsprite
             }));
 
-            var graphics = new PIXI.Graphics();
+            var graphics = new Graphics();
             graphics.lineStyle(5, 0xFFFF00);
             game.addEntity(GenericEntity({
                 displayobject: graphics
             }));
 
-            var points = new PIXI.Graphics();
+            var points = new Graphics();
             game.addEntity(GenericEntity({
                 displayobject: points
             }));
@@ -117,18 +108,20 @@ const gridcellsize = 128;
 
                         // On détermine la direction du mouvement
 
-                        let up = false, down = false, left = false, right = false;
+                        let /*up = false, down = false,*/ left = false, right = false;
                         if(newpos.x > prevpos.x) {
                             right = true
                         } else if(newpos.x < prevpos.x) {
                             left = true;
                         }
 
+                        /*
                         if(newpos.y > prevpos.y) {
                             down = true
                         } else if(newpos.y < prevpos.y) {
                             up = true;
                         }
+                        */
 
                         if(left) {
                             mummy.displayobject.scale.x = Math.abs(mummy.displayobject.scale.x) * -1;
@@ -159,11 +152,7 @@ const gridcellsize = 128;
                 }
             });
 
-            game.addSystem({
-                process: function(entities, { deltatime }) {
-                    game.sortStage(zindexsort);
-                }
-            });
+            game.addSystem(new ZIndexSystem());
 
             if(debug) {
                 game.addSystem(new DebugSystem({ stage: canvas, cbk: (msg) => msg += '; '  + game.entities.length + ' entities' }));
@@ -171,7 +160,7 @@ const gridcellsize = 128;
 
             // ////////////////
 
-            let circle = new PIXI.Graphics();
+            let circle = new Graphics();
             circle.lineStyle(1, 0xFFFF00);
             game.addEntity(GenericEntity({
                 displayobject: circle
@@ -202,7 +191,7 @@ const gridcellsize = 128;
             let first = true;
 
             game.addSystem({
-                process: function(entities, { deltatime }) {
+                process: function(entities) {
 
                     if(first) {
                         first = false;

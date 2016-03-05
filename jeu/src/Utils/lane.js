@@ -53,4 +53,4 @@ export function curveToLane(curve) {
             };
         }
     };
-};
+}
