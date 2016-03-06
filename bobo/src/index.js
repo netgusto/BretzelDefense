@@ -19,18 +19,21 @@ export class GameSet {
         this.canvas = canvas;
         this.renderer = autoDetectRenderer(width, height);
         this.entities = new Array();
+        this.entitybyid = {};
         this.systems = new Array();
         node.appendChild(this.renderer.view);
     }
 
     addEntity(entity: Object) {
         this.entities.push(entity);
+        this.entitybyid[entity.id] = entity;
         this.canvas.addChild(entity.displayobject);
         entity.remove = () => {
             entity.displayobject.parent.removeChild(entity.displayobject);
             const index = this.entities.indexOf(entity);
             if(index === -1) return;
             this.entities.splice(index, 1);
+            delete this.entitybyid[entity.id];
         };
 
         return this;
@@ -38,6 +41,10 @@ export class GameSet {
 
     getEntities() {
         return this.entities;
+    }
+
+    getEntity(id) {
+        return this.entitybyid[id];
     }
 
     sortStage(cbk) {

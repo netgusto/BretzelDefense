@@ -41,12 +41,31 @@ const gridcellsize = 128;
         .load()
         .then(function({ /*loader,*/ resources }) {
 
-            const bgsprite = new PixiExtras.TilingSprite(resources.background.texture, viewwidth, viewheight);
-            bgsprite.tileScale.set(viewwidth / resources.background.texture.width, viewheight / resources.background.texture.height);
+            const bgsprite = new Sprite(resources.background.texture);
+            bgsprite.scale.set(viewwidth / resources.background.texture.width, viewheight / resources.background.texture.height);
 
             game.addEntity(GenericEntity({
-               displayobject: bgsprite
+                displayobject: bgsprite
             }));
+
+            bgsprite.interactive = true;
+
+            const pointer = new Graphics();
+
+            bgsprite.mousemove = function(e) {
+                pointer.clear();
+                pointer.lineStyle(2, 0xFF0000);
+                pointer.position.set(e.data.global.x, e.data.global.y);
+                pointer.drawCircle(0, 0, pointerentity.range);
+            };
+
+            const pointerentity = GenericEntity({
+                displayobject: pointer
+            });
+            pointerentity.hunter = true;
+            pointerentity.range = 20;
+            pointerentity.matches = [];
+            game.addEntity(pointerentity);
 
             var graphics = new Graphics();
             graphics.lineStyle(5, 0xFFFF00);
@@ -177,6 +196,7 @@ const gridcellsize = 128;
 
                 flag.hunter = true;
                 flag.range = 150;
+                flag.matches = [];
 
                 if(cursor.shift) {
                     flag.setTint(0xFF0000);
@@ -190,40 +210,42 @@ const gridcellsize = 128;
 
             let first = true;
 
+            const onRangeEnter = function(entity/*, hunterentity*/) {
+                entity.setTint(0xFF0000);
+            };
+
+            const onRangeLeave = function(entityid/*, hunterentity*/) {
+                game.getEntity(entityid).setTint(0xFFFFFF);
+            };
+
+            const matchbyid = new Array();
+
             game.addSystem({
                 process: function(entities) {
 
                     if(first) {
                         first = false;
-                        //tree2.clear();
-                        mummies.map(function(entity) {
-                            entity.setTint(0xFFFFFF);
-                            const displayobject = entity.displayobject;
-                            const bounds = displayobject.getBounds();
+                        for(let i = 0; i < mummies.length; i++) {
+                            const entity = mummies[i];
+                            const bounds = entity.displayobject.getBounds();
                             tree2.insert(
                                 bounds.x,
                                 bounds.y,
                                 bounds.width,
                                 bounds.height,
-                                displayobject.x,
-                                displayobject.y,
                                 entity.id,
                                 entity
                             );
-                        });
+                        }
                     } else {
                         for(let i = 0; i < mummies.length; i++) {
                             const entity = mummies[i];
-                            entity.setTint(0xFFFFFF);
-                            const displayobject = entity.displayobject;
-                            const bounds = displayobject.getBounds();
+                            const bounds = entity.displayobject.getBounds();
                             tree2.update(
                                 bounds.x,
                                 bounds.y,
                                 bounds.width,
                                 bounds.height,
-                                displayobject.x,
-                                displayobject.y,
                                 entity.id,
                                 entity
                             );
@@ -233,14 +255,45 @@ const gridcellsize = 128;
                     for(let i = 0; i < entities.length; i++) {
                         if(!entities[i].hunter) continue;
                         const hunter = entities[i];
-                        tree2.retrieve(hunter.displayobject.x, hunter.displayobject.y, hunter.range).map(collision => {
-                            collision.entity.setTint(0x00FF00);
-                        });
+                        const collisions = tree2.retrieve(hunter.displayobject.x, hunter.displayobject.y, hunter.range);
+                        const prevmatches = matchbyid[hunter.id] || [];
+                        const newmatches = [];
+
+                        let stablematchcount = 0;
+
+                        for(let k = 0; k < collisions.length; k++) {
+                            const collision = collisions[k];
+                            if(prevmatches.indexOf(collision.id) === -1) {
+                                onRangeEnter(collision.entity, hunter);
+                            } else {
+                                stablematchcount++;
+                            }
+
+                            newmatches.push(collision.id);
+                        }
+
+                        if(stablematchcount === prevmatches.length) {
+                            if(prevmatches.length !== newmatches.length) {
+                                delete matchbyid[hunter.id];
+                                matchbyid[hunter.id] = newmatches;
+                            }
+
+                            continue;
+                        }
+
+                        for(let k = 0; k < prevmatches.length; k++) {
+                            if(newmatches.indexOf(prevmatches[k]) === -1) {
+                                onRangeLeave(prevmatches[k]);
+                            }
+                        }
+
+                        delete matchbyid[hunter.id];
+                        matchbyid[hunter.id] = newmatches;
                     }
                 }
             });
 
-            // var grid = new PIXI.Graphics();
+            // var grid = new Graphics();
             // grid.lineStyle(1, 0xFFFF00);
             // game.addEntity(GenericEntity({
             //     displayobject: grid

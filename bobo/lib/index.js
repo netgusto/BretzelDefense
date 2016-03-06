@@ -33,6 +33,7 @@ var GameSet = exports.GameSet = function () {
         this.canvas = canvas;
         this.renderer = (0, _pixi.autoDetectRenderer)(width, height);
         this.entities = new Array();
+        this.entitybyid = {};
         this.systems = new Array();
         node.appendChild(this.renderer.view);
     }
@@ -43,12 +44,14 @@ var GameSet = exports.GameSet = function () {
             var _this = this;
 
             this.entities.push(entity);
+            this.entitybyid[entity.id] = entity;
             this.canvas.addChild(entity.displayobject);
             entity.remove = function () {
                 entity.displayobject.parent.removeChild(entity.displayobject);
                 var index = _this.entities.indexOf(entity);
                 if (index === -1) return;
                 _this.entities.splice(index, 1);
+                delete _this.entitybyid[entity.id];
             };
 
             return this;
@@ -57,6 +60,11 @@ var GameSet = exports.GameSet = function () {
         key: 'getEntities',
         value: function getEntities() {
             return this.entities;
+        }
+    }, {
+        key: 'getEntity',
+        value: function getEntity(id) {
+            return this.entitybyid[id];
         }
     }, {
         key: 'sortStage',

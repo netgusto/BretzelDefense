@@ -28,19 +28,20 @@ export default class SpatialHash2 {
         }
     }
 
-    insert(x, y, width, height, centerx, centery, id, entity) {
-        const cellx = (x / this.cellwidth)|0;
-        const celly = (y / this.cellheight)|0;
+    insert(boundsx, boundsy, width, height, id, entity) {
+
+        // on calcule le centroide de la bounding box
+
+        const centroidx = (boundsx + width/2)|0;
+        const centroidy = (boundsy + height/2)|0;
+        const cellx = (centroidx / this.cellwidth)|0;
+        const celly = (centroidx / this.cellheight)|0;
 
         const gridcell = celly * this.nbcellsx + cellx;
         this.grid[gridcell].push({
-            x,
-            y,
-            width,
-            height,
             id,
-            centerx,
-            centery,
+            centerx: centroidx,
+            centery: centroidy,
             entity
         });
         this.list[id] = gridcell;
@@ -99,7 +100,7 @@ export default class SpatialHash2 {
         return matching;
     }
 
-    update(x, y, width, height, centerx, centery, id) {
+    update(boundsx, boundsy, width, height, id) {
 
         const previousgridcell = this.list[id];
         //if(previousgridcell === undefined) {
@@ -107,19 +108,23 @@ export default class SpatialHash2 {
         //    return;
         //}
 
-        const cellx = (x / this.cellwidth)|0;
-        const celly = (y / this.cellheight)|0;
+        // on calcule le centroide de la bounding box
+
+        const centroidx = (boundsx + width/2)|0;
+        const centroidy = (boundsy + height/2)|0;
+
+        const cellx = (centroidx / this.cellwidth)|0;
+        const celly = (centroidy / this.cellheight)|0;
         const gridcell = celly * this.nbcellsx + cellx;
 
         const cell = this.grid[previousgridcell];
         const item = cell[this.stackindex[id]];
-        item.x = x;
-        item.y = y;
-        item.centerx = centerx;
-        item.centery = centery;
+        item.centerx = centroidx;
+        item.centery = centroidy;
 
         if(previousgridcell === gridcell) return;
         const newcell = this.grid[gridcell];
+        if(!newcell) return;
 
         cell.splice(this.stackindex[id], 1);
         let newindex = 0;
