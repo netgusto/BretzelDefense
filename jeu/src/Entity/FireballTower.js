@@ -5,35 +5,52 @@
 import compose from 'compose-js';
 
 import { loadspritesheet } from 'bobo';
-import { SCALE_MODES, extras as PixiExtras } from 'pixi.js';
+import { SCALE_MODES, extras as PixiExtras, Sprite } from 'pixi.js';
 
 import GenericEntity from './Generic';
 
 const FireballTower = compose(GenericEntity).compose({
     loadAssets(loader) {
         loader.add('fireball', '/assets/sprites/fireball.png');
+        loader.add('fireballtower', '/assets/sprites/flag.png');
         loader.once('complete', (_, resources) => {
-            FireballTower.texture = resources.fireball.texture.baseTexture;
-            FireballTower.texture.scaleMode = SCALE_MODES.NEAREST;
-            FireballTower.spriteframes = loadspritesheet(FireballTower.texture, 16, 16, 4);
+            const fireballtexture = resources.fireball.texture.baseTexture;
+            fireballtexture.scaleMode = SCALE_MODES.NEAREST;
+            FireballTower.ballframes = loadspritesheet(fireballtexture, 16, 16, 4);
+
+            FireballTower.texture = resources.fireballtower.texture;
         });
     },
     init: function() {
         this.hunter = true;
         this.range = 150;
-        this.displayobject = new PixiExtras.MovieClip(FireballTower.spriteframes);
-        this.displayobject.tint = 0xFF0000;
-        this.displayobject.play();
-        this.displayobject.animationSpeed = 0.15;
-        this.displayobject.pivot.set(this.displayobject.width / 2, this.displayobject.height / 2);
+
+        this.displayobject = new Sprite(FireballTower.texture);
+        this.displayobject.pivot.set(this.displayobject.width / 2, this.displayobject.height);
+        this.lastfired = null;
     },
     methods: {
-        engage(target, distance, centerx, centery, lasers) {
-            //target.entity.setTint(0xFF0000);
-            lasers.moveTo(this.displayobject.x, this.displayobject.y);
-            lasers.lineTo(centerx, centery);
+        engage(target, distance, centerx, centery, { ballisticSystem }) {
 
-            target.life--;
+            if(!this.lastfired || performance.now() - this.lastfired >= 700) {
+
+                const fireball = new PixiExtras.MovieClip(FireballTower.ballframes);
+                fireball.tint = 0xFF0000;
+                fireball.animationSpeed = 0.15;
+                fireball.position.set(this.displayobject.x, this.displayobject.y - this.displayobject.height);
+                fireball.play();
+
+                ballisticSystem.fire({
+                    hunter: this,
+                    target: target,
+                    distance,
+                    speed: 250,
+                    displayobject: fireball,
+                    damage: 50
+                });
+
+                this.lastfired = performance.now();
+            }
         }
     }
 });

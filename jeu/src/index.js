@@ -21,6 +21,7 @@ import GenericEntity from './Entity/Generic';
 import DebugSystem from './System/Debug';
 import ZIndexSystem from './System/ZIndex';
 import RangeDetectionSystem from './System/RangeDetection';
+import BallisticSystem from './System/Ballistic';
 
 //const cursor = cursorkeys();
 
@@ -203,12 +204,6 @@ const gridcellsize = 128;
                 }
             });
 
-            game.addSystem(new ZIndexSystem());
-
-            if(debug) {
-                game.addSystem(new DebugSystem({ stage: canvas, cbk: (msg) => msg += '; '  + game.entities.length + ' entities' }));
-            }
-
             // ////////////////
 
             let circle = new Graphics();
@@ -221,8 +216,8 @@ const gridcellsize = 128;
             bgsprite.click = bgsprite.tap = function(event) {
 
                 const clickpoint = event.data.getLocalPosition(bgsprite);
-                const tower = PulsedLaserTower()
-                //const tower = FireballTower()
+                //const tower = PulsedLaserTower()
+                const tower = FireballTower()
                     .setPosition(clickpoint.x, clickpoint.y);
 
                 game.addEntity(tower);
@@ -248,6 +243,13 @@ const gridcellsize = 128;
                     }
                 }
             });
+
+            // Le tracker de projectiles
+            var projectiles = new PixiContainer();
+            game.addEntity(GenericEntity({
+                displayobject: projectiles
+            }));
+            const ballisticSystem = new BallisticSystem({ container: projectiles });
 
             // Les lasers
 
@@ -287,9 +289,9 @@ const gridcellsize = 128;
                     matches.sort(sortdistance);
                     const target = matches[0];
 
-                    hunter.engage(target.entity, target.distance, target.centerx, target.centery, lasers);
+                    hunter.engage(target.entity, target.distance, target.centerx, target.centery, { lasers, ballisticSystem });
 
-                    if(target.entity.life === 0) {
+                    if(target.entity.life <= 0) {
                         spatialhash.remove(target.entity.id)
                         target.entity.remove();
                     }
@@ -300,10 +302,19 @@ const gridcellsize = 128;
                     entity.matchcount--;
                     if(entity.matchcount === 0) {
                         entity.setTint(0xFFFFFF);
-                        entity.displayobject.alpha = 1;
                     }
                 }
             }));
+
+            game.addSystem(ballisticSystem);
+
+            ////////////////////
+
+            game.addSystem(new ZIndexSystem());
+
+            if(debug) {
+                game.addSystem(new DebugSystem({ stage: canvas, cbk: (msg) => msg += '; '  + game.entities.length + ' entities' }));
+            }
 
         }).then(() => game.run(gameloop()));
 
