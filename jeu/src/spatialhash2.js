@@ -42,7 +42,8 @@ export default class SpatialHash2 {
             id,
             centerx: centroidx,
             centery: centroidy,
-            entity
+            entity,
+            distance: null
         });
         this.list[id] = gridcell;
         this.stackindex[id] = this.grid[gridcell].length - 1;
@@ -87,9 +88,9 @@ export default class SpatialHash2 {
                 const cell = this.grid[gridy * this.nbcellsx + gridx];
                 for(let k = 0; k < cell.length; k++) {
                     let item = cell[k];
-                    const dxsq = Math.pow(centerx - item.centerx, 2);
-                    const dysq = Math.pow(centery - item.centery, 2);
-                    if((dxsq + dysq) <= radiussq) {
+                    const dsq = Math.pow(centerx - item.centerx, 2) + Math.pow(centery - item.centery, 2);
+                    if(dsq <= radiussq) {
+                        item.distance = Math.sqrt(dsq);
                         matching.push(item);
                     }
                 }

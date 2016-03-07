@@ -20,6 +20,7 @@ import GenericEntity from './Entity/Generic';
 
 import DebugSystem from './System/Debug';
 import ZIndexSystem from './System/ZIndex';
+import RangeDetectionSystem from './System/RangeDetection';
 
 const cursor = cursorkeys();
 
@@ -30,8 +31,6 @@ const debug = true;
 const gridcellsize = 128;
 
 (function(mountnode: HTMLElement, viewwidth: number, viewheight: number) {
-
-    const tree2 = new SpatialHash2({ cellwidth: gridcellsize, cellheight: gridcellsize, worldwidth: viewwidth, worldheight: viewheight });
 
     /* Le stage */
     const canvas = new PixiContainer(0xFF0000 /* white */, true /* interactive */);
@@ -64,7 +63,6 @@ const gridcellsize = 128;
             });
             pointerentity.hunter = true;
             pointerentity.range = 20;
-            pointerentity.matches = [];
             game.addEntity(pointerentity);
 
             var graphics = new Graphics();
@@ -111,6 +109,7 @@ const gridcellsize = 128;
                 mummy.lane = lanes[mummyindex % lanes.length];
                 mummy.prevpos = { x: 0, y: 0 };
                 mummy.pixelswalked = 0;
+                mummy.matchcount = 0;
                 mummies.push(mummy);
             }
 
@@ -196,39 +195,29 @@ const gridcellsize = 128;
 
                 flag.hunter = true;
                 flag.range = 150;
-                flag.matches = [];
 
                 if(cursor.shift) {
                     flag.setTint(0xFF0000);
                     flag.range = 30;
                 }
-                //flag.displayobject.addChild(circle);
                 game.addEntity(flag);
 
                 //circle.drawCircle(flag.displayobject.x, flag.displayobject.y, flag.range);
             };
 
+            const spatialhash = new SpatialHash2({ cellwidth: gridcellsize, cellheight: gridcellsize, worldwidth: viewwidth, worldheight: viewheight });
+
             let first = true;
 
-            const onRangeEnter = function(entity/*, hunterentity*/) {
-                entity.setTint(0xFF0000);
-            };
-
-            const onRangeLeave = function(entityid/*, hunterentity*/) {
-                game.getEntity(entityid).setTint(0xFFFFFF);
-            };
-
-            const matchbyid = new Array();
-
             game.addSystem({
-                process: function(entities) {
+                process: function() {
 
                     if(first) {
                         first = false;
                         for(let i = 0; i < mummies.length; i++) {
                             const entity = mummies[i];
                             const bounds = entity.displayobject.getBounds();
-                            tree2.insert(
+                            spatialhash.insert(
                                 bounds.x,
                                 bounds.y,
                                 bounds.width,
@@ -241,86 +230,37 @@ const gridcellsize = 128;
                         for(let i = 0; i < mummies.length; i++) {
                             const entity = mummies[i];
                             const bounds = entity.displayobject.getBounds();
-                            tree2.update(
+                            spatialhash.update(
                                 bounds.x,
                                 bounds.y,
                                 bounds.width,
                                 bounds.height,
-                                entity.id,
-                                entity
+                                entity.id
                             );
                         }
-                    }
-
-                    for(let i = 0; i < entities.length; i++) {
-                        if(!entities[i].hunter) continue;
-                        const hunter = entities[i];
-                        const collisions = tree2.retrieve(hunter.displayobject.x, hunter.displayobject.y, hunter.range);
-                        const prevmatches = matchbyid[hunter.id] || [];
-                        const newmatches = [];
-
-                        let stablematchcount = 0;
-
-                        for(let k = 0; k < collisions.length; k++) {
-                            const collision = collisions[k];
-                            if(prevmatches.indexOf(collision.id) === -1) {
-                                onRangeEnter(collision.entity, hunter);
-                            } else {
-                                stablematchcount++;
-                            }
-
-                            newmatches.push(collision.id);
-                        }
-
-                        if(stablematchcount === prevmatches.length) {
-                            if(prevmatches.length !== newmatches.length) {
-                                delete matchbyid[hunter.id];
-                                matchbyid[hunter.id] = newmatches;
-                            }
-
-                            continue;
-                        }
-
-                        for(let k = 0; k < prevmatches.length; k++) {
-                            if(newmatches.indexOf(prevmatches[k]) === -1) {
-                                onRangeLeave(prevmatches[k]);
-                            }
-                        }
-
-                        delete matchbyid[hunter.id];
-                        matchbyid[hunter.id] = newmatches;
                     }
                 }
             });
 
-            // var grid = new Graphics();
-            // grid.lineStyle(1, 0xFFFF00);
-            // game.addEntity(GenericEntity({
-            //     displayobject: grid
-            // }));
-
-            // for(let x = 0; x < viewwidth; x += gridcellsize) {
-            //     grid.moveTo(x, 0);
-            //     grid.lineTo(x, viewheight);
-            // }
-
-            // for(let y = 0; y < viewheight; y += gridcellsize) {
-            //     grid.moveTo(0, y);
-            //     grid.lineTo(viewwidth, y);
-            // }
-
-            // const nbcellsx = Math.ceil(viewwidth / gridcellsize);
-            // const nbcellsy = Math.ceil(viewheight / gridcellsize);
-
-            // for(let y = 0; y < nbcellsy; y++) {
-            //     for(let x = 0; x < nbcellsx; x++) {
-            //         const text = new Text('', { font: '15px Arial', fill: 'yellow' });
-            //         text.text = y * nbcellsx + x;
-            //         text.position.set(x * gridcellsize + 5, y * gridcellsize + 5);
-            //         grid.addChild(text);
-            //     }
-            // }
-
+            game.addSystem(new RangeDetectionSystem({
+                spatialhash,
+                onenter: function(entity, hunterentity, distance) {
+                    entity.setTint(0xFF0000);
+                    entity.displayobject.alpha = distance / hunterentity.range;
+                    entity.matchcount++;
+                },
+                onrange: function(entity, hunterentity, distance) {
+                    entity.displayobject.alpha = distance / hunterentity.range;
+                },
+                onleave: function(entityid/*, hunterentity*/) {
+                    const entity = game.getEntity(entityid);
+                    entity.matchcount--;
+                    if(entity.matchcount === 0) {
+                        entity.setTint(0xFFFFFF);
+                        entity.displayobject.alpha = 1;
+                    }
+                }
+            }));
 
         }).then(() => game.run(gameloop()));
 
