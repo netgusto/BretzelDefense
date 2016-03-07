@@ -3,7 +3,7 @@
 
 // TODO: tester avec une liste doublement liée; tester avec un tableau à 2 dimensions x, y
 
-export default class SpatialHash2 {
+export default class SpatialHash {
 
     constructor({ cellwidth, cellheight, worldwidth, worldheight, maxentityid=16384 }) {
         this.cellwidth = cellwidth;

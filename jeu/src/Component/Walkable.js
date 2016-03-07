@@ -3,12 +3,12 @@
 //import stampit from 'stampit';
 import compose from 'compose-js';
 
-import { DisplayObject } from 'pixi.js';
+//import { DisplayObject } from 'pixi.js';
 
 const Walkable = compose({
-    expects: {
-        displayobject: DisplayObject
-    },
+    // expects: {
+    //     displayobject: DisplayObject
+    // },
     init: function() {
         this.tag('Walkable');
         this.doStop();

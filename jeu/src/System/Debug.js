@@ -18,7 +18,7 @@ export default class DebugSystem {
         this.cbk = cbk;
 
         this.text = new Text('', { font: '30px Arial', fill: 'white' });
-        this.text.position.set(25);
+        this.text.position.set(25, 50);
         stage.addChild(this.text);
     }
 

@@ -1,45 +1,13 @@
 'use strict';
 
-//import stampit from 'stampit';
 import compose from 'compose-js';
 
-import { DisplayObject } from 'pixi.js';
-
-/*
-// Décorateur ?
-// https://github.com/CocktailJS/traits-decorator
-
-// Plugin babel ?
-Trait Displayable {
-
-    use Something;
-    use SomethingElse { hello as world };
-
-    need Deps;
-    need Deps2;
-
-    init({ prop, prop2 }) {
-        // ...
-    }
-
-    setPosition() {
-
-    }
-
-    getPosition() {
-        
-    }
-
-    static loadAssets() {
-
-    }
-}
-*/
+//import { DisplayObject } from 'pixi.js';
 
 const Displayable = compose({
-    expects: {
-        displayobject: DisplayObject
-    },
+    // expects: {
+    //     displayobject: DisplayObject
+    // },
     init: function({ displayobject }) {
         this.tag('Displayable');
         this.displayobject = displayobject;

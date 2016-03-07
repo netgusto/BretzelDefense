@@ -4,18 +4,16 @@
 
 //import stampit from 'stampit';
 import compose from 'compose-js';
-import { DisplayObject } from 'pixi.js';
+import { extras as PixiExtras } from 'pixi.js';
 import { loadspritesheet } from 'bobo';
 
 import GenericEntity from './Generic';
 import Walkable from '../Component/Walkable';
-import CollaborativeDiffusionFieldAgent from '../Component/CollaborativeDiffusionFieldAgent';
-import CustomRenderable from '../Component/CustomRenderable';
 
-let Mummy = compose(GenericEntity, CollaborativeDiffusionFieldAgent, Walkable, CustomRenderable).compose({
-    expects: {
-        displayobject: DisplayObject
-    },
+let Mummy = compose(GenericEntity).compose({
+    // expects: {
+    //     displayobject: DisplayObject
+    // },
     loadAssets(loader) {
         loader.add('mummy', '/assets/sprites/metalslug_mummy37x45.png');
         loader.once('complete', (_, resources) => {
@@ -26,6 +24,7 @@ let Mummy = compose(GenericEntity, CollaborativeDiffusionFieldAgent, Walkable, C
     },
     init: function() {
 
+        this.displayobject = new PixiExtras.MovieClip(Mummy.spriteframes);
         //console.log(this.displayobject.scale);
         this.displayobject.play();
         this.displayobject.pivot.set(this.displayobject.width/2, this.displayobject.height);    // pas d'utilisation de la propriété anchor, car cause problème dans le calcul des déplacements de hitArea
@@ -37,8 +36,20 @@ let Mummy = compose(GenericEntity, CollaborativeDiffusionFieldAgent, Walkable, C
         setLane(lane) {
             this.lane = lane;
             return this;
-        }
+        }//,
+        // render() {
+
+        //     //console.log('laaaa');
+        //     const lifebarwidth = 0;
+        //     this.lifebar.lineStyle(2, 0x00FF00);
+        //     this.lifebar.moveTo(0, 0);
+        //     this.lifebar.lineTo(lifebarwidth, 0);
+
+        //     this.lifebar.lineStyle(2, 0xFF0000);
+        //     //this.lifebar.lineTo(((this.maxlife - this.life) / this.life)|0 * lifebarwidth, 0);
+        //     //this.lifebar.lineTo(((this.maxlife - this.life) / this.life)|0 * lifebarwidth, 0);
+        // }
     }
-});
+}).compose(Walkable);
 
 export default Mummy;
