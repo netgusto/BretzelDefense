@@ -24,19 +24,22 @@ const FireballTower = compose(GenericEntity).compose({
     init: function() {
         this.hunter = true;
         this.range = 150;
+        this.firerate = 700;
+        this.firedamage = 30;
 
         this.displayobject = new Sprite(FireballTower.texture);
         this.displayobject.pivot.set(this.displayobject.width / 2, this.displayobject.height);
-        this.lastfired = null;
+        this.lastfired = performance.now();
     },
     methods: {
         engage(target, distance, centerx, centery, { ballisticSystem }) {
 
-            if(!this.lastfired || performance.now() - this.lastfired >= 700) {
+            if(performance.now() - this.lastfired >= this.firerate) {
 
                 const fireball = new PixiExtras.MovieClip(FireballTower.ballframes);
-                fireball.tint = 0xFF0000;
                 fireball.animationSpeed = 0.15;
+                fireball.pivot.set(fireball.width/2, fireball.height/2);
+                fireball.scale.set(-1);
                 fireball.position.set(this.displayobject.x, this.displayobject.y - this.displayobject.height);
                 fireball.play();
 
@@ -44,9 +47,14 @@ const FireballTower = compose(GenericEntity).compose({
                     hunter: this,
                     target: target,
                     distance,
-                    speed: 250,
+
+                    // TODO: actuellement, la distance est calculée depuis la base de la tour, et pas depuis la position du tir (généralement le sommet de la tour)
+                    flightduration: distance * 4,   // la durée de vol du projectile est fonction de la distance; la durée de vol doit être fixe pour permettre le ciblage prédictif
                     displayobject: fireball,
-                    damage: 50
+                    damage: this.firedamage,
+                    orient: true,
+                    homing: false,
+                    parabolic: true
                 });
 
                 this.lastfired = performance.now();

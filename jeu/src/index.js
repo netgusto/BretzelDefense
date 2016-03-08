@@ -50,21 +50,24 @@ const gridcellsize = 128;
 
             bgsprite.interactive = true;
 
-            // const pointer = new Graphics();
+            const pointer = new Graphics();
 
-            // bgsprite.mousemove = function(e) {
-            //     pointer.clear();
-            //     pointer.lineStyle(2, 0xFF0000);
-            //     pointer.position.set(e.data.global.x, e.data.global.y);
-            //     pointer.drawCircle(0, 0, pointerentity.range);
-            // };
+            bgsprite.mousemove = function(e) {
+                pointer.clear();
+                pointer.lineStyle(2, 0xFF0000);
+                pointer.position.set(e.data.global.x, e.data.global.y);
+                pointer.drawCircle(0, 0, pointerentity.range);
+            };
 
-            // const pointerentity = GenericEntity({
-            //     displayobject: pointer
-            // });
-            // pointerentity.hunter = true;
-            // pointerentity.range = 20;
-            // game.addEntity(pointerentity);
+            const pointerentity = GenericEntity({
+                displayobject: pointer
+            });
+            pointerentity.hunter = true;
+            pointerentity.range = 20;
+            pointerentity.engage = function(target) {
+                target.doStop();
+            };
+            game.addEntity(pointerentity);
 
             const curves = [
                 { name: 'blue',       color: 0x0000FF, offsetx: 0, offsety: 0, path: 'M1280,378.771481 C1280,378.771481 1232.26953,379.203125 1189.68359,387.875 C1147.09766,396.546875 1048.55273,454.15039 989.744141,458.630859 C930.935547,463.111329 880.714844,455.652343 880.714844,416.472656 C880.714844,377.292968 998.042608,375.023725 1018.82227,336.93164 C1041.0625,296.162109 1000.88477,260.160156 941.800781,256.066406 C882.716797,251.972656 736.179688,287.751952 689.664062,287.751954 C643.148438,287.751956 464.777344,251.730469 429.648438,256.066406 C394.519531,260.402344 353.539062,271.609374 350.703125,321.666015 C347.867188,371.722656 498.990234,380.554687 490.714844,432.554687 C482.439453,484.554688 372.416016,460.025396 318.521484,438.080082 C264.626953,416.134769 214.911215,391.091939 156.744141,381.607419 C98.5770663,372.122898 0,378.771481 0,378.771481' },
@@ -101,7 +104,7 @@ const gridcellsize = 128;
                 mummy.prevpos = { x: 0, y: 0 };
                 mummy.pixelswalked = 0;
                 mummy.matchcount = 0;
-                mummy.maxlife = 50 + Math.floor(Math.random() * 100);
+                mummy.maxlife = 100;
                 mummy.life = mummy.maxlife;
 
                 mummyindex++;
@@ -268,8 +271,12 @@ const gridcellsize = 128;
 
             //const sortdistance = function(a, b) { return b.distance - a.distance; };
             const sortdistance = function(a, b) {
-                return (a.entity.lane.length - (a.entity.pixelswalked % a.entity.lane.length)) - (b.entity.lane.length - (b.entity.pixelswalked % b.entity.lane.length));
+               return (a.entity.lane.length - (a.entity.pixelswalked % a.entity.lane.length)) - (b.entity.lane.length - (b.entity.pixelswalked % b.entity.lane.length));
             };
+
+            // const sortdistance = function(/*a, b*/) {
+            //     return Math.random() - Math.random();
+            // };
 
             game.addSystem(new RangeDetectionSystem({
                 spatialhash,
@@ -290,11 +297,6 @@ const gridcellsize = 128;
                     const target = matches[0];
 
                     hunter.engage(target.entity, target.distance, target.centerx, target.centery, { lasers, ballisticSystem });
-
-                    if(target.entity.life <= 0) {
-                        spatialhash.remove(target.entity.id)
-                        target.entity.remove();
-                    }
                 },
                 onleave: function(entityid/*, hunterentity*/) {
                     const entity = game.getEntity(entityid);
@@ -307,6 +309,18 @@ const gridcellsize = 128;
             }));
 
             game.addSystem(ballisticSystem);
+
+            game.addSystem({
+                process(entities) {
+                    for(let i = 0; i < entities.length; i++) {
+                        const entity = entities[i];
+                        if(entity.maxlife && entity.life <= 0) {
+                            spatialhash.remove(entity.id)
+                            entity.remove();
+                        }
+                    }
+                }
+            });
 
             ////////////////////
 
