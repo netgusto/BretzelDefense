@@ -9,6 +9,10 @@ import { SCALE_MODES, extras as PixiExtras, Sprite } from 'pixi.js';
 
 import GenericEntity from './Generic';
 
+// const sort = function(a, b) {
+//     return (a.entity.lane.length - (a.entity.pixelswalked % a.entity.lane.length)) - (b.entity.lane.length - (b.entity.pixelswalked % b.entity.lane.length));
+// };
+
 const FireballTower = compose(GenericEntity).compose({
     loadAssets(loader) {
         loader.add('fireball', '/assets/sprites/fireball.png');
@@ -24,7 +28,7 @@ const FireballTower = compose(GenericEntity).compose({
     init: function() {
         this.hunter = true;
         this.range = 150;
-        this.firerate = 200;
+        this.firerate = 1000;
         this.firedamage = 30;
 
         this.displayobject = new Sprite(FireballTower.texture);
@@ -32,12 +36,19 @@ const FireballTower = compose(GenericEntity).compose({
         this.lastfired = performance.now();
     },
     methods: {
-        engage(target, distance, centerx, centery, { ballisticSystem }) {
+        engage(matches, { ballisticSystem }) {
 
-            if(performance.now() - this.lastfired >= this.firerate) {
+            //matches.sort(sort);
+            const match = matches[0];
+            const { distance, entity } = match;
+
+            const now = performance.now();
+
+            if(now - this.lastfired >= this.firerate) {
 
                 const fireball = new PixiExtras.MovieClip(FireballTower.ballframes);
                 fireball.animationSpeed = 0.15;
+                fireball.tint = 0XFF0000;
                 fireball.pivot.set(fireball.width/2, fireball.height/2);
                 fireball.scale.set(-1);
                 fireball.position.set(this.displayobject.x, this.displayobject.y - this.displayobject.height);
@@ -45,20 +56,20 @@ const FireballTower = compose(GenericEntity).compose({
 
                 ballisticSystem.fire({
                     hunter: this,
-                    target: target,
+                    target: entity,
                     distance,
 
                     // TODO: actuellement, la distance est calculée depuis la base de la tour, et pas depuis la position du tir (généralement le sommet de la tour)
-                    flightduration: 600 + distance * 3,   // la durée de vol du projectile est fonction de la distance; la durée de vol doit être fixe pour permettre le ciblage prédictif
+                    flightduration: 300 + distance,   // la durée de vol du projectile est fonction de la distance; la durée de vol doit être fixe pour permettre le ciblage prédictif
                     displayobject: fireball,
                     damage: this.firedamage,
                     orient: true,
                     homing: false,
-                    parabolic: false,
-                    parabolicapex: 15 + distance / 2
+                    parabolic: true,
+                    parabolicapex: -35  // -35: visée horizontale (flêche)
                 });
 
-                this.lastfired = performance.now();
+                this.lastfired = now;
             }
         }
     }

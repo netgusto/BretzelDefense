@@ -16,6 +16,7 @@ import SpatialHash from './Utils/spatialhash';
 import Mummy from './Entity/Mummy';
 import PulsedLaserTower from './Entity/PulsedLaserTower';
 import FireballTower from './Entity/FireballTower';
+import ArcherTower from './Entity/ArcherTower';
 import GenericEntity from './Entity/Generic';
 
 import DebugSystem from './System/Debug';
@@ -37,7 +38,7 @@ const gridcellsize = 128;
     const canvas = new PixiContainer(0xFF0000 /* white */, true /* interactive */);
     const game = new GameSet(mountnode, viewwidth, viewheight, canvas);
     game
-        .requires(Mummy, PulsedLaserTower, FireballTower)
+        .requires(Mummy, PulsedLaserTower, FireballTower, ArcherTower)
         .load()
         .then(function({ /*loader,*/ resources }) {
 
@@ -64,8 +65,8 @@ const gridcellsize = 128;
             });
             pointerentity.hunter = true;
             pointerentity.range = 20;
-            pointerentity.engage = function(target) {
-                target.doStop();
+            pointerentity.engage = function(matches) {
+                matches.map(match => match.entity.doStop());
             };
             game.addEntity(pointerentity);
 
@@ -93,7 +94,7 @@ const gridcellsize = 128;
             let mummyindex = 0;
 
             window.setInterval(function() {
-                if(game.entities.length >= 500) return;
+                if(game.entities.length >= 100) return;
 
                 const mummy = Mummy()
                     .doRun()
@@ -118,7 +119,7 @@ const gridcellsize = 128;
                     mummy.id,
                     mummy
                 );
-            }, 20);
+            }, 50);
 
             let creeps = [];
             game.addSystem({
@@ -220,12 +221,13 @@ const gridcellsize = 128;
 
                 const clickpoint = event.data.getLocalPosition(bgsprite);
                 //const tower = PulsedLaserTower()
-                const tower = FireballTower()
+                //const tower = FireballTower()
+                const tower = ArcherTower()
                     .setPosition(clickpoint.x, clickpoint.y);
 
                 game.addEntity(tower);
 
-                //circle.drawCircle(flag.displayobject.x, flag.displayobject.y, flag.range);
+                //circle.drawCircle(tower.displayobject.x, tower.displayobject.y, tower.range);
             };
 
             const spatialhash = new SpatialHash({ cellwidth: gridcellsize, cellheight: gridcellsize, worldwidth: viewwidth, worldheight: viewheight });
@@ -269,15 +271,6 @@ const gridcellsize = 128;
                 }
             });
 
-            //const sortdistance = function(a, b) { return b.distance - a.distance; };
-            // const sortdistance = function(a, b) {
-            //    return (a.entity.lane.length - (a.entity.pixelswalked % a.entity.lane.length)) - (b.entity.lane.length - (b.entity.pixelswalked % b.entity.lane.length));
-            // };
-
-            const sortdistance = function(/*a, b*/) {
-                return Math.random() - Math.random();
-            };
-
             game.addSystem(new RangeDetectionSystem({
                 spatialhash,
                 onenter: function(entity/*, hunterentity, distance*/) {
@@ -292,11 +285,7 @@ const gridcellsize = 128;
 
                     if(!matches.length) return;
 
-                    // on trouve le plus proche
-                    matches.sort(sortdistance);
-                    const target = matches[0];
-
-                    hunter.engage(target.entity, target.distance, target.centerx, target.centery, { lasers, ballisticSystem });
+                    hunter.engage(matches, { lasers, ballisticSystem });
                 },
                 onleave: function(entityid/*, hunterentity*/) {
                     const entity = game.getEntity(entityid);
