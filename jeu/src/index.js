@@ -93,7 +93,7 @@ const gridcellsize = 128;
             let mummyindex = 0;
 
             window.setInterval(function() {
-                if(game.entities.length >= 100) return;
+                if(game.entities.length >= 500) return;
 
                 const mummy = Mummy()
                     .doRun()
@@ -118,7 +118,7 @@ const gridcellsize = 128;
                     mummy.id,
                     mummy
                 );
-            }, 1000);
+            }, 20);
 
             let creeps = [];
             game.addSystem({
@@ -270,13 +270,13 @@ const gridcellsize = 128;
             });
 
             //const sortdistance = function(a, b) { return b.distance - a.distance; };
-            const sortdistance = function(a, b) {
-               return (a.entity.lane.length - (a.entity.pixelswalked % a.entity.lane.length)) - (b.entity.lane.length - (b.entity.pixelswalked % b.entity.lane.length));
-            };
-
-            // const sortdistance = function(/*a, b*/) {
-            //     return Math.random() - Math.random();
+            // const sortdistance = function(a, b) {
+            //    return (a.entity.lane.length - (a.entity.pixelswalked % a.entity.lane.length)) - (b.entity.lane.length - (b.entity.pixelswalked % b.entity.lane.length));
             // };
+
+            const sortdistance = function(/*a, b*/) {
+                return Math.random() - Math.random();
+            };
 
             game.addSystem(new RangeDetectionSystem({
                 spatialhash,

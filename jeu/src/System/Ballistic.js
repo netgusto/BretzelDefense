@@ -2,10 +2,15 @@
 
 //import { vec2 } from 'gl-matrix';
 
+import { Graphics } from 'pixi.js';
+
 export default class Ballistic {
 
     constructor({ container }) {
         this.container = container;
+        this.debuggraphics = new Graphics();
+        this.debuggraphics.lineStyle(2, 0xFF0000);
+        this.container.addChild(this.debuggraphics);
         this.pendinglaunch = [];
         this.inflight = [];
     }
@@ -23,13 +28,32 @@ export default class Ballistic {
                 // Predictive
                 // On détermine la position supposée de la cible en T+flightduration
 
-                const { target } = projectileprops;
+                const { target, hunter } = projectileprops;
                 const targetspeedperms = target.walk.velocityms;
                 const targetpixelswalked = target.pixelswalked;
                 const targetpixelswalkedwhenprojectilehits = targetpixelswalked + (targetspeedperms * projectileprops.flightduration);
 
                 const { x: predictivex, y: predictivey } = target.lane.getPointAtLengthLoop(targetpixelswalkedwhenprojectilehits);
                 projectileprops.predictiveimpact = { x: predictivex, y: predictivey - 10 };
+
+                if(projectileprops.parabolic) {
+
+                    const startpoint = [projectileprops.displayobject.x, projectileprops.displayobject.y];
+
+                    const aimvec = [projectileprops.predictiveimpact.x-startpoint[0], projectileprops.predictiveimpact.y-startpoint[1]];
+                    const vertexbasepoint = [startpoint[0] + aimvec[0]/2, startpoint[1] + aimvec[1]/2];
+                    const vertexapex = [vertexbasepoint[0], vertexbasepoint[1] - hunter.displayobject.height - projectileprops.parabolicapex];  // 120: hauteur de l'apex  // ajout de la hauteur de la tour pour viser vers le haut
+
+                    projectileprops.parabolicstart = startpoint;
+                    projectileprops.parabolicvertex = vertexapex;
+                    projectileprops.parabolicend = [projectileprops.predictiveimpact.x, projectileprops.predictiveimpact.y];
+
+                    projectileprops.parabolicstartzero = [0, 0];
+                    projectileprops.parabolicvertexzero = [vertexapex[0]-startpoint[0], vertexapex[1] - startpoint[1]];
+                    projectileprops.parabolicendzero = aimvec;
+
+                    projectileprops.parabolicwidth = projectileprops.parabolicendzero[0] - projectileprops.parabolicstartzero[0];
+                }
             }
 
             projectileprops.firetime = performance.now();
@@ -45,7 +69,7 @@ export default class Ballistic {
         for(let i = this.inflight.length-1; i >= 0; i--) {  // reverse order to allow splice while looping below
 
             const projectileprops = this.inflight[i];
-            const { target, displayobject, orient, homing, firetime, flightduration } = projectileprops;
+            const { target, displayobject, orient, homing, firetime, flightduration, parabolic } = projectileprops;
             const bounds = target.displayobject.getBounds();
 
             const elapsedtime = performance.now() - firetime;
@@ -93,7 +117,26 @@ export default class Ballistic {
                 const normalizedaimvec = aimdistance !== 0 ? [aimvec[0] / aimdistance, aimvec[1] / aimdistance] : [aimvec[0], aimvec[1]];
 
                 nextx = bulletx + (normalizedaimvec[0] * displacementthisround);
-                nexty = bullety + (normalizedaimvec[1] * displacementthisround);
+                if(parabolic) {
+
+                    const { parabolicstart, parabolicstartzero, parabolicvertex, parabolicvertexzero, parabolicend, parabolicleadcoeffa, parabolicwidth } = projectileprops;
+                    //this.debuggraphics.moveTo(parabolicstart[0], parabolicstart[1]);
+                    //this.debuggraphics.quadraticCurveTo(parabolicvertex[0], parabolicvertex[1], parabolicend[0], parabolicend[1]);
+
+                    const relativex = nextx-parabolicstart[0];
+                    const fromY = parabolicstart[1];
+                    const cpY = parabolicvertex[1];
+                    const toY = parabolicend[1];
+
+                    let j = relativex / parabolicwidth;
+
+                    let ya = fromY + ( (cpY - fromY) * j );
+                    nexty = ya + ( ((cpY + ( (toY - cpY) * j )) - ya) * j );
+                } else {
+                    nexty = bullety + (normalizedaimvec[1] * displacementthisround);
+                }
+
+                //console.log(nexty);
 
                 if(orient) {
                     displayobject.rotation = Math.atan2(bullety-nexty, bulletx-nextx) + (2 * Math.PI);

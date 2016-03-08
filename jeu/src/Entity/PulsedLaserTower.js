@@ -5,12 +5,12 @@ import LaserTower from './LaserTower';
 
 const PulsedLaserTower = compose(LaserTower).compose({
     init: function() {
-        this.firerate = 100;
+        this.firerate = 500;
         this.firedamage = 10;
         this.target = null;
         this.lastfire = null;
         this.lastfiredtarget = null;
-        this.beamduration = 50;
+        this.beamduration = 250;
     },
     methods: {
         engage(target, distance, centerx, centery, { lasers }) {

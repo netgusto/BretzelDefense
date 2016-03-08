@@ -24,7 +24,7 @@ const FireballTower = compose(GenericEntity).compose({
     init: function() {
         this.hunter = true;
         this.range = 150;
-        this.firerate = 700;
+        this.firerate = 200;
         this.firedamage = 30;
 
         this.displayobject = new Sprite(FireballTower.texture);
@@ -49,12 +49,13 @@ const FireballTower = compose(GenericEntity).compose({
                     distance,
 
                     // TODO: actuellement, la distance est calculée depuis la base de la tour, et pas depuis la position du tir (généralement le sommet de la tour)
-                    flightduration: distance * 4,   // la durée de vol du projectile est fonction de la distance; la durée de vol doit être fixe pour permettre le ciblage prédictif
+                    flightduration: 600 + distance * 3,   // la durée de vol du projectile est fonction de la distance; la durée de vol doit être fixe pour permettre le ciblage prédictif
                     displayobject: fireball,
                     damage: this.firedamage,
                     orient: true,
                     homing: false,
-                    parabolic: true
+                    parabolic: false,
+                    parabolicapex: 15 + distance / 2
                 });
 
                 this.lastfired = performance.now();
