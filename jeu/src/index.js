@@ -13,6 +13,7 @@ import { curveToLane } from './Utils/lane';
 
 import SpatialHash from './Utils/spatialhash';
 
+import Background from './Entity/Background';
 import Mummy from './Entity/Mummy';
 import PulsedLaserTower from './Entity/PulsedLaserTower';
 import FireballTower from './Entity/FireballTower';
@@ -26,8 +27,6 @@ import BallisticSystem from './System/Ballistic';
 
 //const cursor = cursorkeys();
 
-loader.add('background', '/assets/sprites/level_pagras-v2.png');
-
 const debug = true;
 
 const gridcellsize = 128;
@@ -38,18 +37,25 @@ const gridcellsize = 128;
     const canvas = new PixiContainer(0xFF0000 /* white */, true /* interactive */);
     const game = new GameSet(mountnode, viewwidth, viewheight, canvas);
     game
-        .requires(Mummy, PulsedLaserTower, FireballTower, ArcherTower)
+        .requires(Background, Mummy, PulsedLaserTower, FireballTower, ArcherTower)
         .load()
         .then(function({ /*loader,*/ resources }) {
 
-            const bgsprite = new Sprite(resources.background.texture);
-            bgsprite.scale.set(viewwidth / resources.background.texture.width, viewheight / resources.background.texture.height);
+            game.addEntity(Background({
+                viewwidth,
+                viewheight,
+                onclick(event) {
+                    const clickpoint = event.data.getLocalPosition(bgsprite);
+                    //const tower = PulsedLaserTower()
+                    //const tower = FireballTower()
+                    const tower = ArcherTower()
+                        .setPosition(clickpoint.x, clickpoint.y);
 
-            game.addEntity(GenericEntity({
-                displayobject: bgsprite
+                    game.addEntity(tower);
+
+                    //circle.drawCircle(tower.displayobject.x, tower.displayobject.y, tower.range);
+                }
             }));
-
-            bgsprite.interactive = true;
 
             const pointer = new Graphics();
 
@@ -215,20 +221,6 @@ const gridcellsize = 128;
             game.addEntity(GenericEntity({
                 displayobject: circle
             }));
-
-            bgsprite.interactive = true;
-            bgsprite.click = bgsprite.tap = function(event) {
-
-                const clickpoint = event.data.getLocalPosition(bgsprite);
-                //const tower = PulsedLaserTower()
-                //const tower = FireballTower()
-                const tower = ArcherTower()
-                    .setPosition(clickpoint.x, clickpoint.y);
-
-                game.addEntity(tower);
-
-                //circle.drawCircle(tower.displayobject.x, tower.displayobject.y, tower.range);
-            };
 
             const spatialhash = new SpatialHash({ cellwidth: gridcellsize, cellheight: gridcellsize, worldwidth: viewwidth, worldheight: viewheight });
 
