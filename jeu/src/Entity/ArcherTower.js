@@ -26,8 +26,8 @@ const ArcherTower = compose(GenericEntity).compose({
     init: function() {
         this.hunter = true;
         this.range = 100;
-        this.firerate = 700;
-        this.firedamage = 30;
+        this.firerate = 500;
+        this.firedamage = 9;
 
         this.displayobject = new Sprite(ArcherTower.texture);
         this.displayobject.pivot.set(this.displayobject.width / 2, this.displayobject.height);

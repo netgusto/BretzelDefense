@@ -5,8 +5,8 @@
 import 'babel-polyfill';
 import 'perfnow';   // Polyfill for high resolution timer
 
-import { Container as PixiContainer, Graphics, Sprite, loader } from 'pixi.js';
-import { GameSet, gameloop } from 'bobo';
+import { Container as PixiContainer, Graphics } from 'pixi.js';
+import { GameSet, gameloop, cursorkeys } from 'bobo';
 
 //import { vec2 } from 'gl-matrix';
 import { curveToLane } from './Utils/lane';
@@ -25,7 +25,7 @@ import ZIndexSystem from './System/ZIndex';
 import RangeDetectionSystem from './System/RangeDetection';
 import BallisticSystem from './System/Ballistic';
 
-//const cursor = cursorkeys();
+const cursor = cursorkeys();
 
 const debug = true;
 
@@ -39,17 +39,24 @@ const gridcellsize = 128;
     game
         .requires(Background, Mummy, PulsedLaserTower, FireballTower, ArcherTower)
         .load()
-        .then(function({ /*loader,*/ resources }) {
+        .then(function(/*{ loader, resources }*/) {
 
             game.addEntity(Background({
                 viewwidth,
                 viewheight,
                 onclick(event) {
-                    const clickpoint = event.data.getLocalPosition(bgsprite);
+                    console.log(event);
+                    const clickpoint = event.data.getLocalPosition(event.target);
                     //const tower = PulsedLaserTower()
                     //const tower = FireballTower()
-                    const tower = ArcherTower()
-                        .setPosition(clickpoint.x, clickpoint.y);
+                    let tower;
+                    if(cursor.shift) {
+                        tower = FireballTower();
+                    } else {
+                        tower = ArcherTower();
+                    }
+
+                    tower.setPosition(clickpoint.x, clickpoint.y);
 
                     game.addEntity(tower);
 
@@ -59,12 +66,14 @@ const gridcellsize = 128;
 
             const pointer = new Graphics();
 
+            /*
             bgsprite.mousemove = function(e) {
                 pointer.clear();
                 pointer.lineStyle(2, 0xFF0000);
                 pointer.position.set(e.data.global.x, e.data.global.y);
                 pointer.drawCircle(0, 0, pointerentity.range);
             };
+            */
 
             const pointerentity = GenericEntity({
                 displayobject: pointer
