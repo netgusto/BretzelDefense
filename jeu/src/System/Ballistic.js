@@ -61,7 +61,7 @@ export default class Ballistic {
 
         //console.log('LENGTH', this.inflight.length);
 
-        const hits = []
+        const hits = [];
         for(let i = this.inflight.length-1; i > 0; --i) {  // reverse order to allow splice while looping below
 
             const projectileprops = this.inflight[i];
@@ -150,12 +150,15 @@ export default class Ballistic {
             const hitinfo = hits[i];
             const projectileprops = this.inflight[hitinfo.index];
 
-            if(!hitinfo.missed) {
-                projectileprops.target.life -= projectileprops.damage;
-                if(projectileprops.target.life < 0) projectileprops.target.life = 0;
+            if(hitinfo.missed) {
+                projectileprops.hunter.ballisticMiss(projectileprops);
+            } else {
+                projectileprops.hunter.ballisticHit(projectileprops);
+                //projectileprops.target.life -= projectileprops.damage;
+                //if(projectileprops.target.life < 0) projectileprops.target.life = 0;
             }
 
-            this.container.removeChild(projectileprops.displayobject);
+            //this.container.removeChild(projectileprops.displayobject);
             this.inflight.splice(hitinfo.index, 1);
         }
     }

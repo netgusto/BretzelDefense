@@ -71,6 +71,17 @@ const FireballTower = compose(GenericEntity).compose({
 
                 this.lastfired = now;
             }
+        },
+        ballisticHit(projectileprops) {
+            const { target, displayobject } = projectileprops;
+
+            displayobject.parent.removeChild(displayobject);
+
+            target.life -= projectileprops.damage;
+            if(target.life < 0) target.life = 0;
+        },
+        ballisticMiss(projectileprops) {
+            projectileprops.displayobject.parent.removeChild(projectileprops.displayobject);
         }
     }
 });
