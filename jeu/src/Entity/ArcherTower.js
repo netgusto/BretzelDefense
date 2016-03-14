@@ -8,9 +8,10 @@ import { SCALE_MODES, Sprite } from 'pixi.js';
 
 import GenericEntity from './Generic';
 
-// const sort = function(a, b) {
-//     return (a.entity.lane.length - (a.entity.pixelswalked % a.entity.lane.length)) - (b.entity.lane.length - (b.entity.pixelswalked % b.entity.lane.length));
-// };
+const sort = function(a, b) {
+    //return (b.entity.lane.length - (b.entity.pixelswalked % b.entity.lane.length)) - (a.entity.lane.length - (a.entity.pixelswalked % a.entity.lane.length));
+    return b.entity.pixelswalked - a.entity.pixelswalked;
+};
 
 const ArcherTower = compose(GenericEntity).compose({
     loadAssets(loader) {
@@ -27,9 +28,9 @@ const ArcherTower = compose(GenericEntity).compose({
             ArcherTower.texture = resources.archertower.texture;
         });
     },
-    init: function() {
+    init: function({ worldscale }) {
         this.hunter = true;
-        this.range = 100;
+        this.range = 200 * worldscale;
         this.firerate = 200;
         this.firedamage = 9;
 
@@ -40,7 +41,7 @@ const ArcherTower = compose(GenericEntity).compose({
     methods: {
         engage(matches, { ballisticSystem }) {
 
-            //matches.sort(sort);
+            matches.sort(sort);
             const match = matches[0];
             const { distance, entity } = match;
 

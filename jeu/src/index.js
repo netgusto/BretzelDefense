@@ -5,17 +5,19 @@
 import 'babel-polyfill';
 import 'perfnow';   // Polyfill for high resolution timer
 
-import { Container as PixiContainer, Graphics } from 'pixi.js';
+import { Container as PixiContainer } from 'pixi.js';
 import { GameSet, gameloop, cursorkeys } from 'bobo';
 
 //import { vec2 } from 'gl-matrix';
 import { curveToLane } from './Utils/lane';
+//import { drawSVGPath } from './Utils/svg';
+import resolutionFinder from './Utils/resolution';
+import creepsautospawn from './Utils/creepsautospawn';
 
 import SpatialHash from './Utils/spatialhash';
 
 import Background from './Entity/Background';
 import Mummy from './Entity/Mummy';
-import PulsedLaserTower from './Entity/PulsedLaserTower';
 import FireballTower from './Entity/FireballTower';
 import ArcherTower from './Entity/ArcherTower';
 import GenericEntity from './Entity/Generic';
@@ -24,12 +26,18 @@ import DebugSystem from './System/Debug';
 import ZIndexSystem from './System/ZIndex';
 import RangeDetectionSystem from './System/RangeDetection';
 import BallisticSystem from './System/Ballistic';
-
-const cursor = cursorkeys();
+import MoveCreepsSystem from './System/MoveCreeps';
+import LifebarSystem from './System/Lifebar';
+import SpatialTrackingSystem from './System/SpatialTracking';
+import DeathSystem from './System/Death';
 
 const debug = true;
-
 const gridcellsize = 128;
+
+const resolution = resolutionFinder();
+const cursor = cursorkeys();
+
+Background.setTexturePath('/assets/sprites/level-' + resolution.width + '-' + resolution.height + '.jpg');
 
 (function(mountnode: HTMLElement, viewwidth: number, viewheight: number) {
 
@@ -37,7 +45,7 @@ const gridcellsize = 128;
     const canvas = new PixiContainer(0xFF0000 /* white */, true /* interactive */);
     const game = new GameSet(mountnode, viewwidth, viewheight, canvas);
     game
-        .requires(Background, Mummy, PulsedLaserTower, FireballTower, ArcherTower)
+        .requires(Background, Mummy, FireballTower, ArcherTower)
         .load()
         .then(function(/*{ loader, resources }*/) {
 
@@ -45,56 +53,40 @@ const gridcellsize = 128;
                 viewwidth,
                 viewheight,
                 onclick(event) {
-                    console.log(event);
-                    const clickpoint = event.data.getLocalPosition(event.target);
-                    //const tower = PulsedLaserTower()
-                    //const tower = FireballTower()
+                    
+                    //const clickpoint = event.data.getLocalPosition(event.target);
+                    const clickpoint = event.data.global;
+
                     let tower;
                     if(cursor.shift) {
-                        tower = FireballTower();
+                        tower = FireballTower({ worldscale: resolution.worldscale });
                     } else {
-                        tower = ArcherTower();
+                        tower = ArcherTower({ worldscale: resolution.worldscale });
                     }
 
                     tower.setPosition(clickpoint.x, clickpoint.y);
 
                     game.addEntity(tower);
 
-                    //circle.drawCircle(tower.displayobject.x, tower.displayobject.y, tower.range);
+                    // let circle = new Graphics();
+                    // circle.lineStyle(1, 0xFFFF00);
+                    // game.addEntity(GenericEntity({
+                    //     displayobject: circle
+                    // }));
+                    // circle.drawCircle(tower.displayobject.x, tower.displayobject.y, tower.range);
                 }
             }));
 
-            const pointer = new Graphics();
-
-            /*
-            bgsprite.mousemove = function(e) {
-                pointer.clear();
-                pointer.lineStyle(2, 0xFF0000);
-                pointer.position.set(e.data.global.x, e.data.global.y);
-                pointer.drawCircle(0, 0, pointerentity.range);
-            };
-            */
-
-            const pointerentity = GenericEntity({
-                displayobject: pointer
-            });
-            pointerentity.hunter = true;
-            pointerentity.range = 20;
-            pointerentity.engage = function(matches) {
-                matches.map(match => match.entity.doStop());
-            };
-            game.addEntity(pointerentity);
-
             const curves = [
-                { name: 'blue',       color: 0x0000FF, offsetx: 0, offsety: 0, path: 'M1280,378.771481 C1280,378.771481 1232.26953,379.203125 1189.68359,387.875 C1147.09766,396.546875 1048.55273,454.15039 989.744141,458.630859 C930.935547,463.111329 880.714844,455.652343 880.714844,416.472656 C880.714844,377.292968 998.042608,375.023725 1018.82227,336.93164 C1041.0625,296.162109 1000.88477,260.160156 941.800781,256.066406 C882.716797,251.972656 736.179688,287.751952 689.664062,287.751954 C643.148438,287.751956 464.777344,251.730469 429.648438,256.066406 C394.519531,260.402344 353.539062,271.609374 350.703125,321.666015 C347.867188,371.722656 498.990234,380.554687 490.714844,432.554687 C482.439453,484.554688 372.416016,460.025396 318.521484,438.080082 C264.626953,416.134769 214.911215,391.091939 156.744141,381.607419 C98.5770663,372.122898 0,378.771481 0,378.771481' },
-                { name: 'blue bis',   color: 0x0000FF, offsetx: 0, offsety: 0, path: 'M1280,378.771481 C1280,378.771481 1232.26953,379.203125 1189.68359,387.875 C1147.09766,396.546875 1048.55273,454.15039 989.744141,458.630859 C930.935547,463.111329 886.121094,458.769533 880.714844,416.472656 C875.308594,374.175778 1141.70313,341.210935 1152.00391,242.896482 C1156.31004,201.797187 1082.0332,164.150391 1022.94922,160.056641 C963.865234,155.962891 736.822266,162.279291 690.306641,162.279293 C643.791016,162.279295 369.017578,159.001954 329.537109,169.976563 C290.056641,180.951171 210.378906,204.734376 244.351562,275.472653 C278.324219,346.210931 504.302734,379.45508 490.714844,432.554687 C477.126953,485.654294 372.416016,460.025396 318.521484,438.080082 C264.626953,416.134769 214.911215,391.091939 156.744141,381.607419 C98.5770663,372.122898 0,378.771481 0,378.771481' },
-                { name: 'yellow',     color: 0xFFFF00, offsetx: 0, offsety: 0, path: 'M1280,397 C1280,397 1248.55273,392.339844 1205.9668,401.011719 C1163.38086,409.683594 1051.16406,470.589847 992.355469,475.070317 C933.546875,479.550786 899.894531,469.830078 881.232422,453.875 C862.570312,437.919922 857.880859,413.302734 874.466797,394.429688 C892.342498,374.089026 983.948206,363.760734 1005.46094,330.433594 C1020.51172,307.117191 997.005859,274.357422 937.921875,270.263672 C878.837891,266.169922 734.679688,301.999998 688.164062,302 C641.648438,302.000002 495.789062,264.042969 443.199219,264.042969 C390.609375,264.042969 368.271484,283.953125 368.271484,322.666016 C368.271484,361.378906 509.869141,374.835938 506.033203,434.755859 C502.197266,494.675781 360.412109,472.937501 306.517578,450.992188 C252.623047,429.046874 211.391684,406.566551 153.224609,397.08203 C95.057535,387.59751 0,397 0,397' },
-                { name: 'yellow bis', color: 0xFFFF00, offsetx: 0, offsety: 0, path: 'M1280,397 C1280,397 1248.55273,392.339844 1205.9668,401.011719 C1163.38086,409.683594 1051.16406,470.589847 992.355469,475.070317 C933.546875,479.550786 899.894531,469.830078 881.232422,453.875 C862.570312,437.919922 857.880859,413.302734 874.466797,394.429688 C892.342498,374.089026 1164.48828,307.953131 1137.28125,234.335941 C1110.07422,160.71875 976.537109,166.21875 919.453125,166.21875 C857.992952,166.21875 736.28125,173.433592 689.765625,173.433594 C643.25,173.433596 481.601562,164.962891 395.216797,170.289063 C308.832031,175.615235 234.371094,201.853526 248.240234,258.740237 C262.109375,315.626948 517.943359,373.753902 506.033203,434.755859 C494.123047,495.757817 360.412109,472.937501 306.517578,450.992188 C252.623047,429.046874 211.391684,406.566551 153.224609,397.08203 C95.057535,387.59751 0,397 0,397' },
-                { name: 'red',        color: 0xFF0000, offsetx: 0, offsety: 0, path: 'M1280,410.960933 C1280,410.960933 1257.97488,406.857417 1215.3857,415.529292 C1172.79651,424.201167 1055.49459,484.468745 996.68151,488.949214 C937.868429,493.429683 887.285156,478.417969 865.605469,459.03125 C843.925781,439.644531 832.42578,408.855812 858.044922,384.44175 C883.664064,360.027687 952.684678,353.39779 980.109375,334.673828 C1010.71327,313.779297 987.630038,285.947266 928.541545,281.853516 C869.453053,277.759766 733.534731,316.019531 687.904297,313.148438 C642.273862,310.277344 492.611802,280.578125 459.689368,278.388672 C426.766935,276.199219 384.652394,281.853516 386.910378,318.550782 C389.692294,363.763091 530.152344,370.998047 518.455078,435.867188 C504.290082,514.421541 359.834094,488.808595 305.93545,466.863281 C252.036807,444.917968 207.057872,422.453271 148.886359,412.96875 C90.7148466,403.484229 0,415.529297 0,415.529297' },
-                { name: 'red bis',    color: 0xFF0000, offsetx: 0, offsety: 0, path: 'M1280,412.960933 C1280,412.960933 1257.97488,408.857417 1215.3857,417.529292 C1172.79651,426.201167 1055.49459,486.468745 996.68151,490.949214 C937.868429,495.429683 887.285156,480.417969 865.605469,461.03125 C843.925781,441.644531 832.42578,410.855812 858.044922,386.44175 C883.664064,362.027687 1104.53516,315.347654 1122.88672,251.19531 C1139.21012,194.132913 1030.11193,184.101562 971.023438,180.007812 C911.934945,175.914062 729.976138,190.302735 684.345703,187.431641 C638.715269,184.560547 446.183594,175.863281 374.271484,183.896485 C302.359375,191.929688 247.057077,218.391101 262.664062,254.894531 C287.386719,312.71875 512.369141,376.087898 518.275391,419.939461 C531.574397,518.679308 359.834094,490.808595 305.93545,468.863281 C252.036807,446.917968 207.057872,424.453271 148.886359,414.96875 C90.7148466,405.484229 0,417.529297 0,417.529297' }
+                { name: 'red',           width: 2048, height: 1536, color: 0xFF0000, offsetx: resolution.offsetx, offsety: resolution.offsety, path: 'M849.785463,1609.33256 C849.785463,1609.33256 824.518578,1222.63558 874.98358,1150.3126 C925.448581,1077.98961 1010.21881,1080.7982 1093.81234,1080.7982 C1196.92576,1080.7982 1268.50285,974.359992 1225.82594,903.722092 C1183.14903,833.084192 1063.51958,818.921084 966.97361,847.894996 C918.190631,862.535003 811.767647,929.738386 625.088409,877.261521 C547.918818,855.568598 485.131987,779.784834 485.131987,699.706817 C485.131987,619.628801 521.333161,570.972113 625.088414,525.760228 C728.843667,480.548343 861.917457,543.752143 944.033402,494.94072 C1026.14935,446.129297 1016.49876,323.355616 1034.29848,275.432611 C1052.09819,227.509607 1125.01623,158.854929 1225.82594,158.85493 C1326.63564,158.85493 1376.43011,182.498321 1406.92917,239.54051 C1437.42823,296.582699 1427.68029,402.373258 1476.54638,470.116591 C1525.41246,537.859923 1645.34564,508.559325 1738.55632,508.559314 C1831.767,508.559303 2049.73042,480.473832 2181.7211,393.448956 C2313.71178,306.424081 2373.2371,361.935898 2373.2371,361.935898' },
+                { name: 'yellow',        width: 2048, height: 1536, color: 0xFFFF00, offsetx: resolution.offsetx, offsety: resolution.offsety, path: 'M893.797638,1638.67902 C893.797638,1638.67902 868.530753,1251.98205 918.995754,1179.65906 C969.460756,1107.33608 1073.43463,1129.11884 1154.19729,1112.615 C1225.38469,1098.06787 1299.21393,989.720953 1281.03029,920.748165 C1262.84666,851.775378 1207.76266,829.714986 1165.23472,809.200078 C1056.09828,756.554127 918.995762,844.742544 757.617787,855.971005 C676.069004,861.645059 586.99939,808.135072 554.995584,750.501419 C523.66663,694.083067 548.151387,633.971659 584.147919,597.802368 C653.495752,528.121712 889.54542,581.335105 971.661365,532.523682 C1053.77731,483.712259 1060.51094,352.702079 1078.31065,304.779075 C1096.11036,256.85607 1124.57497,202.817307 1225.38468,202.817308 C1272.22612,202.817308 1360.95705,221.823731 1379.20376,304.779077 C1397.45048,387.734422 1427.60797,499.111974 1478.93147,532.523682 C1550.62671,579.197437 1720.19005,549.363508 1781.77189,549.363508 C1925.69973,549.363508 2093.74259,509.820296 2225.73327,422.79542 C2357.72395,335.770545 2417.24927,391.282361 2417.24927,391.282361' },
+                { name: 'blue',          width: 2048, height: 1536, color: 0x0000FF, offsetx: resolution.offsetx, offsety: resolution.offsety, path: 'M947.185318,1615.31075 C947.185318,1615.31075 933.100278,1263.32563 976.658575,1200.90086 C1020.21687,1138.47609 1198.53437,1151.85049 1244.61707,1111.50305 C1347.95977,1021.02194 1337.19011,955.041572 1321.49511,895.508487 C1305.80012,835.975403 1279.38555,808.805216 1198.36418,768.464665 C1105.10066,722.028749 959.076703,790.951645 821.344481,808.805227 C725.485455,821.230983 633.359386,804.746667 605.735661,755.000829 C578.694428,706.303964 583.842179,669.17308 612.876177,636.950093 C676.796986,566.008456 938.383376,602.717268 1009.26083,560.586238 C1080.13828,518.455209 1094.44325,398.7663 1109.80687,357.402099 C1125.17049,316.037898 1138.07944,245.042972 1225.0922,245.042972 C1265.52286,245.042972 1332.21028,261.448151 1347.95973,333.050122 C1363.70917,404.652094 1384.87665,531.747299 1429.17595,560.586238 C1491.05889,600.872165 1658.90938,585.969882 1712.06305,585.969882 C1776.5347,585.969882 1937.76607,572.55721 2067.86252,540.806034 C2188.44746,511.376223 2279.71828,464.893012 2305.25319,430.54472' }
             ];
 
-            const lanes = curves.map(curveToLane);
+            const lanes = curves.map(curveToLane(
+                viewwidth,
+                viewheight
+            ));
 
             // pre-memoizing lanes
             const beforememoization = performance.now();
@@ -102,217 +94,49 @@ const gridcellsize = 128;
             console.info('Path memoization took', performance.now() - beforememoization, 'ms');
 
             if(debug) {
-                // Drawing lanes
-                //lanes.map(lane => drawSVGPath(graphics, lane.path, lane.color, lane.offsetx, lane.offsety));
+                // const graphics = new Graphics();
+                // game.addEntity(GenericEntity({
+                //     displayobject: graphics
+                // }));
+                // // Drawing lanes
+                // lanes.map(lane => drawSVGPath(graphics, lane.path, lane.color, 0, 0));
             }
 
-            let mummyindex = 0;
-
-            window.setInterval(function() {
-                if(game.entities.length >= 100) return;
-
-                const mummy = Mummy()
-                    .doRun()
-                    .setVelocityPerSecond(20 + Math.floor(Math.random() * 50));
-                game.addEntity(mummy);
-                mummy.creep = true;
-                mummy.lane = lanes[mummyindex % lanes.length];
-                mummy.prevpos = { x: 0, y: 0 };
-                mummy.pixelswalked = 0;
-                mummy.matchcount = 0;
-                mummy.maxlife = 100;
-                mummy.life = mummy.maxlife;
-
-                mummyindex++;
-
-                const bounds = mummy.displayobject.getBounds();
-                spatialhash.insert(
-                    bounds.x,
-                    bounds.y,
-                    bounds.width,
-                    bounds.height,
-                    mummy.id,
-                    mummy
-                );
-            }, 50);
-
-            let creeps = [];
-            game.addSystem({
-                process(entities) {
-                    creeps = [];
-                    for(let i = 0; i < entities.length; i++) {
-                        if(entities[i].creep) {
-                            creeps.push(entities[i]);
-                        }
-                    }
-                }
-            });
-
-            game.addSystem({
-                process(entities, { deltatime }) {
-
-                    for(let i = 0; i < creeps.length; i++) {
-                        const mummy = creeps[i];
-
-                        const newpos = mummy.lane.getPointAtLengthLoop(mummy.pixelswalked);
-                        const prevpos = mummy.prevpos;
-                        newpos.x += mummy.lane.offsetx;
-                        newpos.y += mummy.lane.offsety;
-
-                        // On détermine la direction du mouvement
-
-                        let /*up = false, down = false,*/ left = false, right = false;
-                        if(newpos.x > prevpos.x) {
-                            right = true
-                        } else if(newpos.x < prevpos.x) {
-                            left = true;
-                        }
-
-                        /*
-                        if(newpos.y > prevpos.y) {
-                            down = true
-                        } else if(newpos.y < prevpos.y) {
-                            up = true;
-                        }
-                        */
-
-                        if(left) {
-                            mummy.displayobject.scale.x = Math.abs(mummy.displayobject.scale.x) * -1;
-                        } else if(right) {
-                            mummy.displayobject.scale.x = Math.abs(mummy.displayobject.scale.x);
-                        }
-
-                        mummy.setPosition(newpos.x, newpos.y);
-                        mummy.prevpos = newpos;
-                        mummy.pixelswalked += deltatime * mummy.walk.velocityms;
-                    }
-                }
-            });
-
-            // Lifebar
-            const lifebarwidth = 16;
-            const lifebarheight = 2;
-            const halfwidth = lifebarwidth/2;
-            const lifebar = new Graphics();
-            game.addEntity(GenericEntity({
-                displayobject: lifebar
-            }));
-
-            game.addSystem({
-                process(entities) {
-                    lifebar.clear();
-                    for(let i = 0; i < entities.length; i++) {
-                        if(entities[i].maxlife) {
-                            const maxlife = entities[i].maxlife;
-                            const life = entities[i].life;
-                            const displayobject = entities[i].displayobject;
-
-                            const xstart = displayobject.x - halfwidth;
-                            const xend = displayobject.x + halfwidth;
-                            const y = displayobject.y - displayobject.height - 3;
-
-                            lifebar.lineStyle(lifebarheight, 0x62AA21);
-                            lifebar.moveTo(xstart, y);
-                            lifebar.lineTo(xend, y);
-
-                            lifebar.lineStyle(lifebarheight, 0xC32427);
-                            lifebar.moveTo(xstart + Math.ceil((life/maxlife)*lifebarwidth), y);
-                            lifebar.lineTo(xend, y);
-                        }
-                    }
-                }
-            });
+            // Déplacement des creeps
+            game.addSystem(MoveCreepsSystem());
+            game.addSystem(LifebarSystem({ game }));
 
             // ////////////////
 
-            let circle = new Graphics();
-            circle.lineStyle(1, 0xFFFF00);
-            game.addEntity(GenericEntity({
-                displayobject: circle
-            }));
-
-            const spatialhash = new SpatialHash({ cellwidth: gridcellsize, cellheight: gridcellsize, worldwidth: viewwidth, worldheight: viewheight });
-
-            game.addSystem({
-                process: function() {
-
-                    for(let i = 0; i < creeps.length; i++) {
-                        const entity = creeps[i];
-                        const bounds = entity.displayobject.getBounds();
-                        spatialhash.update(
-                            bounds.x,
-                            bounds.y,
-                            bounds.width,
-                            bounds.height,
-                            entity.id
-                        );
-                    }
-                }
+            const spatialhash = new SpatialHash({
+                cellwidth: (gridcellsize * resolution.worldscale)|0,
+                cellheight: (gridcellsize * resolution.worldscale)|0,
+                worldwidth: viewwidth,
+                worldheight: viewheight
             });
+
+            game.addSystem(SpatialTrackingSystem({ spatialhash }));
 
             // Le tracker de projectiles
             var projectiles = new PixiContainer();
-            game.addEntity(GenericEntity({
-                displayobject: projectiles
-            }));
+            game.addEntity(GenericEntity({ displayobject: projectiles }));
             const ballisticSystem = new BallisticSystem({ container: projectiles });
 
-            // Les lasers
-
-            var lasers = new Graphics();
-            game.addEntity(GenericEntity({
-                displayobject: lasers
-            }));
-
-            game.addSystem({
-                process: function() {
-                    lasers.clear();
-                    lasers.lineStyle(2, 0xFF0000);
-                    lasers.alpha = 0.8;
-                }
-            });
 
             game.addSystem(new RangeDetectionSystem({
                 spatialhash,
-                onenter: function(entity/*, hunterentity, distance*/) {
-                    entity.matchcount++;
-                },
-                onrange: function(/*entity, hunterentity, distance*/) {
-                    //entity.setTint(0xFF0000);
-                    //entity.displayobject.alpha = distance / hunterentity.range;
-                },
+                onenter: function(entity/*, hunterentity, distance*/) { entity.matchcount++; },
+                onrange: function(/*entity, hunterentity, distance*/) { },
                 onrangebulk: function(matches, hunter) {
-                    //console.log(matches);
-
                     if(!matches.length) return;
-
-                    hunter.engage(matches, { lasers, ballisticSystem });
+                    hunter.engage(matches, { ballisticSystem });
                 },
-                onleave: function(entityid/*, hunterentity*/) {
-                    const entity = game.getEntity(entityid);
-                    if(!entity) return; // creep has died !
-                    entity.matchcount--;
-                    if(entity.matchcount === 0) {
-                        entity.setTint(0xFFFFFF);
-                    }
-                }
+                onleave: function(/*entityid, hunterentity*/) { }
             }));
 
             game.addSystem(ballisticSystem);
 
-            game.addSystem({
-                process(entities) {
-                    for(let i = 0; i < entities.length; i++) {
-                        const entity = entities[i];
-                        if(entity.maxlife && entity.life <= 0) {
-                            spatialhash.remove(entity.id)
-                            entity.remove();
-                        }
-                    }
-                }
-            });
-
-            ////////////////////
+            game.addSystem(DeathSystem({ spatialhash }));
 
             game.addSystem(new ZIndexSystem());
 
@@ -320,6 +144,8 @@ const gridcellsize = 128;
                 game.addSystem(new DebugSystem({ stage: canvas, cbk: (msg) => msg += '; '  + game.entities.length + ' entities' }));
             }
 
+            creepsautospawn({ game, resolution, spatialhash, lanes });
+
         }).then(() => game.run(gameloop()));
 
-})(document.getElementById('app'), 1280, 720);
+})(document.getElementById('app'), resolution.width, resolution.height);

@@ -32,7 +32,7 @@ export default class Ballistic {
                 // On détermine la position supposée de la cible en T+flightduration
 
                 const { target, hunter, flightduration } = projectileprops;
-                const targetpixelswalkedwhenprojectilehits = target.pixelswalked + (target.walk.velocityms * flightduration);
+                const targetpixelswalkedwhenprojectilehits = target.pixelswalked + (target.velocitypermillisecond * flightduration);
 
                 const pointatlength = target.lane.getPointAtLengthLoop(targetpixelswalkedwhenprojectilehits);
                 const predictiveimpact = [pointatlength.x, pointatlength.y - (target.displayobject.height / 2)];
@@ -62,7 +62,7 @@ export default class Ballistic {
         //console.log('LENGTH', this.inflight.length);
 
         const hits = [];
-        for(let i = this.inflight.length-1; i > 0; --i) {  // reverse order to allow splice while looping below
+        for(let i = this.inflight.length-1; i >= 0; --i) {  // reverse order to allow splice while looping below
 
             const projectileprops = this.inflight[i];
             const { target, displayobject, orient, homing, firetime, flightduration, parabolic } = projectileprops;

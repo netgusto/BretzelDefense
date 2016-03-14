@@ -66,12 +66,59 @@ export function path2js(path) {
     return pathData;
 }
 
-export function drawSVGPath(graphics, path, color, offsetx, offsety) {
-    const instructions = path2js(path);
+export function scalejspath(jspath, scalex, scaley, offsetx, offsety) {
+    return jspath.map(instruction => {
+        switch(instruction.instruction) {
+            case 'M': {
+                // Move to
+                instruction.data[0] = scalex * instruction.data[0] + offsetx;
+                instruction.data[1] = scaley * instruction.data[1] + offsety;
+                break;
+            }
+            case 'C': {
+                // Curve to
+                instruction.data[0] = scalex * instruction.data[0] + offsetx;
+                instruction.data[2] = scalex * instruction.data[2] + offsetx;
+                instruction.data[4] = scalex * instruction.data[4] + offsetx;
+                instruction.data[1] = scaley * instruction.data[1] + offsety;
+                instruction.data[3] = scaley * instruction.data[3] + offsety;
+                instruction.data[5] = scaley * instruction.data[5] + offsety;
+            }
+        }
 
-    graphics.lineStyle(2, color);
+        return instruction;
+    });
+}
 
-    instructions.map(instruction => {
+export function jsToSVGPath(jspath) {
+    return jspath.map(instruction => {
+        let res = '';
+        switch(instruction.instruction) {
+            case 'M': {
+                // Move to
+                res = 'M' + instruction.data[0] + ',' + instruction.data[1];
+                break;
+            }
+            case 'C': {
+                // Curve to
+                res = 'C' +
+                    instruction.data[0] + ',' + instruction.data[1] + ' ' +
+                    instruction.data[2] + ',' + instruction.data[3] + ' ' +
+                    instruction.data[4] + ',' + instruction.data[5];
+                    break;
+            }
+        }
+
+        return res;
+    }).join(' ');
+}
+
+export function drawSVGPath(graphics, path, color, offsetx = 0, offsety = 0) {
+    const jspath = path2js(path);
+
+    graphics.lineStyle(5, color);
+
+    jspath.map(instruction => {
         switch(instruction.instruction) {
             case 'M': {
                 // Move to

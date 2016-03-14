@@ -4,13 +4,16 @@
 
 import compose from 'compose-js';
 
-import { Sprite } from 'pixi.js';
+import { Sprite, Graphics, Text } from 'pixi.js';
 
 import GenericEntity from './Generic';
 
 const Background = compose(GenericEntity).compose({
+    setTexturePath(texturepath) {
+        Background.texturepath = texturepath;
+    },
     loadAssets(loader) {
-        loader.add('background', '/assets/sprites/level_pagras-v2.png');
+        loader.add('background', Background.texturepath);
         loader.once('complete', (_, resources) => {
             Background.texture = resources.background.texture;
         });
@@ -21,6 +24,22 @@ const Background = compose(GenericEntity).compose({
 
         this.displayobject.interactive = true;
         this.displayobject.click = this.displayobject.tap = onclick;
+
+        const pointer = new Graphics();
+        const text = new Text('', { font: '10px Arial', fill: 'red' });
+        text.position.set(-25, -20);
+
+        pointer.addChild(text);
+        this.displayobject.addChild(pointer);
+
+        this.displayobject.mousemove = function(e) {
+            pointer.clear();
+            pointer.lineStyle(2, 0xFF0000);
+            pointer.position.set(e.data.global.x, e.data.global.y);
+            pointer.drawCircle(0, 0, 2);
+            text.text = e.data.global.x + ',' + e.data.global.y;
+            text.position.set(-text.width/2, -20);
+        };
     }
 });
 
