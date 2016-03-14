@@ -2,18 +2,18 @@
 
 import Mummy from '../Entity/Mummy';
 
-export default function({ game, resolution, spatialhash, lanes }) {
+export default function({ layer, resolution, spatialhash, lanes }) {
     // Vagues de creeps
     let mummyindex = 0;
 
     window.setInterval(function() {
-        if(game.entities.length >= 100) return;
+        if(layer.entities.length >= 100) return;
 
         const mummy = Mummy({
             worldscale: resolution.worldscale
         })
             .setVelocityPerSecond((20 + Math.floor(Math.random() * 50)) * resolution.worldscale);
-        game.addEntity(mummy);
+        layer.addEntity(mummy);
         mummy.creep = true;
         mummy.lane = lanes[mummyindex % lanes.length];
         mummy.prevpos = { x: 0, y: 0 };

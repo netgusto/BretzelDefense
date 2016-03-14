@@ -36,7 +36,7 @@ const Pathable = compose({
             return this.path.route.steps !== null;
         },
         isRouteValid(target) {
-            
+
             if(target === null) {
 
                 if(this.path.route.target === null) {

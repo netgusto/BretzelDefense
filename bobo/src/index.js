@@ -2,10 +2,53 @@
 
 /* @flow */
 
-import { autoDetectRenderer, extras as PixiExtras, Texture, Rectangle, loader } from 'pixi.js';
+import { autoDetectRenderer, extras as PixiExtras, Texture, Rectangle, loader, Container } from 'pixi.js';
 
 // $FlowFixMe
 import keyboardjs from 'keyboardjs';
+
+export class GameLayer {
+    constructor(game) : void {
+        this.game = game;
+        this.container = new Container();
+        this.entities = new Array();
+    }
+
+    addEntity(entity: Object) {
+        this.entities.push(entity);
+        this.game.entities.push(entity);
+        this.game.entitybyid[entity.id] = entity;
+        this.container.addChild(entity.displayobject);
+        entity.remove = () => {
+            let index;
+            entity.displayobject.parent.removeChild(entity.displayobject);
+
+            index = this.entities.indexOf(entity);
+            if(index !== -1) {
+                this.entities.splice(index, 1);
+            }
+
+            index = this.game.entities.indexOf(entity);
+            if(index === -1) return;
+            this.game.entities.splice(index, 1);
+            delete this.game.entitybyid[entity.id];
+        };
+
+        return this;
+    }
+
+    addChild(displayobject) {
+        this.container.addChild(displayobject);
+    }
+
+    getContainer() {
+        return this.container;
+    }
+
+    sort(cbk) {
+        this.container.children.sort(cbk);
+    }
+};
 
 export class GameSet {
 
@@ -21,21 +64,13 @@ export class GameSet {
         this.entities = new Array();
         this.entitybyid = {};
         this.systems = new Array();
+        this.layers = new Array();
         node.appendChild(this.renderer.view);
     }
 
-    addEntity(entity: Object) {
-        this.entities.push(entity);
-        this.entitybyid[entity.id] = entity;
-        this.canvas.addChild(entity.displayobject);
-        entity.remove = () => {
-            entity.displayobject.parent.removeChild(entity.displayobject);
-            const index = this.entities.indexOf(entity);
-            if(index === -1) return;
-            this.entities.splice(index, 1);
-            delete this.entitybyid[entity.id];
-        };
-
+    addLayer(layer) {
+        this.layers.push(layer);
+        this.canvas.addChild(layer.getContainer());
         return this;
     }
 
@@ -47,23 +82,13 @@ export class GameSet {
         return this.entitybyid[id];
     }
 
-    sortStage(cbk) {
-        this.canvas.children.sort(cbk);
-    }
-
     addSystem(system: Object) {
         this.systems.push(system);
         return this;
     }
 
     requires(...entities) {
-
         entities.map(entity => entity.loadAssets && entity.loadAssets(loader));
-
-        //loader.add('mummy', '/assets/sprites/metalslug_mummy37x45.png');
-        //loader.add('background', '/assets/sprites/level_pagras-v2.png');
-        //loader.add('flag', '/assets/sprites/flag.png');
-
         return this;
     }
 

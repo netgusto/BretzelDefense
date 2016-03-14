@@ -3,14 +3,14 @@
 import { Graphics } from 'pixi.js';
 import GenericEntity from '../Entity/Generic';
 
-export default function({ game }) {
+export default function({ layer }) {
 
     // Lifebar
     const lifebarwidth = 16;
     const lifebarheight = 2;
     const halfwidth = lifebarwidth/2;
     const lifebar = new Graphics();
-    game.addEntity(GenericEntity({
+    layer.addEntity(GenericEntity({
         displayobject: lifebar
     }));
 

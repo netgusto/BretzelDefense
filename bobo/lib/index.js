@@ -3,7 +3,7 @@
 Object.defineProperty(exports, "__esModule", {
     value: true
 });
-exports.GameSet = undefined;
+exports.GameSet = exports.GameLayer = undefined;
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
@@ -24,6 +24,63 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
+var GameLayer = exports.GameLayer = function () {
+    function GameLayer(game) {
+        _classCallCheck(this, GameLayer);
+
+        this.game = game;
+        this.container = new _pixi.Container();
+        this.entities = new Array();
+    }
+
+    _createClass(GameLayer, [{
+        key: 'addEntity',
+        value: function addEntity(entity) {
+            var _this = this;
+
+            this.entities.push(entity);
+            this.game.entities.push(entity);
+            this.game.entitybyid[entity.id] = entity;
+            this.container.addChild(entity.displayobject);
+            entity.remove = function () {
+                var index = undefined;
+                entity.displayobject.parent.removeChild(entity.displayobject);
+
+                index = _this.entities.indexOf(entity);
+                if (index !== -1) {
+                    _this.entities.splice(index, 1);
+                }
+
+                index = _this.game.entities.indexOf(entity);
+                if (index === -1) return;
+                _this.game.entities.splice(index, 1);
+                delete _this.game.entitybyid[entity.id];
+            };
+
+            return this;
+        }
+    }, {
+        key: 'addChild',
+        value: function addChild(displayobject) {
+            this.container.addChild(displayobject);
+        }
+    }, {
+        key: 'getContainer',
+        value: function getContainer() {
+            return this.container;
+        }
+    }, {
+        key: 'sort',
+        value: function sort(cbk) {
+            this.container.children.sort(cbk);
+        }
+    }]);
+
+    return GameLayer;
+}();
+
+;
+
 var GameSet = exports.GameSet = function () {
     function GameSet(node, width, height, canvas) {
         _classCallCheck(this, GameSet);
@@ -35,25 +92,15 @@ var GameSet = exports.GameSet = function () {
         this.entities = new Array();
         this.entitybyid = {};
         this.systems = new Array();
+        this.layers = new Array();
         node.appendChild(this.renderer.view);
     }
 
     _createClass(GameSet, [{
-        key: 'addEntity',
-        value: function addEntity(entity) {
-            var _this = this;
-
-            this.entities.push(entity);
-            this.entitybyid[entity.id] = entity;
-            this.canvas.addChild(entity.displayobject);
-            entity.remove = function () {
-                entity.displayobject.parent.removeChild(entity.displayobject);
-                var index = _this.entities.indexOf(entity);
-                if (index === -1) return;
-                _this.entities.splice(index, 1);
-                delete _this.entitybyid[entity.id];
-            };
-
+        key: 'addLayer',
+        value: function addLayer(layer) {
+            this.layers.push(layer);
+            this.canvas.addChild(layer.getContainer());
             return this;
         }
     }, {
@@ -65,11 +112,6 @@ var GameSet = exports.GameSet = function () {
         key: 'getEntity',
         value: function getEntity(id) {
             return this.entitybyid[id];
-        }
-    }, {
-        key: 'sortStage',
-        value: function sortStage(cbk) {
-            this.canvas.children.sort(cbk);
         }
     }, {
         key: 'addSystem',

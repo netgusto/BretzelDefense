@@ -1,16 +1,9 @@
 'use strict';
 
-//import { vec2 } from 'gl-matrix';
-
-import { Graphics } from 'pixi.js';
-
 export default class Ballistic {
 
-    constructor({ container }) {
-        this.container = container;
-        this.debuggraphics = new Graphics();
-        this.debuggraphics.lineStyle(1, 0xFF0000);
-        this.container.addChild(this.debuggraphics);
+    constructor({ layer }) {
+        this.layer = layer;
         this.pendinglaunch = [];
         this.inflight = [];
     }
@@ -56,7 +49,7 @@ export default class Ballistic {
 
             projectileprops.firetime = now;
             this.inflight.push(projectileprops);
-            this.container.addChild(projectileprops.displayobject);
+            this.layer.addChild(projectileprops.displayobject);
         }
 
         //console.log('LENGTH', this.inflight.length);
