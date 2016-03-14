@@ -2,22 +2,22 @@
 
 /* @flow */
 
-import { autoDetectRenderer, extras as PixiExtras, Texture, Rectangle, loader, Container } from 'pixi.js';
+import { extras as PixiExtras, Texture, Rectangle, loader, Container } from 'pixi.js';
 
 // $FlowFixMe
 import keyboardjs from 'keyboardjs';
 
 export class GameLayer {
-    constructor(game) : void {
-        this.game = game;
+    constructor(stage) : void {
+        this.stage = stage;
         this.container = new Container();
         this.entities = new Array();
     }
 
     addEntity(entity: Object) {
         this.entities.push(entity);
-        this.game.entities.push(entity);
-        this.game.entitybyid[entity.id] = entity;
+        this.stage.entities.push(entity);
+        this.stage.entitybyid[entity.id] = entity;
         this.container.addChild(entity.displayobject);
         entity.remove = () => {
             let index;
@@ -28,10 +28,10 @@ export class GameLayer {
                 this.entities.splice(index, 1);
             }
 
-            index = this.game.entities.indexOf(entity);
+            index = this.stage.entities.indexOf(entity);
             if(index === -1) return;
-            this.game.entities.splice(index, 1);
-            delete this.game.entitybyid[entity.id];
+            this.stage.entities.splice(index, 1);
+            delete this.stage.entitybyid[entity.id];
         };
 
         return this;
@@ -50,27 +50,19 @@ export class GameLayer {
     }
 };
 
-export class GameSet {
+export class GameStage {
 
-    width: number;
-    height: number;
-    renderer: WebGLRenderer|CanvasRenderer;
-
-    constructor(node: HTMLElement, width: number, height: number, canvas: PixiContainer ) : void {
-        this.width = width;
-        this.height = height;
-        this.canvas = canvas;
-        this.renderer = autoDetectRenderer(width, height);
+    constructor(container) : void {
+        this.container = container;
         this.entities = new Array();
         this.entitybyid = {};
         this.systems = new Array();
         this.layers = new Array();
-        node.appendChild(this.renderer.view);
     }
 
     addLayer(layer) {
         this.layers.push(layer);
-        this.canvas.addChild(layer.getContainer());
+        this.container.addChild(layer.getContainer());
         return this;
     }
 
@@ -87,7 +79,7 @@ export class GameSet {
         return this;
     }
 
-    requires(...entities) {
+    require(...entities) {
         entities.map(entity => entity.loadAssets && entity.loadAssets(loader));
         return this;
     }
@@ -97,7 +89,6 @@ export class GameSet {
         const p = new Promise((resolve, reject) => {
             loader.load();
             loader.once('complete', (loader, resources) => {
-                console.log('ioci');
                 resolve({ loader, resources });
             });
         });
@@ -105,16 +96,16 @@ export class GameSet {
         return p;
     }
 
-    run(cbk: Function) : void {
-
+    run(renderer, cbk) : void {
         const self = this;
 
-        animate();
         function animate() {
             cbk(self);
-            self.renderer.render(self.canvas);
+            renderer.render(self.container);
             window.requestAnimationFrame(animate);
         }
+
+        animate();
     }
 };
 
@@ -172,14 +163,14 @@ export function gameloop() {
 
     // Systems
 
-    return (game: GameSet) => {
+    return (stage: GameStage) => {
         const start = performance.now();
         const deltatime = start - then;
 
-        game.systems.map(system => {
+        stage.systems.map(system => {
             system.process(
-                system.match ? game.entities.filter(system.match) : game.entities,
-                { deltatime, costtime, game }
+                system.match ? stage.entities.filter(system.match) : stage.entities,
+                { deltatime, costtime, game: stage }
             );
         });
 

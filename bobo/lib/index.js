@@ -3,7 +3,7 @@
 Object.defineProperty(exports, "__esModule", {
     value: true
 });
-exports.GameSet = exports.GameLayer = undefined;
+exports.GameStage = exports.GameLayer = undefined;
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
@@ -25,10 +25,10 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
 var GameLayer = exports.GameLayer = function () {
-    function GameLayer(game) {
+    function GameLayer(stage) {
         _classCallCheck(this, GameLayer);
 
-        this.game = game;
+        this.stage = stage;
         this.container = new _pixi.Container();
         this.entities = new Array();
     }
@@ -39,8 +39,8 @@ var GameLayer = exports.GameLayer = function () {
             var _this = this;
 
             this.entities.push(entity);
-            this.game.entities.push(entity);
-            this.game.entitybyid[entity.id] = entity;
+            this.stage.entities.push(entity);
+            this.stage.entitybyid[entity.id] = entity;
             this.container.addChild(entity.displayobject);
             entity.remove = function () {
                 var index = undefined;
@@ -51,10 +51,10 @@ var GameLayer = exports.GameLayer = function () {
                     _this.entities.splice(index, 1);
                 }
 
-                index = _this.game.entities.indexOf(entity);
+                index = _this.stage.entities.indexOf(entity);
                 if (index === -1) return;
-                _this.game.entities.splice(index, 1);
-                delete _this.game.entitybyid[entity.id];
+                _this.stage.entities.splice(index, 1);
+                delete _this.stage.entitybyid[entity.id];
             };
 
             return this;
@@ -81,26 +81,22 @@ var GameLayer = exports.GameLayer = function () {
 
 ;
 
-var GameSet = exports.GameSet = function () {
-    function GameSet(node, width, height, canvas) {
-        _classCallCheck(this, GameSet);
+var GameStage = exports.GameStage = function () {
+    function GameStage(container) {
+        _classCallCheck(this, GameStage);
 
-        this.width = width;
-        this.height = height;
-        this.canvas = canvas;
-        this.renderer = (0, _pixi.autoDetectRenderer)(width, height);
+        this.container = container;
         this.entities = new Array();
         this.entitybyid = {};
         this.systems = new Array();
         this.layers = new Array();
-        node.appendChild(this.renderer.view);
     }
 
-    _createClass(GameSet, [{
+    _createClass(GameStage, [{
         key: 'addLayer',
         value: function addLayer(layer) {
             this.layers.push(layer);
-            this.canvas.addChild(layer.getContainer());
+            this.container.addChild(layer.getContainer());
             return this;
         }
     }, {
@@ -120,8 +116,8 @@ var GameSet = exports.GameSet = function () {
             return this;
         }
     }, {
-        key: 'requires',
-        value: function requires() {
+        key: 'require',
+        value: function require() {
             for (var _len = arguments.length, entities = Array(_len), _key = 0; _key < _len; _key++) {
                 entities[_key] = arguments[_key];
             }
@@ -129,11 +125,6 @@ var GameSet = exports.GameSet = function () {
             entities.map(function (entity) {
                 return entity.loadAssets && entity.loadAssets(_pixi.loader);
             });
-
-            //loader.add('mummy', '/assets/sprites/metalslug_mummy37x45.png');
-            //loader.add('background', '/assets/sprites/level_pagras-v2.png');
-            //loader.add('flag', '/assets/sprites/flag.png');
-
             return this;
         }
     }, {
@@ -143,7 +134,6 @@ var GameSet = exports.GameSet = function () {
             var p = new Promise(function (resolve, reject) {
                 _pixi.loader.load();
                 _pixi.loader.once('complete', function (loader, resources) {
-                    console.log('ioci');
                     resolve({ loader: loader, resources: resources });
                 });
             });
@@ -152,20 +142,20 @@ var GameSet = exports.GameSet = function () {
         }
     }, {
         key: 'run',
-        value: function run(cbk) {
-
+        value: function run(renderer, cbk) {
             var self = this;
 
-            animate();
             function animate() {
                 cbk(self);
-                self.renderer.render(self.canvas);
+                renderer.render(self.container);
                 window.requestAnimationFrame(animate);
             }
+
+            animate();
         }
     }]);
 
-    return GameSet;
+    return GameStage;
 }();
 
 ;
@@ -255,12 +245,12 @@ function gameloop() {
 
     // Systems
 
-    return function (game) {
+    return function (stage) {
         var start = performance.now();
         var deltatime = start - then;
 
-        game.systems.map(function (system) {
-            system.process(system.match ? game.entities.filter(system.match) : game.entities, { deltatime: deltatime, costtime: costtime, game: game });
+        stage.systems.map(function (system) {
+            system.process(system.match ? stage.entities.filter(system.match) : stage.entities, { deltatime: deltatime, costtime: costtime, game: stage });
         });
 
         then = start;
