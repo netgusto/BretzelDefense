@@ -2,7 +2,7 @@
 
 /* @flow */
 
-import { Text, Container as PixiContainer, DisplayObject } from 'pixi.js';
+import { Text, DisplayObject } from 'pixi.js';
 
 export default class DebugSystem {
 
@@ -11,7 +11,7 @@ export default class DebugSystem {
     fps: Array<number>;
     text: Text;
 
-    constructor({ stage, cbk }: { stage: PixiContainer, cbk: Function}) {
+    constructor({ layer, cbk }) {
         this.count = 0;
         this.fps = [];
         this.costs = new Array(300);
@@ -19,7 +19,7 @@ export default class DebugSystem {
 
         this.text = new Text('', { font: '30px Arial', fill: 'white' });
         this.text.position.set(25, 50);
-        stage.addChild(this.text);
+        layer.addChild(this.text);
     }
 
     sum(a, b) {

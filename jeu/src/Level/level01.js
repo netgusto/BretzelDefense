@@ -14,7 +14,6 @@ export default function({ resolution }) {
 
     return {
         loadAssets(loader) {
-            Background.setTexturePath('/assets/sprites/level-' + resolution.width + '-' + resolution.height + '.jpg');
             Background.loadAssets(loader);
             Mummy.loadAssets(loader);
             FireballTower.loadAssets(loader);
@@ -28,6 +27,7 @@ export default function({ resolution }) {
 
         setup({ cursor, spatialhash, creepslayer, backgroundlayer }) {
 
+            this.lanes.map(lane => lane.memoizeAll());
             creepsautospawn({ layer: creepslayer, resolution, spatialhash, lanes: this.lanes });
 
             backgroundlayer.addEntity(Background({
