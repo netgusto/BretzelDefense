@@ -58,7 +58,7 @@ export default function() {
 
     //normalizedresolution = resolutionsbyratio['4:3'][0];    // 640x480
     //normalizedresolution = resolutionsbyratio['4:3'][1];    // 800x600
-    normalizedresolution = resolutionsbyratio['4:3'][2];    // 1024x768
+    //normalizedresolution = resolutionsbyratio['4:3'][2];    // 1024x768
     //normalizedresolution = resolutionsbyratio['4:3'][3];    // 2048x1536
 
     return normalizedresolution;

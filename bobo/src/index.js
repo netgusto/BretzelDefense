@@ -106,6 +106,22 @@ export class GameStage {
         }
 
         animate();
+        return this;
+    }
+
+    destroy() {
+        this.entities.map(entity => entity.remove());
+        delete this.entitybyid;
+
+        for(let i = this.systems.length - 1; i >= 0; i++) {
+            delete this.systems[i];
+        }
+
+        for(let i = this.layers.length - 1; i >= 0; i++) {
+            delete this.layers[i];
+        }
+
+        delete this;
     }
 };
 

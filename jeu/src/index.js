@@ -7,8 +7,7 @@ import { Container, autoDetectRenderer } from 'pixi.js';
 import { gameloop } from 'bobo';
 
 import resolutionFinder from './Utils/resolution';
-import TitleScreen from './Stage/TitleScreen';
-//import Stage from './Stage/StageLevel01';
+import Stage from './Stage/TitleScreen';
 
 const debug = true;
 
@@ -18,6 +17,15 @@ const debug = true;
     mountnode.appendChild(renderer.view);
 
     const canvas = new Container(0xFF0000 /* white */, true /* interactive */);
-    TitleScreen({ resolution, canvas, debug }).then(stage => stage.run(renderer, gameloop()));
+    let previousstage = null;
+
+    const swapstage = function(newstage) {
+        if(previousstage) previousstage.destroy();
+        newstage({ resolution, canvas, debug, swapstage })
+            .then(stage => stage.run(renderer, gameloop()))
+            .then(stage => previousstage = stage);
+    };
+
+    swapstage(Stage);
 
 })(document.getElementById('app'), resolutionFinder());

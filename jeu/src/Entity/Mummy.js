@@ -10,13 +10,17 @@ import { loadspritesheet } from 'bobo';
 import GenericEntity from './Generic';
 import SpatialTrackable from '../Component/SpatialTrackable';
 
+let loaded = false;
+
 let Mummy = compose(GenericEntity, SpatialTrackable).compose({
     // expects: {
     //     displayobject: DisplayObject
     // },
     loadAssets(loader) {
+        if(loaded) return;
         loader.add('mummy', '/assets/sprites/metalslug_mummy37x45.png');
         loader.once('complete', (_, resources) => {
+            loaded = true;
             Mummy.texture = resources.mummy.texture.baseTexture;
             //Mummy.texture.scaleMode = SCALE_MODES.NEAREST;
             Mummy.spriteframes = loadspritesheet(Mummy.texture, 37, 45, 18);

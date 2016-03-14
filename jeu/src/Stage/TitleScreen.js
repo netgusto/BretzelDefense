@@ -1,25 +1,25 @@
 'use strict';
 
 import { GameStage, GameLayer } from 'bobo';
+import { Text } from 'pixi.js';
 
-import Mummy from '../Entity/Mummy';
+import StageLevel01 from './StageLevel01';
+import GenericEntity from '../Entity/Generic';
 
-export default function({ resolution, canvas/*, debug */}) {
+export default function({ resolution, canvas/*, debug */, swapstage }) {
     const stage = new GameStage(canvas);
     const layer = new GameLayer(stage);
     stage.addLayer(layer);
-    return stage
-        .require(Mummy)
-        .load()
-        .then(function(/*{ loader, resources }*/) {
-            const mummy = Mummy({ worldscale: resolution.worldscale * 5 });
-            mummy.displayobject.position.set(resolution.width/2, resolution.height/2);
-            mummy.displayobject.interactive = true;
-            mummy.displayobject.click = mummy.displayobject.tap = function() {
-                console.log('Level 01 !');
-            };
-            layer.addEntity(mummy);
 
-            return stage;
-        });
+    const text = new Text('Sucrée défense', { font: '30px Arial', fill: 'white' });
+    const title = GenericEntity({ displayobject: text });
+
+    title.displayobject.position.set(resolution.width/2 - text.width/2, resolution.height/2 - text.height/2);
+    title.displayobject.interactive = true;
+    title.displayobject.click = title.displayobject.tap = function() {
+        swapstage(StageLevel01);
+    };
+    layer.addEntity(title);
+
+    return Promise.resolve(stage);
 }
