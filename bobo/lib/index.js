@@ -43,7 +43,7 @@ var GameLayer = exports.GameLayer = function () {
             this.stage.entitybyid[entity.id] = entity;
             this.container.addChild(entity.displayobject);
             entity.remove = function () {
-                var index = undefined;
+                var index = void 0;
                 entity.displayobject.parent.removeChild(entity.displayobject);
 
                 index = _this.entities.indexOf(entity);
@@ -129,11 +129,21 @@ var GameStage = exports.GameStage = function () {
         }
     }, {
         key: 'load',
-        value: function load() {
+        value: function load(_ref) {
+            var _ref$onbegin = _ref.onbegin;
+            var onbegin = _ref$onbegin === undefined ? null : _ref$onbegin;
+            var _ref$onprogress = _ref.onprogress;
+            var onprogress = _ref$onprogress === undefined ? null : _ref$onprogress;
+            var _ref$oncomplete = _ref.oncomplete;
+            var oncomplete = _ref$oncomplete === undefined ? null : _ref$oncomplete;
 
+
+            if (onbegin !== null) onbegin();
             var p = new Promise(function (resolve, reject) {
                 _pixi.loader.load();
+                if (onbegin !== null) onprogress();
                 _pixi.loader.once('complete', function (loader, resources) {
+                    oncomplete();
                     resolve({ loader: loader, resources: resources });
                 });
             });
@@ -152,6 +162,25 @@ var GameStage = exports.GameStage = function () {
             }
 
             animate();
+            return this;
+        }
+    }, {
+        key: 'destroy',
+        value: function destroy() {
+            this.entities.map(function (entity) {
+                return entity.remove();
+            });
+            delete this.entitybyid;
+
+            for (var i = this.systems.length - 1; i >= 0; i--) {
+                delete this.systems[i];
+            }
+
+            for (var _i = this.layers.length - 1; _i >= 0; _i--) {
+                delete this.layers[_i];
+            }
+
+            delete this;
         }
     }]);
 
@@ -240,8 +269,8 @@ function cursorkeys() {
 
 function gameloop() {
     var then = performance.now();
-    var start = undefined;
-    var costtime = undefined;
+    var start = void 0;
+    var costtime = void 0;
 
     // Systems
 

@@ -35,7 +35,17 @@ export default function({ resolution, canvas, debug }) {
 
     return stage
         .require(level)
-        .load()
+        .load({
+            onbegin() {
+                console.log('begin');
+            },
+            onprogress(progress, loadedresource) {
+                console.log('progress', progress, loadedresource);
+            },
+            oncomplete() {
+                console.log('end');
+            }
+        })
         .then(function(/*{ loader, resources }*/) {
 
             const spatialhash = new SpatialHash({
@@ -72,13 +82,14 @@ export default function({ resolution, canvas, debug }) {
             /*****************************************************************/
             /* Setup du level                                                */
             /*****************************************************************/
-            level.setup({
-                creepslayer: layers.creeps,
-                backgroundlayer: layers.background,
-                spatialhash,
-                cursor
-            });
-
-            return stage;
+            return level
+                .init()
+                .then(() => { console.log('laaa'); level.setup({
+                    creepslayer: layers.creeps,
+                    backgroundlayer: layers.background,
+                    spatialhash,
+                    cursor
+                })})
+                .then(() => stage);
         });
 }

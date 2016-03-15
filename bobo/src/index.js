@@ -84,11 +84,14 @@ export class GameStage {
         return this;
     }
 
-    load() {
+    load({ onbegin = null, onprogress = null, oncomplete = null }) {
 
         const p = new Promise((resolve, reject) => {
+            if(onprogress !== null) loader.onprogress((loader, loadedresource) => onprogress(loader.progress, loadedresource));
+            if(onbegin !== null) onbegin();
             loader.load();
             loader.once('complete', (loader, resources) => {
+                if(oncomplete !== null) oncomplete();
                 resolve({ loader, resources });
             });
         });
@@ -113,11 +116,11 @@ export class GameStage {
         this.entities.map(entity => entity.remove());
         delete this.entitybyid;
 
-        for(let i = this.systems.length - 1; i >= 0; i++) {
+        for(let i = this.systems.length - 1; i >= 0; i--) {
             delete this.systems[i];
         }
 
-        for(let i = this.layers.length - 1; i >= 0; i++) {
+        for(let i = this.layers.length - 1; i >= 0; i--) {
             delete this.layers[i];
         }
 

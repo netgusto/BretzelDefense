@@ -34,6 +34,20 @@ export function curveToLane(towidth, toheight) {
                     this.getPointAtLength(length);
                 }
             },
+            memoizeAllAsync: function() {
+                const p = new Promise((resolve/*, reject*/) => {
+
+                    let walked = 0;
+                    const memoizationmethod = () => {
+                        if(walked >= this.pathlength) return resolve(this);
+                        this.getPointAtLength(walked++);
+                        window.setImmediate(memoizationmethod);
+                    };
+                    memoizationmethod();
+                });
+
+                return p;
+            },
             getPointAtLength: function(lengthpx) {
                 //let roundlengthpx = parseFloat(lengthpx).toFixed(1);
                 let roundlengthpx = Math.floor(lengthpx);
