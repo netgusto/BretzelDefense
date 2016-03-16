@@ -3,6 +3,10 @@
 import 'babel-polyfill';
 import 'perfnow';
 
+import Emitter from 'tiny-emitter';
+
+const eventbus = new Emitter();
+
 import { Container, autoDetectRenderer } from 'pixi.js';
 import { gameloop } from 'bobo';
 
@@ -21,7 +25,7 @@ const debug = true;
 
     const swapstage = function(newstage) {
         if(previousstage) previousstage.destroy();
-        newstage({ resolution, canvas, debug, swapstage })
+        newstage({ resolution, canvas, debug, swapstage, eventbus })
             .then(stage => stage.run(renderer, gameloop()))
             .then(stage => previousstage = stage);
     };

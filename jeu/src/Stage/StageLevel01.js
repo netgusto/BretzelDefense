@@ -12,11 +12,17 @@ import LifebarSystem from '../System/Lifebar';
 import MoveCreepsSystem from '../System/MoveCreeps';
 import RangeDetectionSystem from '../System/RangeDetection';
 import SpatialTrackingSystem from '../System/SpatialTracking';
+import HUDSystem from '../System/HUD';
 import ZIndexSystem from '../System/ZIndex';
 
 const gridcellsize = 128;
 
-export default function({ resolution, canvas, debug }) {
+export default function({ resolution, canvas, debug, eventbus }) {
+    const state = {
+        life: 20,
+        coins: 300
+    };
+
     const stage = new GameStage(canvas);
     const cursor = cursorkeys();
 
@@ -31,7 +37,7 @@ export default function({ resolution, canvas, debug }) {
 
     Object.values(layers).map(layer => stage.addLayer(layer));
 
-    const level = Level01({ resolution });
+    const level = Level01({ resolution, eventbus });
 
     return stage
         .require(level)
@@ -70,7 +76,8 @@ export default function({ resolution, canvas, debug }) {
                     },
                     onleave: function(/*entityid, hunterentity*/) { }
                 }))
-                .addSystem(DeathSystem({ spatialhash }))
+                .addSystem(DeathSystem({ eventbus }))
+                .addSystem(new HUDSystem({ layer: layers.interface, state }))
                 .addSystem(new ZIndexSystem(layers.creeps));
 
             // Debug
@@ -78,6 +85,13 @@ export default function({ resolution, canvas, debug }) {
                 stage.addSystem(new DebugSystem({ layer: layers.debug, cbk: (msg) => msg += '; '  + layers.creeps.entities.length + ' creeps' }));
                 // const graphics = new Graphics(); stage.addEntity(GenericEntity({ displayobject: graphics })); level.lanes.map(lane => drawSVGPath(graphics, lane.path, lane.color, 0, 0));
             }
+
+            // Events
+            eventbus.on('entity.death', function(entity) {
+                spatialhash.remove(entity.id);
+                entity.die();
+                state.coins += 20;
+            });
 
             /*****************************************************************/
             /* Setup du level                                                */

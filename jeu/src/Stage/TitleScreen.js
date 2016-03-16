@@ -6,7 +6,7 @@ import { Text } from 'pixi.js';
 import StageLevel01 from './StageLevel01';
 import GenericEntity from '../Entity/Generic';
 
-export default function({ resolution, canvas/*, debug */, swapstage }) {
+export default function({ resolution, canvas/*, debug */, swapstage/*, eventbus */ }) {
     const stage = new GameStage(canvas);
     const layer = new GameLayer(stage);
     stage.addLayer(layer);
