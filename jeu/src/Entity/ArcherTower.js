@@ -73,6 +73,7 @@ const ArcherTower = compose(GenericEntity).compose({
             const { target, displayobject } = projectileprops;
 
             setTimeout(function() {
+                // On remplace la flêche par une éclaboussure de sang
                 displayobject.parent.removeChild(displayobject);
             }, 20);
 

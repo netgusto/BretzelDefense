@@ -7,6 +7,7 @@ export default function() {
             for(let i = 0; i < entities.length; i++) {
 
                 if(!entities[i].creep) continue;
+                if(entities[i].dead) continue;
 
                 const creep = entities[i];
 

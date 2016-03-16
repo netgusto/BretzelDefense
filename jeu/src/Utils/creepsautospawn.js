@@ -2,7 +2,7 @@
 
 import Mummy from '../Entity/Mummy';
 
-export default function({ layer, resolution, spatialhash, lanes }) {
+export default function({ layer, resolution, spatialhash, lanes, vps, frequency }) {
     // Vagues de creeps
     let mummyindex = 0;
 
@@ -12,7 +12,7 @@ export default function({ layer, resolution, spatialhash, lanes }) {
         const mummy = Mummy({
             worldscale: resolution.worldscale
         })
-            .setVelocityPerSecond((20 + Math.floor(Math.random() * 50)) * resolution.worldscale);
+            .setVelocityPerSecond((vps + Math.floor(Math.random() * 50)) * resolution.worldscale);
         layer.addEntity(mummy);
         mummy.creep = true;
         mummy.lane = lanes[mummyindex % lanes.length];
@@ -33,5 +33,5 @@ export default function({ layer, resolution, spatialhash, lanes }) {
             mummy.id,
             mummy
         );
-    }, 1000 + Math.floor(Math.random() * 1000));
+    }, frequency);
 }

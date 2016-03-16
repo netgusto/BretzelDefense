@@ -34,7 +34,7 @@ export default function({ resolution }) {
         },
 
         setup({ cursor, spatialhash, creepslayer, backgroundlayer }) {
-            creepsautospawn({ layer: creepslayer, resolution, spatialhash, lanes: this.lanes });
+            creepsautospawn({ layer: creepslayer, resolution, spatialhash, lanes: this.lanes, vps: 20, frequency: 50 });
 
             backgroundlayer.addEntity(Background({
                 viewwidth: resolution.width,

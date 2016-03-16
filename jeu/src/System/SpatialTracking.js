@@ -5,7 +5,7 @@ export default function({ spatialhash }) {
         process(entities) {
 
             for(let i = 0; i < entities.length; i++) {
-                if(!entities[i].spatialtrackable) continue;
+                if(!entities[i].spatialtrackable || entities[i].dead) continue;
 
                 const entity = entities[i];
                 const bounds = entity.displayobject.getBounds();

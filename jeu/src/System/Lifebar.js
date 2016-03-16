@@ -20,7 +20,7 @@ export default function({ layer }) {
             lifebar.clear();
             for(let i = 0; i < entities.length; i++) {
 
-                if(!entities[i].maxlife) continue;
+                if(!entities[i].maxlife || entities[i].dead) continue;
 
                 const maxlife = entities[i].maxlife;
                 const life = entities[i].life;
