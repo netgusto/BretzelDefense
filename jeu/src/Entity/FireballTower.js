@@ -28,7 +28,7 @@ const FireballTower = compose(GenericEntity).compose({
     },
     init: function({ worldscale }) {
         this.hunter = true;
-        this.range = 300 * worldscale;
+        this.range = 500 * worldscale;
         this.firerate = 1500;
         this.firedamage = 70;
 

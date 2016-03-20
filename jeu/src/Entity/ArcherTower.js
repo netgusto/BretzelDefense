@@ -30,7 +30,7 @@ const ArcherTower = compose(GenericEntity).compose({
     },
     init: function({ worldscale }) {
         this.hunter = true;
-        this.range = 200 * worldscale;
+        this.range = 300 * worldscale;
         this.firerate = 200;
         this.firedamage = 9;
 

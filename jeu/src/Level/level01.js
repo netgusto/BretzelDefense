@@ -1,14 +1,16 @@
 'use strict';
 
 import { curveToLane } from '../Utils/lane';
-import creepsautospawn from '../Utils/creepsautospawn';
+//import creepsautospawn from '../Utils/creepsautospawn';
+import { Graphics } from 'pixi.js';
 
 import Background from '../Entity/Background';
 import Mummy from '../Entity/Mummy';
 import FireballTower from '../Entity/FireballTower';
 import ArcherTower from '../Entity/ArcherTower';
+import Soldier from '../Entity/Soldier';
 
-export default function({ resolution }) {
+export default function({ resolution, state }) {
 
     Background.setTexturePath('/assets/sprites/level-' + resolution.width + '-' + resolution.height + '.jpg');
 
@@ -33,8 +35,65 @@ export default function({ resolution }) {
             return Promise.all(promises).then(() => console.log('Lanes async memoization took ' + (performance.now() - before) + ' ms'));
         },
 
+        waves({ layer, spatialhash }) {
+
+            const wavesprops = [
+                { number: 9, frequency: 400, vps: 20, delay: 0 },
+                { number: 1, frequency: 400, vps: 23, delay: 20000 },
+                { number: 25, frequency: 400, vps: 30, delay: 30000 },
+                { number: 40, frequency: 400, vps: 35, delay: 50000 },
+                { number: 70, frequency: 400, vps: 38, delay: 75000 }
+            ];
+
+            // Vagues de creeps
+            let mummyindex = 0;
+            const lanes = this.lanes;
+
+            const spawn = function({ vps, frequency, number }) {
+                let count = 0;
+                let interval = window.setInterval(function() {
+                    const mummy = Mummy({
+                        worldscale: resolution.worldscale
+                    })
+                        .setVelocityPerSecond((vps + Math.floor(Math.random() * 50)) * resolution.worldscale);
+                    layer.addEntity(mummy);
+                    mummy.creep = true;
+                    mummy.lane = lanes[mummyindex % lanes.length];
+                    mummy.prevpos = { x: 0, y: 0 };
+                    mummy.pixelswalked = 0;
+                    mummy.matchcount = 0;
+                    mummy.maxlife = 100;
+                    mummy.life = mummy.maxlife;
+
+                    mummyindex++;
+
+                    const bounds = mummy.displayobject.getBounds();
+                    spatialhash.insert(
+                        bounds.x,
+                        bounds.y,
+                        bounds.width,
+                        bounds.height,
+                        mummy.id,
+                        mummy
+                    );
+
+                    count++;
+
+                    if(count === number) window.clearInterval(interval);
+                }, frequency);
+            };
+
+            wavesprops.map(waveprops => {
+                window.setTimeout(function() {
+                    spawn(waveprops)
+                }, waveprops.delay);
+            });
+        },
+
         setup({ cursor, spatialhash, creepslayer, backgroundlayer }) {
-            creepsautospawn({ layer: creepslayer, resolution, spatialhash, lanes: this.lanes, vps: 20, frequency: 50 });
+
+            //creepsautospawn({ layer: creepslayer, resolution, spatialhash, lanes: this.lanes, vps: 20, frequency: 50 });
+            this.waves({ layer: creepslayer, resolution, spatialhash });
 
             backgroundlayer.addEntity(Background({
                 viewwidth: resolution.width,
@@ -44,22 +103,30 @@ export default function({ resolution }) {
                     const clickpoint = event.data.global;
 
                     let tower;
-                    if(cursor.shift) {
-                        tower = FireballTower({ worldscale: resolution.worldscale });
+                    if(cursor.alt) {
+                        tower = Soldier({ worldscale: resolution.worldscale })
+                            .setRallyPoint(clickpoint.x, clickpoint.y);
+                    } else if(cursor.shift) {
+                        if(state.coins >= 100) {
+                            tower = FireballTower({ worldscale: resolution.worldscale });
+                            state.coins -= 100;
+                        }
                     } else {
-                        tower = ArcherTower({ worldscale: resolution.worldscale });
+                        if(state.coins >= 70) {
+                            tower = ArcherTower({ worldscale: resolution.worldscale });
+                            state.coins -= 70;
+                        }
                     }
 
-                    tower.setPosition(clickpoint.x, clickpoint.y);
+                    if(tower) {
+                        tower.setPosition(clickpoint.x, clickpoint.y);
+                        creepslayer.addEntity(tower);
+                    }
 
-                    creepslayer.addEntity(tower);
-
-                    // let circle = new Graphics();
-                    // circle.lineStyle(1, 0xFFFF00);
-                    // game.addEntity(GenericEntity({
-                    //     displayobject: circle
-                    // }));
-                    //circle.drawCircle(tower.displayobject.x, tower.displayobject.y, tower.range);
+                    let circle = new Graphics();
+                    circle.lineStyle(1, 0xFFFF00);
+                    backgroundlayer.addChild(circle);
+                    circle.drawCircle(tower.displayobject.x, tower.displayobject.y, tower.range);
                 }
             }));
 

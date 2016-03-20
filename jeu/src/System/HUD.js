@@ -4,17 +4,15 @@
 
 import { Text } from 'pixi.js';
 
-export default class HUDSystem {
+export default function({ layer, state }) {
 
-    constructor({ layer, state }) {
-        this.state = state;
+    const text = new Text('', { font: '30px Arial', fill: 'yellow' });
+    text.position.set(25, 100);
+    layer.addChild(text);
 
-        this.text = new Text('', { font: '30px Arial', fill: 'yellow' });
-        this.text.position.set(25, 100);
-        layer.addChild(this.text);
-    }
-
-    process() {
-        this.text.text = 'Life ' + this.state.life + '; Coins ' + this.state.coins;
-    }
+    return {
+        process() {
+            text.text = 'Life ' + state.life + '; Coins ' + state.coins;
+        }
+    };
 }

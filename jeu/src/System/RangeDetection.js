@@ -1,61 +1,56 @@
 'use strict';
 
-export default class RangeDetection {
+export default function({ onenter, onrange, onleave, spatialhash, onrangebulk = null }) {
 
-    constructor({ onenter, onrange, onleave, spatialhash, onrangebulk = null }) {
-        this.matchbyid = new Array();
-        this.onenter = onenter;
-        this.onrange = onrange;
-        this.onrangebulk = onrangebulk;
-        this.onleave = onleave;
-        this.spatialhash = spatialhash;
-    }
+    const matchbyid = new Array();
 
-    process(entities) {
-        for(let i = 0; i < entities.length; i++) {
-            if(!entities[i].hunter) continue;
-            const hunter = entities[i];
-            const collisions = this.spatialhash.retrieve(hunter.displayobject.x, hunter.displayobject.y, hunter.range);
-            const prevmatches = this.matchbyid[hunter.id] || [];
-            const newmatches = [];
-            const bulkmatches = [];
+    return {
+        process(entities) {
+            for(let i = 0; i < entities.length; i++) {
+                if(!entities[i].hunter) continue;
+                const hunter = entities[i];
+                const collisions = spatialhash.retrieve(hunter.displayobject.x, hunter.displayobject.y, hunter.range);
+                const prevmatches = matchbyid[hunter.id] || [];
+                const newmatches = [];
+                const bulkmatches = [];
 
-            let stablematchcount = 0;
+                let stablematchcount = 0;
 
-            for(let k = 0; k < collisions.length; k++) {
-                const collision = collisions[k];
-                if(prevmatches.indexOf(collision.id) === -1) {
-                    this.onenter(collision.entity, hunter, collision.distance);
-                } else {
-                    stablematchcount++;
+                for(let k = 0; k < collisions.length; k++) {
+                    const collision = collisions[k];
+                    if(prevmatches.indexOf(collision.id) === -1) {
+                        onenter(collision.entity, hunter, collision.distance);
+                    } else {
+                        stablematchcount++;
+                    }
+
+                    onrange(collision.entity, hunter, collision.distance);
+                    newmatches.push(collision.id);
+                    if(onrangebulk) bulkmatches.push({ entity: collision.entity, distance: collision.distance, centerx: collision.centerx, centery: collision.centery });
                 }
 
-                this.onrange(collision.entity, hunter, collision.distance);
-                newmatches.push(collision.id);
-                if(this.onrangebulk) bulkmatches.push({ entity: collision.entity, distance: collision.distance, centerx: collision.centerx, centery: collision.centery });
-            }
-
-            if(this.onrangebulk) {
-                this.onrangebulk(bulkmatches, hunter);
-            }
-
-            if(stablematchcount === prevmatches.length) {
-                if(prevmatches.length !== newmatches.length) {
-                    delete this.matchbyid[hunter.id];
-                    this.matchbyid[hunter.id] = newmatches;
+                if(onrangebulk) {
+                    onrangebulk(bulkmatches, hunter);
                 }
 
-                continue;
-            }
+                if(stablematchcount === prevmatches.length) {
+                    if(prevmatches.length !== newmatches.length) {
+                        delete matchbyid[hunter.id];
+                        matchbyid[hunter.id] = newmatches;
+                    }
 
-            for(let k = 0; k < prevmatches.length; k++) {
-                if(newmatches.indexOf(prevmatches[k]) === -1) {
-                    this.onleave(prevmatches[k]);
+                    continue;
                 }
-            }
 
-            delete this.matchbyid[hunter.id];
-            this.matchbyid[hunter.id] = newmatches;
+                for(let k = 0; k < prevmatches.length; k++) {
+                    if(newmatches.indexOf(prevmatches[k]) === -1) {
+                        onleave(prevmatches[k]);
+                    }
+                }
+
+                delete matchbyid[hunter.id];
+                matchbyid[hunter.id] = newmatches;
+            }
         }
-    }
+    };
 }

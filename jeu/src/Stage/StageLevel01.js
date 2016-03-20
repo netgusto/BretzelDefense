@@ -6,6 +6,7 @@ import Level01 from '../Level/level01';
 import SpatialHash from '../Utils/spatialhash';
 
 import BallisticSystem from '../System/Ballistic';
+import MeleeSystem from '../System/Melee';
 import DeathSystem from '../System/Death';
 import DebugSystem from '../System/Debug';
 import LifebarSystem from '../System/Lifebar';
@@ -20,7 +21,7 @@ const gridcellsize = 128;
 export default function({ resolution, canvas, debug, eventbus }) {
     const state = {
         life: 20,
-        coins: 300
+        coins: 100
     };
 
     const stage = new GameStage(canvas);
@@ -37,7 +38,7 @@ export default function({ resolution, canvas, debug, eventbus }) {
 
     Object.values(layers).map(layer => stage.addLayer(layer));
 
-    const level = Level01({ resolution, eventbus });
+    const level = Level01({ resolution, eventbus, state });
 
     return stage
         .require(level)
@@ -61,28 +62,31 @@ export default function({ resolution, canvas, debug, eventbus }) {
                 worldheight: resolution.height
             });
 
-            const ballisticSystem = new BallisticSystem({ layer: layers.projectiles });
+            const ballisticSystem = BallisticSystem({ layer: layers.projectiles });
+            const meleeSystem = MeleeSystem();
 
-            stage.addSystem(ballisticSystem)
+            stage
                 .addSystem(MoveCreepsSystem())
-                .addSystem(LifebarSystem({ layer: layers.lifebar }))
                 .addSystem(SpatialTrackingSystem({ spatialhash }))
-                .addSystem(new RangeDetectionSystem({
+                .addSystem(RangeDetectionSystem({
                     spatialhash,
                     onenter: function(entity/*, hunterentity, distance*/) { entity.matchcount++; },
                     onrange: function(/*entity, hunterentity, distance*/) { },
                     onrangebulk: function(matches, hunter) {
-                        if(matches.length) hunter.engage(matches, { ballisticSystem });
+                        if(matches.length) hunter.engage(matches, { ballisticSystem, meleeSystem });
                     },
                     onleave: function(/*entityid, hunterentity*/) { }
                 }))
+                .addSystem(ballisticSystem)
+                .addSystem(meleeSystem)
                 .addSystem(DeathSystem({ eventbus }))
-                .addSystem(new HUDSystem({ layer: layers.interface, state }))
-                .addSystem(new ZIndexSystem(layers.creeps));
+                .addSystem(LifebarSystem({ layer: layers.lifebar }))
+                .addSystem(HUDSystem({ layer: layers.interface, state }))
+                .addSystem(ZIndexSystem(layers.creeps));
 
             // Debug
             if(debug) {
-                stage.addSystem(new DebugSystem({ layer: layers.debug, cbk: (msg) => msg += '; '  + layers.creeps.entities.length + ' creeps' }));
+                stage.addSystem(DebugSystem({ layer: layers.debug, cbk: (msg) => msg += '; '  + layers.creeps.entities.length + ' creeps' }));
                 // const graphics = new Graphics(); stage.addEntity(GenericEntity({ displayobject: graphics })); level.lanes.map(lane => drawSVGPath(graphics, lane.path, lane.color, 0, 0));
             }
 
@@ -90,7 +94,7 @@ export default function({ resolution, canvas, debug, eventbus }) {
             eventbus.on('entity.death', function(entity) {
                 spatialhash.remove(entity.id);
                 entity.die();
-                state.coins += 20;
+                state.coins += 4;
             });
 
             /*****************************************************************/

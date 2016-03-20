@@ -4,39 +4,31 @@
 
 import { Text, DisplayObject } from 'pixi.js';
 
-export default class DebugSystem {
+export default function({ layer, cbk }) {
 
-    count: number;
-    costs: number;
-    fps: Array<number>;
-    text: Text;
+    let count = 0;
+    const fps = [];
+    const costs = new Array(300);
 
-    constructor({ layer, cbk }) {
-        this.count = 0;
-        this.fps = [];
-        this.costs = new Array(300);
-        this.cbk = cbk;
+    const text = new Text('', { font: '30px Arial', fill: 'white' });
+    text.position.set(25, 50);
+    layer.addChild(text);
 
-        this.text = new Text('', { font: '30px Arial', fill: 'white' });
-        this.text.position.set(25, 50);
-        layer.addChild(this.text);
-    }
+    const sum = (a, b) => a + b;
 
-    sum(a, b) {
-        return a + b;
-    }
+    return {
+        process(entities: Array<DisplayObject>, { deltatime, costtime }) {
+            fps[count % 10] = Math.floor(1000 / deltatime);
+            if(!isNaN(costtime)) costs[count % 300] = parseFloat(costtime);
 
-    process(entities: Array<DisplayObject>, { deltatime, costtime }) {
-        this.fps[this.count % 10] = Math.floor(1000 / deltatime);
-        if(!isNaN(costtime)) this.costs[this.count % 300] = parseFloat(costtime);
-
-        if(this.count % 10 === 0) {
-            this.text.text = Math.round(this.fps.reduce(this.sum, 0) / this.fps.length) + ' fps; ' + parseFloat(costtime).toFixed(3) + ' ms cost/frame; ' + parseFloat(this.costs.reduce(this.sum, 0) / this.costs.length).toFixed(2) + ' ms cost/frame mean';
-            if(this.cbk) {
-                this.text.text = this.cbk(this.text.text, { deltatime, costtime });
+            if(count % 10 === 0) {
+                text.text = Math.round(fps.reduce(sum, 0) / fps.length) + ' fps; ' + parseFloat(costtime).toFixed(3) + ' ms cost/frame; ' + parseFloat(costs.reduce(sum, 0) / costs.length).toFixed(2) + ' ms cost/frame mean';
+                if(cbk) {
+                    text.text = cbk(text.text, { deltatime, costtime });
+                }
             }
-        }
 
-        this.count++;
-    }
+            count++;
+        }
+    };
 }

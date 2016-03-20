@@ -55,6 +55,10 @@ let Mummy = compose(GenericEntity, SpatialTrackable).compose({
                 //displayobject.parent.removeChild(displayobject);
                 this.remove();
             }, 1000);
+        },
+        engageSoldier(/*soldier*/) {
+            this.setVelocityPerSecond(0);
+            this.displayobject.gotoAndStop(5);  // idle
         }
     }
 });
