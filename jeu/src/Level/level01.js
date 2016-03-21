@@ -37,12 +37,16 @@ export default function({ resolution, state }) {
 
         waves({ layer, spatialhash }) {
 
+            // const wavesprops = [
+            //     { number: 9, frequency: 400, vps: 20, delay: 0 },
+            //     { number: 15, frequency: 400, vps: 23, delay: 20000 },
+            //     { number: 25, frequency: 400, vps: 30, delay: 30000 },
+            //     { number: 40, frequency: 400, vps: 35, delay: 50000 },
+            //     { number: 70, frequency: 400, vps: 38, delay: 75000 }
+            // ];
+
             const wavesprops = [
-                { number: 9, frequency: 400, vps: 20, delay: 0 },
-                { number: 1, frequency: 400, vps: 23, delay: 20000 },
-                { number: 25, frequency: 400, vps: 30, delay: 30000 },
-                { number: 40, frequency: 400, vps: 35, delay: 50000 },
-                { number: 70, frequency: 400, vps: 38, delay: 75000 }
+                { number: 10, frequency: 1, vps: 150, delay: 0 }
             ];
 
             // Vagues de creeps
@@ -52,6 +56,7 @@ export default function({ resolution, state }) {
             const spawn = function({ vps, frequency, number }) {
                 let count = 0;
                 let interval = window.setInterval(function() {
+                    if(count >= number) return;
                     const mummy = Mummy({
                         worldscale: resolution.worldscale
                     })
@@ -61,18 +66,13 @@ export default function({ resolution, state }) {
                     mummy.lane = lanes[mummyindex % lanes.length];
                     mummy.prevpos = { x: 0, y: 0 };
                     mummy.pixelswalked = 0;
-                    mummy.matchcount = 0;
-                    mummy.maxlife = 100;
-                    mummy.life = mummy.maxlife;
 
                     mummyindex++;
 
-                    const bounds = mummy.displayobject.getBounds();
+                    const trackpoint = mummy.getSpatialTrackPoint();
                     spatialhash.insert(
-                        bounds.x,
-                        bounds.y,
-                        bounds.width,
-                        bounds.height,
+                        trackpoint.x,
+                        trackpoint.y,
                         mummy.id,
                         mummy
                     );
@@ -123,10 +123,10 @@ export default function({ resolution, state }) {
                         creepslayer.addEntity(tower);
                     }
 
-                    let circle = new Graphics();
-                    circle.lineStyle(1, 0xFFFF00);
-                    backgroundlayer.addChild(circle);
-                    circle.drawCircle(tower.displayobject.x, tower.displayobject.y, tower.range);
+                    // let circle = new Graphics();
+                    // circle.lineStyle(1, 0xFFFF00);
+                    // backgroundlayer.addChild(circle);
+                    // circle.drawCircle(tower.displayobject.x, tower.displayobject.y, tower.range);
                 }
             }));
 

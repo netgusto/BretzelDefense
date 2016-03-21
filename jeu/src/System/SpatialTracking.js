@@ -7,14 +7,11 @@ export default function({ spatialhash }) {
             for(let i = 0; i < entities.length; i++) {
                 if(!entities[i].spatialtrackable || entities[i].dead) continue;
 
-                const entity = entities[i];
-                const bounds = entity.displayobject.getBounds();
+                let trackpoint = entities[i].getSpatialTrackPoint();
                 spatialhash.update(
-                    bounds.x,
-                    bounds.y,
-                    bounds.width,
-                    bounds.height,
-                    entity.id
+                    trackpoint.x,
+                    trackpoint.y,
+                    entities[i].id
                 );
             }
         }

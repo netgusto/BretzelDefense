@@ -9,7 +9,8 @@ export default function({ onenter, onrange, onleave, spatialhash, onrangebulk = 
             for(let i = 0; i < entities.length; i++) {
                 if(!entities[i].hunter) continue;
                 const hunter = entities[i];
-                const collisions = spatialhash.retrieve(hunter.displayobject.x, hunter.displayobject.y, hunter.range);
+                const rangeCenterPoint = hunter.getRangeCenterPoint();
+                const collisions = spatialhash.retrieve(rangeCenterPoint.x, rangeCenterPoint.y, hunter.range);
                 const prevmatches = matchbyid[hunter.id] || [];
                 const newmatches = [];
                 const bulkmatches = [];

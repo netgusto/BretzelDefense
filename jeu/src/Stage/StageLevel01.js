@@ -70,9 +70,10 @@ export default function({ resolution, canvas, debug, eventbus }) {
                 .addSystem(SpatialTrackingSystem({ spatialhash }))
                 .addSystem(RangeDetectionSystem({
                     spatialhash,
-                    onenter: function(entity/*, hunterentity, distance*/) { entity.matchcount++; },
+                    onenter: function(/*entity, hunterentity, distance*/) { },
                     onrange: function(/*entity, hunterentity, distance*/) { },
                     onrangebulk: function(matches, hunter) {
+                        // engagement for both ballistic and melee systems
                         if(matches.length) hunter.engage(matches, { ballisticSystem, meleeSystem });
                     },
                     onleave: function(/*entityid, hunterentity*/) { }
@@ -91,10 +92,16 @@ export default function({ resolution, canvas, debug, eventbus }) {
             }
 
             // Events
-            eventbus.on('entity.death', function(entity) {
-                spatialhash.remove(entity.id);
-                entity.die();
-                state.coins += 4;
+            eventbus.on('entity.death.batch', function(entities) {
+
+                meleeSystem.forfait(entities.map(entity => entity.id));
+
+                for(let i = entities.length - 1; i >= 0; i--) {
+                    const entity = entities[i];
+                    spatialhash.remove(entity.id);
+                    entity.die();
+                    if(entity.creep) state.coins += 4;
+                }
             });
 
             /*****************************************************************/

@@ -17,7 +17,13 @@ export default function({ layer, cbk }) {
     const sum = (a, b) => a + b;
 
     return {
-        process(entities: Array<DisplayObject>, { deltatime, costtime }) {
+        process(entities, { deltatime, costtime }) {
+
+            entities.map(entity => {
+                if(entity.hasTag('Debugable')) {
+                    entity.render();
+                }
+            });
             fps[count % 10] = Math.floor(1000 / deltatime);
             if(!isNaN(costtime)) costs[count % 300] = parseFloat(costtime);
 

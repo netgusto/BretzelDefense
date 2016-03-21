@@ -39,6 +39,9 @@ const ArcherTower = compose(GenericEntity).compose({
         this.lastfired = performance.now();
     },
     methods: {
+        getRangeCenterPoint() {
+            return { x: this.displayobject.x, y: this.displayobject.y };
+        },
         engage(matches, { ballisticSystem }) {
 
             matches.sort(sort);

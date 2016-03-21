@@ -8,6 +8,7 @@ import { extras as PixiExtras } from 'pixi.js';
 import { loadspritesheet } from 'bobo';
 
 import GenericEntity from './Generic';
+import Debugable from '../Component/Debugable';
 import SpatialTrackable from '../Component/SpatialTrackable';
 
 let loaded = false;
@@ -28,6 +29,10 @@ let Mummy = compose(GenericEntity, SpatialTrackable).compose({
     },
     init: function({ worldscale }) {
 
+        this.maxlife = 100;
+        this.life = this.maxlife;
+        this.meleecount = 0;
+
         this.displayobject = new PixiExtras.MovieClip(Mummy.spriteframes);
         //console.log(this.displayobject.scale);
         this.displayobject.play();
@@ -36,6 +41,27 @@ let Mummy = compose(GenericEntity, SpatialTrackable).compose({
         this.displayobject.scale.set(worldscale);
     },
     methods: {
+        getSpatialTrackPoint() {
+            // on calcule le centroide de la bounding box
+            const bounds = this.displayobject.getBounds();
+            const centroidx = (bounds.x + bounds.width/2)|0;
+            const centroidy = (bounds.y + bounds.height/2)|0;
+            return { x: centroidx, y: centroidy };
+        },
+        engageMelee(/*hunter*/) {
+            this.setVelocityPerSecond(0);
+            this.displayobject.gotoAndStop(5);  // idle
+            this.meleecount++;
+        },
+        fightMelee(hunter) {
+            hunter.life -= 0.25;
+            if(hunter.life < 0) hunter.life = 0;
+        },
+        releaseMelee() {
+            this.setVelocityPerSecond(50);
+            this.displayobject.play();  // walk
+            this.meleecount--;
+        },
         setLane(lane) {
             this.lane = lane;
             return this;
@@ -49,18 +75,15 @@ let Mummy = compose(GenericEntity, SpatialTrackable).compose({
         die() {
             const displayobject = this.displayobject;
             this.dead = true;
+            this.meleecount = 0;
             displayobject.stop();
             displayobject.rotation = (displayobject.scale.x > 0) ? -Math.PI / 2 : Math.PI / 2;
             setTimeout(() => {
                 //displayobject.parent.removeChild(displayobject);
                 this.remove();
             }, 1000);
-        },
-        engageSoldier(/*soldier*/) {
-            this.setVelocityPerSecond(0);
-            this.displayobject.gotoAndStop(5);  // idle
         }
     }
-});
+}).compose(Debugable);
 
 export default Mummy;

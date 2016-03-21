@@ -28,20 +28,15 @@ export default class SpatialHash {
         }
     }
 
-    insert(boundsx, boundsy, width, height, id, entity) {
-
-        // on calcule le centroide de la bounding box
-
-        const centroidx = (boundsx + width/2)|0;
-        const centroidy = (boundsy + height/2)|0;
-        const cellx = (centroidx / this.cellwidth)|0;
-        const celly = (centroidx / this.cellheight)|0;
+    insert(centerx, centery, id, entity) {
+        const cellx = (centerx / this.cellwidth)|0;
+        const celly = (centery / this.cellheight)|0;
 
         const gridcell = celly * this.nbcellsx + cellx;
         this.grid[gridcell].push({
             id,
-            centerx: centroidx,
-            centery: centroidy,
+            centerx,
+            centery,
             entity,
             distance: null
         });
@@ -101,7 +96,7 @@ export default class SpatialHash {
         return matching;
     }
 
-    update(boundsx, boundsy, width, height, id) {
+    update(centerx, centery, id) {
 
         const previousgridcell = this.list[id];
         //if(previousgridcell === undefined) {
@@ -109,19 +104,14 @@ export default class SpatialHash {
         //    return;
         //}
 
-        // on calcule le centroide de la bounding box
-
-        const centroidx = (boundsx + width/2)|0;
-        const centroidy = (boundsy + height/2)|0;
-
-        const cellx = (centroidx / this.cellwidth)|0;
-        const celly = (centroidy / this.cellheight)|0;
+        const cellx = (centerx / this.cellwidth)|0;
+        const celly = (centery / this.cellheight)|0;
         const gridcell = celly * this.nbcellsx + cellx;
 
         const cell = this.grid[previousgridcell];
         const item = cell[this.stackindex[id]];
-        item.centerx = centroidx;
-        item.centery = centroidy;
+        item.centerx = centerx;
+        item.centery = centery;
 
         if(previousgridcell === gridcell) return;
         const newcell = this.grid[gridcell];

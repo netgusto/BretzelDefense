@@ -37,6 +37,9 @@ const FireballTower = compose(GenericEntity).compose({
         this.lastfired = null;
     },
     methods: {
+        getRangeCenterPoint() {
+            return { x: this.displayobject.x, y: this.displayobject.y };
+        },
         engage(matches, { ballisticSystem }) {
 
             const now = performance.now();
