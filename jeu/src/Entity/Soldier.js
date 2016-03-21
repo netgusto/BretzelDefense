@@ -6,10 +6,6 @@ import compose from 'compose-js';
 import { Graphics, Sprite } from 'pixi.js';
 import GenericEntity from './Generic';
 
-const sort = function(a, b) {
-    return a.distance - b.distance
-};
-
 const Soldier = compose(GenericEntity).compose({
     init: function({ worldscale }) {
         this.hunter = true;
@@ -31,6 +27,7 @@ const Soldier = compose(GenericEntity).compose({
         this.displayobject.pivot.set(this.displayobject.width / 2, this.displayobject.height);
 
         this.engagedCreep = null;
+        this.engagedFirst = false;
     },
     methods: {
         setRallyPoint(x, y) {
@@ -41,6 +38,7 @@ const Soldier = compose(GenericEntity).compose({
             return this.rallypoint;
         },
         getSpatialTrackPoint() {
+            //return this.rallypoint;
             // on calcule le centroide de la bounding box
             const bounds = this.displayobject.getBounds();
             const centroidx = (bounds.x + bounds.width/2)|0;
@@ -49,34 +47,65 @@ const Soldier = compose(GenericEntity).compose({
         },
         engage(matches, { meleeSystem }) {
 
+            const creep = meleeSystem.selectForEngagement(this, matches);
+            if(creep !== null) {
+                this.displayobject.tint = 0xFF0000;
+                meleeSystem.fight({
+                    hunter: this,
+                    creep
+                });
+            }
+
+            /*if(this.engagedFirst) return;
+
             matches.sort(sort);
-            const match = matches[0];
 
             const engaged = matches.filter(match => match.entity.meleecount > 0);
             const unengaged = matches.filter(match => match.entity.meleecount === 0);
 
-            engaged.sort(sort);
-            unengaged.sort(sort);
+            //if(this.engagedCreep === null) {
+            let match;
+            let engagedFirst;
 
-            if(this.engagedCreep === null) {
+            if(unengaged.length) {
+                match = unengaged[0];
+                engagedFirst = true;
+            } else {
+                match = engaged[0];
+                engagedFirst = false;
+                if(this.engagedCreep !== null && match.entity.id === this.engagedCreep.id) {
+                    match = null;
+                    if(engaged.length > 1) match = engaged[1];
+                }
+            }
+
+            if(this.engagedCreep === null || match !== null) {
+                if(this.engagedCreep !== null) {
+                    this.engagedCreep.releaseMelee();
+                    this.releaseMelee();
+                }
+
                 this.displayobject.tint = 0xFF0000;
+                this.engagedFirst = engagedFirst;
                 this.engagedCreep = match.entity;
+                this.engagedCreep.meleecount++;
+
                 meleeSystem.fight({
                     hunter: this,
                     creep: this.engagedCreep
                 });
             }
+            //}
+            */
         },
         fightMelee(creep) {
-            creep.life -= .5;
+            creep.life -= 500;
             if(creep.life < 0) creep.life = 0;
         },
         releaseMelee() {
-            this.engagedCreep = null;
             this.displayobject.tint = 0xFFFFFF;
         },
         die() {
-            this.engagedCreep = null;
             this.dead = true;
             this.remove();
         }

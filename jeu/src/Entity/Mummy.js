@@ -51,16 +51,16 @@ let Mummy = compose(GenericEntity, SpatialTrackable).compose({
         engageMelee(/*hunter*/) {
             this.setVelocityPerSecond(0);
             this.displayobject.gotoAndStop(5);  // idle
-            this.meleecount++;
+            //this.meleecount++;
         },
         fightMelee(hunter) {
-            hunter.life -= 0.25;
+            hunter.life -= 0.2;
             if(hunter.life < 0) hunter.life = 0;
         },
         releaseMelee() {
             this.setVelocityPerSecond(50);
             this.displayobject.play();  // walk
-            this.meleecount--;
+            //this.meleecount--;
         },
         setLane(lane) {
             this.lane = lane;
@@ -75,7 +75,7 @@ let Mummy = compose(GenericEntity, SpatialTrackable).compose({
         die() {
             const displayobject = this.displayobject;
             this.dead = true;
-            this.meleecount = 0;
+            //this.meleecount = 0;
             displayobject.stop();
             displayobject.rotation = (displayobject.scale.x > 0) ? -Math.PI / 2 : Math.PI / 2;
             setTimeout(() => {
@@ -84,6 +84,6 @@ let Mummy = compose(GenericEntity, SpatialTrackable).compose({
             }, 1000);
         }
     }
-}).compose(Debugable);
+})/*.compose(Debugable)*/;
 
 export default Mummy;

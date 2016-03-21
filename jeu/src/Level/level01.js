@@ -46,7 +46,7 @@ export default function({ resolution, state }) {
             // ];
 
             const wavesprops = [
-                { number: 10, frequency: 1, vps: 150, delay: 0 }
+                { number: 10000, frequency: 10, vps: 50, delay: 0 }
             ];
 
             // Vagues de creeps

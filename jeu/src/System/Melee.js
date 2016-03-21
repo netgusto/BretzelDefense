@@ -1,23 +1,80 @@
 'use strict';
 
+const closestsort = function(a, b) {
+    return a.distance - b.distance
+};
+
 export default function() {
 
     const pendingfight = [];
     const infight = [];
+
+    const creepforhunter = {};
+    const huntersbycreep = {};
 
     const pendingrelease = [];
     const pendingreleaseindexes = [];
     let inrepositionhunter = [];
 
     return {
-        isEngaged(creep) {
-            return creep.melecount > 0;
+        isCreepEngaged(creep) {
+            return creep.id in huntersbycreep;
+        },
+        isHunterEngaged(hunter) {
+            return hunter.id in creepforhunter;
         },
         fight({ hunter, creep }) {
             pendingfight.push({
                 hunter,
                 creep
             });
+        },
+        selectForEngagement(hunter, matches) {
+
+            let newcreep = null;
+
+            if(this.isHunterEngaged(hunter)) {
+                const currentcreepid = creepforhunter[hunter.id];
+                const hunterrankforthiscreep = huntersbycreep[currentcreepid].indexOf(hunter.id);
+                //console.log({ huntersbycreep, hunterrankforthiscreep, huntersbycreep, currentcreepid });
+                if(hunterrankforthiscreep > 0) {
+
+                    // Not the first hunter on this creep
+                    // Let's see if we can block an unengaged creep in our range
+                    const unengaged = matches.filter(match => !this.isCreepEngaged(match.entity));
+                    if(!unengaged.length) return null;
+
+                    unengaged.sort(closestsort);
+                    newcreep = unengaged[0].entity;
+
+                    huntersbycreep[currentcreepid].splice(hunterrankforthiscreep, 1);
+                    if(huntersbycreep[currentcreepid].length === 0) delete huntersbycreep[currentcreepid];
+                    delete creepforhunter[hunter.id];
+
+                    for(let i = 0; i < infight.length; i++) {
+                        if(infight[i].hunter.id === hunter.id && infight[i].creep.id === currentcreepid) {
+                            pendingrelease.push({ fightindex: i, hunterforfait: false, creepforfait: false });
+                            break;
+                        }
+                    }
+
+                    //console.log('SWITCH !', hunter.id, currentcreepid, hunterrankforthiscreep);
+                } else {
+                    return null;
+                }
+            } else {
+                matches.sort(closestsort);
+                newcreep = matches[0].entity;
+            }
+
+            // Indexes bookkeeping
+
+            if(!(newcreep.id in huntersbycreep)) huntersbycreep[newcreep.id] = new Array();
+            huntersbycreep[newcreep.id].push(hunter.id);
+            creepforhunter[hunter.id] = newcreep.id;
+            //console.log(creepforhunter);
+
+            return newcreep;
         },
         forfait(entityids) {
             for(let entityindex = 0; entityindex < entityids.length; entityindex++) {
@@ -42,6 +99,12 @@ export default function() {
                         let hunterforfait = (entityids.indexOf(hunter.id) > -1);
                         pendingrelease.push({ fightindex: i, hunterforfait, creepforfait: true });
                     }
+
+                    huntersbycreep[creep.id].splice(huntersbycreep[creep.id].indexOf(hunter.id), 1);
+                    if(huntersbycreep[creep.id].length === 0) delete huntersbycreep[creep.id];
+                    delete creepforhunter[hunter.id];
+
+                    //console.log(huntersbycreep);
                 }
             }
         },
@@ -58,6 +121,8 @@ export default function() {
             pendingrelease.sort(function(a, b) {
                 return b.fightindex - a.fightindex;
             });
+
+            // Indexes bookkeeping
 
             for(let i = 0; i < pendingrelease.length; i++) {
 
@@ -82,7 +147,7 @@ export default function() {
                 // On vérifie que le creep n'est pas encore engagé par ailleurs
                 // TODO: perf optim by keeping local indexes of number of engagement per entity
                 const creep = creepsreleased[i];
-                if(!this.isEngaged(creep)) creep.releaseMelee();
+                if(!this.isCreepEngaged(creep)) creep.releaseMelee();
             }
 
             for(let i = 0; i < huntersreleased.length; i++) {
@@ -104,6 +169,12 @@ export default function() {
                 creep.engageMelee(hunter);
                 // On retire le hunter des repositionnements en cours s'il s'y trouve référencé
                 inrepositionhunter = inrepositionhunter.filter(item => item.id !== hunter.id);
+
+                // Indexes bookkeeping
+
+                // if(!(creep.id in huntersbycreep)) huntersbycreep[creep.id] = new Array();
+                // huntersbycreep[creep.id].push(hunter.id);
+                // creepforhunter[hunter.id] = creep.id;
             }
 
             /*****************************************************************/
@@ -137,7 +208,7 @@ export default function() {
             /*****************************************************************/
             /* On traite les engagements en cours                            */
             /*****************************************************************/
-            console.log('INFIGHT', infight.length);
+            //console.log('INFIGHT', infight.length);
 
             for(let i = infight.length-1; i >= 0; --i) {
                 const fightprops = infight[i];
