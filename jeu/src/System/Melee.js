@@ -1,7 +1,11 @@
 'use strict';
 
 const closestsort = function(a, b) {
-    return a.distance - b.distance
+    return a.distance - b.distance;
+};
+
+const fightindexsort = function(a, b) {
+    return b.fightindex - a.fightindex;
 };
 
 export default function() {
@@ -29,24 +33,34 @@ export default function() {
                 creep
             });
         },
+        repositionHunter(hunter) {
+            inrepositionhunter.push(hunter);
+        },
         selectForEngagement(hunter, matches) {
+
+            if(matches.length === 0) return null;
 
             let newcreep = null;
 
             if(this.isHunterEngaged(hunter)) {
+
+                // The hunter is already engaged; let's see if we can collaboratively maximize the number of intercepted creeps
+
                 const currentcreepid = creepforhunter[hunter.id];
                 const hunterrankforthiscreep = huntersbycreep[currentcreepid].indexOf(hunter.id);
-                //console.log({ huntersbycreep, hunterrankforthiscreep, huntersbycreep, currentcreepid });
+
                 if(hunterrankforthiscreep > 0) {
 
                     // Not the first hunter on this creep
                     // Let's see if we can block an unengaged creep in our range
+
                     const unengaged = matches.filter(match => !this.isCreepEngaged(match.entity));
-                    if(!unengaged.length) return null;
+                    if(!unengaged.length) return null;  // Nope ! Keeping the engagement to the current creep
 
                     unengaged.sort(closestsort);
-                    newcreep = unengaged[0].entity;
+                    newcreep = unengaged[0].entity; // Yep ! Let's switch to the closest unengaged creep
 
+                    // Releasing the engagement between the hunter and its current creep
                     huntersbycreep[currentcreepid].splice(hunterrankforthiscreep, 1);
                     if(huntersbycreep[currentcreepid].length === 0) delete huntersbycreep[currentcreepid];
                     delete creepforhunter[hunter.id];
@@ -57,30 +71,30 @@ export default function() {
                             break;
                         }
                     }
-
-                    //console.log('SWITCH !', hunter.id, currentcreepid, hunterrankforthiscreep);
                 } else {
+                    // Hunter is not ranked on this creep interception; should not happen
                     return null;
                 }
             } else {
+                // Hunter is not yet engaged; let's engage the closest creep
                 matches.sort(closestsort);
                 newcreep = matches[0].entity;
             }
 
-            // Indexes bookkeeping
+            // Referencing the engagement between the hunter and the creep
 
             if(!(newcreep.id in huntersbycreep)) huntersbycreep[newcreep.id] = new Array();
             huntersbycreep[newcreep.id].push(hunter.id);
             creepforhunter[hunter.id] = newcreep.id;
-            //console.log(creepforhunter);
 
             return newcreep;
         },
         forfait(entityids) {
+            // Processed as a batch to handle case when both hunter and creep die at the same time
             for(let entityindex = 0; entityindex < entityids.length; entityindex++) {
                 const entityid = entityids[entityindex];
 
-                for(let i = infight.length-1; i >= 0; i--) {    // reverse order to allow splice while looping below
+                for(let i = 0; i < infight.length; i++) {
 
                     if(infight[i].creep.id !== entityid && infight[i].hunter.id !== entityid) continue;
 
@@ -90,21 +104,19 @@ export default function() {
                     const { hunter, creep } = infight[i];
 
                     if(hunter.id === entityid) {
-                        // hunter died
-                        // check if creep died too
+                        // hunter died; check if creep died too
                         let creepforfait = (entityids.indexOf(creep.id) > -1);
                         pendingrelease.push({ fightindex: i, hunterforfait: true, creepforfait });
                     } else {
-                        // creep died
+                        // creep died; check if hunter died too
                         let hunterforfait = (entityids.indexOf(hunter.id) > -1);
                         pendingrelease.push({ fightindex: i, hunterforfait, creepforfait: true });
                     }
 
+                    // Releasing the engagement between the hunter and its creep
                     huntersbycreep[creep.id].splice(huntersbycreep[creep.id].indexOf(hunter.id), 1);
                     if(huntersbycreep[creep.id].length === 0) delete huntersbycreep[creep.id];
                     delete creepforhunter[hunter.id];
-
-                    //console.log(huntersbycreep);
                 }
             }
         },
@@ -118,12 +130,9 @@ export default function() {
             const huntersreleased = [];
 
             // sorting pendingrelease descending on fightindex (order scrambled by forfait, following the order of the given entityids batch)
-            pendingrelease.sort(function(a, b) {
-                return b.fightindex - a.fightindex;
-            });
+            pendingrelease.sort(fightindexsort);
 
             // Indexes bookkeeping
-
             for(let i = 0; i < pendingrelease.length; i++) {
 
                 const { fightindex, hunterforfait, creepforfait } = pendingrelease[i];
@@ -145,7 +154,6 @@ export default function() {
 
             for(let i = 0; i < creepsreleased.length; i++) {
                 // On vérifie que le creep n'est pas encore engagé par ailleurs
-                // TODO: perf optim by keeping local indexes of number of engagement per entity
                 const creep = creepsreleased[i];
                 if(!this.isCreepEngaged(creep)) creep.releaseMelee();
             }
@@ -164,17 +172,13 @@ export default function() {
 
             while(pendingfight.length) {
                 const fightprops = pendingfight.pop();
-                const { hunter, creep } = fightprops;
+
                 infight.push(fightprops);
-                creep.engageMelee(hunter);
+
+                fightprops.creep.engageMelee(fightprops.hunter);
+
                 // On retire le hunter des repositionnements en cours s'il s'y trouve référencé
-                inrepositionhunter = inrepositionhunter.filter(item => item.id !== hunter.id);
-
-                // Indexes bookkeeping
-
-                // if(!(creep.id in huntersbycreep)) huntersbycreep[creep.id] = new Array();
-                // huntersbycreep[creep.id].push(hunter.id);
-                // creepforhunter[hunter.id] = creep.id;
+                inrepositionhunter = inrepositionhunter.filter(item => item.id !== fightprops.hunter.id);
             }
 
             /*****************************************************************/
@@ -186,12 +190,29 @@ export default function() {
             for(let i = 0; i < inrepositionhunter.length; i++) {
                 const hunter = inrepositionhunter[i];
                 const vec = [hunter.rallypoint.x - hunter.displayobject.x, hunter.rallypoint.y - hunter.displayobject.y];
-                const distance = Math.sqrt(Math.pow(vec[0], 2) + Math.pow(vec[1], 2));
-                if(distance > 1) {
+                const distancesquared = Math.pow(vec[0], 2) + Math.pow(vec[1], 2);
+                if(distancesquared > 1) {
+
+                    const distance = Math.sqrt(distancesquared);
                     const normalizedvec = distance !== 0 ? [vec[0] / distance, vec[1] / distance] : [vec[0], vec[1]];
                     const displacementthisround = deltatime * hunter.speedperms;
-                    const nextx = hunter.displayobject.x + (normalizedvec[0] * displacementthisround);
-                    const nexty = hunter.displayobject.y + (normalizedvec[1] * displacementthisround);
+
+                    const prevx = hunter.displayobject.x;
+                    const prevy = hunter.displayobject.y;
+
+                    const nextx = prevx + (normalizedvec[0] * displacementthisround);
+                    const nexty = prevy + (normalizedvec[1] * displacementthisround);
+
+                    if(prevx < nextx) {
+                        console.log('RIGHT');
+                        hunter.displayobject.scale.x = Math.abs(hunter.displayobject.scale.x);
+                    } else if(prevx > nextx) {
+                        hunter.displayobject.scale.x = Math.abs(hunter.displayobject.scale.x) * -1;
+                        console.log('LEFT');
+                    } else {
+                        // pas de changement de direction
+                    }
+
                     hunter.setPosition(nextx, nexty);
                 } else {
                     achievedinrepositions.push(i);
@@ -214,26 +235,61 @@ export default function() {
                 const fightprops = infight[i];
                 const { hunter, creep } = fightprops;
 
-                let offset;
+                // Determining fight position
+                // * if creep unengaged, pick the closest point between the hunter and the left and right sides of the creep
+                // * if creep engaged, pick the side the creep is already fighting
 
-                // Calculating vector between creep fight position (creep.x +/- 20, creep.y) and hunter position
-                if(creep.displayobject.x > hunter.displayobject.x) {
-                    offset = -20;   // fight on the left side of the creep
+                let offset = (creep.displayobject.width / 2) + 5;   // 5px: margin
+                let side = 1;   // 1: right, -1: left
+
+                if(this.isCreepEngaged(creep) && huntersbycreep[creep.id].length > 1) {
+                    if(creep.displayobject.scale.x < 0) {
+                        side = -1;
+                    }
                 } else {
-                    offset = 20;   // fight on the right side of the creep
+                    if(creep.displayobject.x > hunter.displayobject.x) {
+                        side = -1
+                    }
                 }
 
-                const fightpoint = { x: creep.displayobject.x + offset, y: creep.displayobject.y };
+                const fightpoint = { x: creep.displayobject.x + (offset * side), y: creep.displayobject.y };
                 const vec = [fightpoint.x - hunter.displayobject.x, fightpoint.y - hunter.displayobject.y];
-                const distance = Math.sqrt(Math.pow(vec[0], 2) + Math.pow(vec[1], 2));
+                const distancesquared = Math.pow(vec[0], 2) + Math.pow(vec[1], 2);
 
-                if(distance > 1) {
+                if(distancesquared > 1) {
+                    const distance = Math.sqrt(distancesquared);
                     const normalizedvec = distance !== 0 ? [vec[0] / distance, vec[1] / distance] : [vec[0], vec[1]];
                     const displacementthisround = deltatime * hunter.speedperms;
-                    const nextx = hunter.displayobject.x + (normalizedvec[0] * displacementthisround);
-                    const nexty = hunter.displayobject.y + (normalizedvec[1] * displacementthisround);
+
+                    const prevx = hunter.displayobject.x;
+                    const prevy = hunter.displayobject.y;
+
+                    const nextx = prevx + (normalizedvec[0] * displacementthisround);
+                    const nexty = prevy + (normalizedvec[1] * displacementthisround);
+
+                    if(prevx < nextx) {
+                        // face right
+                        hunter.displayobject.scale.x = Math.abs(hunter.displayobject.scale.x);
+                    } else if(prevx > nextx) {
+                        // face left
+                        hunter.displayobject.scale.x = Math.abs(hunter.displayobject.scale.x) * -1;
+                    } else {
+                        // pas de changement de direction
+                    }
+
                     hunter.setPosition(nextx, nexty);
                 } else {
+
+                    if(creep.displayobject.x > hunter.displayobject.x) {
+                        // hunter face right and creep face left
+                        hunter.displayobject.scale.x = Math.abs(hunter.displayobject.scale.x);
+                        creep.displayobject.scale.x = Math.abs(hunter.displayobject.scale.x) * -1;
+                    } else{
+                        // hunter face left and creep face right
+                        hunter.displayobject.scale.x = Math.abs(hunter.displayobject.scale.x) * -1;
+                        creep.displayobject.scale.x = Math.abs(hunter.displayobject.scale.x);
+                    }
+
                     hunter.fightMelee(creep);
                     creep.fightMelee(hunter);
                 }

@@ -1,9 +1,6 @@
 'use strict';
 
-// TODO
-// * 2 flêches en parallèle
-// * animer les archers sur le toit du bâtiment
-
+/* @flow */
 
 import compose from 'compose-js';
 
@@ -16,19 +13,19 @@ const sort = function(a, b) {
     return b.entity.pixelswalked - a.entity.pixelswalked;
 };
 
-const ArcherTower = compose(GenericEntity).compose({
+const ArcherPinTower = compose(GenericEntity).compose({
     loadAssets(loader) {
         loader.add('arrow', '/assets/sprites/arrow.png');
-        loader.add('archertower', '/assets/sprites/flag.png');
+        loader.add('archerpintower', '/assets/sprites/flag.png');
         loader.add('bloodspray', '/assets/sprites/bloodspray.png');
         loader.once('complete', (_, resources) => {
-            ArcherTower.arrowtexture = resources.arrow.texture;
-            ArcherTower.arrowtexture.scaleMode = SCALE_MODES.NEAREST;
+            ArcherPinTower.arrowtexture = resources.arrow.texture;
+            ArcherPinTower.arrowtexture.scaleMode = SCALE_MODES.NEAREST;
 
-            ArcherTower.bloodspraytexture = resources.bloodspray.texture;
-            ArcherTower.bloodspraytexture.scaleMode = SCALE_MODES.NEAREST;
+            ArcherPinTower.bloodspraytexture = resources.bloodspray.texture;
+            ArcherPinTower.bloodspraytexture.scaleMode = SCALE_MODES.NEAREST;
 
-            ArcherTower.texture = resources.archertower.texture;
+            ArcherPinTower.texture = resources.archerpintower.texture;
         });
     },
     init: function({ worldscale }) {
@@ -37,7 +34,7 @@ const ArcherTower = compose(GenericEntity).compose({
         this.firerate = 700;
         this.firedamage = 9;
 
-        this.displayobject = new Sprite(ArcherTower.texture);
+        this.displayobject = new Sprite(ArcherPinTower.texture);
         this.displayobject.pivot.set(this.displayobject.width / 2, this.displayobject.height);
         this.lastfired = performance.now();
     },
@@ -55,7 +52,7 @@ const ArcherTower = compose(GenericEntity).compose({
             const match = matches[0];
             const { distance, entity } = match;
 
-            const projectile = new Sprite(ArcherTower.arrowtexture);
+            const projectile = new Sprite(ArcherPinTower.arrowtexture);
             projectile.scale.set(0.5);
             projectile.pivot.set(projectile.width/2, projectile.height/2);
             projectile.position.set(this.displayobject.x, this.displayobject.y - this.displayobject.height);
@@ -85,7 +82,7 @@ const ArcherTower = compose(GenericEntity).compose({
                 displayobject.parent.removeChild(displayobject);
             }, 20);
 
-            displayobject.texture = ArcherTower.bloodspraytexture;
+            displayobject.texture = ArcherPinTower.bloodspraytexture;
             displayobject.scale.set(0.25);
             displayobject.pivot.set(displayobject.width/2, displayobject.height/2);
             displayobject.alpha = 0.7;
@@ -105,4 +102,4 @@ const ArcherTower = compose(GenericEntity).compose({
     }
 });
 
-export default ArcherTower;
+export default ArcherPinTower;

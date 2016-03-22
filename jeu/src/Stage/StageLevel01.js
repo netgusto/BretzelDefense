@@ -113,7 +113,8 @@ export default function({ resolution, canvas, debug, eventbus }) {
                     creepslayer: layers.creeps,
                     backgroundlayer: layers.background,
                     spatialhash,
-                    cursor
+                    cursor,
+                    meleeSystem
                 })})
                 .then(() => stage);
         });

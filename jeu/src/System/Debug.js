@@ -2,7 +2,7 @@
 
 /* @flow */
 
-import { Text, DisplayObject } from 'pixi.js';
+import { Text } from 'pixi.js';
 
 export default function({ layer, cbk }) {
 

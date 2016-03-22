@@ -34,7 +34,7 @@ const FireballTower = compose(GenericEntity).compose({
 
         this.displayobject = new Sprite(FireballTower.texture);
         this.displayobject.pivot.set(this.displayobject.width / 2, this.displayobject.height);
-        this.lastfired = null;
+        this.lastfired = performance.now();
     },
     methods: {
         getRangeCenterPoint() {
@@ -44,37 +44,36 @@ const FireballTower = compose(GenericEntity).compose({
 
             const now = performance.now();
 
-            if(this.lastfired === null || now - this.lastfired >= this.firerate) {
+            if((now - this.lastfired) < this.firerate) return;
 
-                matches.sort(sort);
-                const match = matches[0];
-                const { distance, entity } = match;
+            matches.sort(sort);
+            const match = matches[0];
+            const { distance, entity } = match;
 
-                const fireball = new PixiExtras.MovieClip(FireballTower.ballframes);
-                fireball.animationSpeed = 0.15;
-                fireball.tint = 0XFF0000;
-                fireball.pivot.set(fireball.width/2, fireball.height/2);
-                fireball.scale.set(-1);
-                fireball.position.set(this.displayobject.x, this.displayobject.y - this.displayobject.height);
-                fireball.play();
+            const fireball = new PixiExtras.MovieClip(FireballTower.ballframes);
+            fireball.animationSpeed = 0.15;
+            fireball.tint = 0XFF0000;
+            fireball.pivot.set(fireball.width/2, fireball.height/2);
+            fireball.scale.set(-1);
+            fireball.position.set(this.displayobject.x, this.displayobject.y - this.displayobject.height);
+            fireball.play();
 
-                ballisticSystem.fire({
-                    hunter: this,
-                    target: entity,
-                    distance,
+            ballisticSystem.fire({
+                hunter: this,
+                target: entity,
+                distance,
 
-                    // TODO: actuellement, la distance est calculée depuis la base de la tour, et pas depuis la position du tir (généralement le sommet de la tour)
-                    flightduration: 150 + distance,   // la durée de vol du projectile est fonction de la distance; la durée de vol doit être fixe pour permettre le ciblage prédictif
-                    displayobject: fireball,
-                    damage: this.firedamage,
-                    orient: true,
-                    homing: true,
-                    parabolic: false,
-                    parabolicapex: 135  // -35: visée horizontale (flêche)
-                });
+                // TODO: actuellement, la distance est calculée depuis la base de la tour, et pas depuis la position du tir (généralement le sommet de la tour)
+                flightduration: 150 + distance,   // la durée de vol du projectile est fonction de la distance; la durée de vol doit être fixe pour permettre le ciblage prédictif
+                displayobject: fireball,
+                damage: this.firedamage,
+                orient: true,
+                homing: true,
+                parabolic: false,
+                parabolicapex: 135  // -35: visée horizontale (flêche)
+            });
 
-                this.lastfired = now;
-            }
+            this.lastfired = now;
         },
         ballisticHit(projectileprops) {
             const { target, displayobject } = projectileprops;

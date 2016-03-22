@@ -2,13 +2,12 @@
 
 /* @flow */
 
-//import stampit from 'stampit';
 import compose from 'compose-js';
 import { extras as PixiExtras } from 'pixi.js';
 import { loadspritesheet } from 'bobo';
 
 import GenericEntity from './Generic';
-import Debugable from '../Component/Debugable';
+//import Debugable from '../Component/Debugable';
 import SpatialTrackable from '../Component/SpatialTrackable';
 
 let loaded = false;
@@ -29,15 +28,13 @@ let Mummy = compose(GenericEntity, SpatialTrackable).compose({
     },
     init: function({ worldscale }) {
 
-        this.maxlife = 100;
+        this.maxlife = 27;
         this.life = this.maxlife;
         this.meleecount = 0;
 
         this.displayobject = new PixiExtras.MovieClip(Mummy.spriteframes);
-        //console.log(this.displayobject.scale);
         this.displayobject.play();
         this.displayobject.pivot.set(this.displayobject.width/2, this.displayobject.height);    // pas d'utilisation de la propriété anchor, car cause problème dans le calcul des déplacements de hitArea
-        //this.displayobject.scale.set(1/this.displayobject.width*20);
         this.displayobject.scale.set(worldscale);
     },
     methods: {
@@ -51,16 +48,16 @@ let Mummy = compose(GenericEntity, SpatialTrackable).compose({
         engageMelee(/*hunter*/) {
             this.setVelocityPerSecond(0);
             this.displayobject.gotoAndStop(5);  // idle
-            //this.meleecount++;
         },
         fightMelee(hunter) {
-            hunter.life -= 0.2;
+            this.setTint(0x00FF00);
+            hunter.life -= 0.002;
             if(hunter.life < 0) hunter.life = 0;
         },
         releaseMelee() {
+            this.setTint(0xFFFFFF);
             this.setVelocityPerSecond(50);
             this.displayobject.play();  // walk
-            //this.meleecount--;
         },
         setLane(lane) {
             this.lane = lane;
@@ -73,13 +70,11 @@ let Mummy = compose(GenericEntity, SpatialTrackable).compose({
             return this;
         },
         die() {
-            const displayobject = this.displayobject;
+            this.setTint(0xFFFFFF);
             this.dead = true;
-            //this.meleecount = 0;
-            displayobject.stop();
-            displayobject.rotation = (displayobject.scale.x > 0) ? -Math.PI / 2 : Math.PI / 2;
+            this.displayobject.stop();
+            this.displayobject.rotation = (this.displayobject.scale.x > 0) ? -Math.PI / 2 : Math.PI / 2;
             setTimeout(() => {
-                //displayobject.parent.removeChild(displayobject);
                 this.remove();
             }, 1000);
         }
