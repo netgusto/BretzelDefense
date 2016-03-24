@@ -204,11 +204,9 @@ export default function() {
                     const nexty = prevy + (normalizedvec[1] * displacementthisround);
 
                     if(prevx < nextx) {
-                        console.log('RIGHT');
                         hunter.displayobject.scale.x = Math.abs(hunter.displayobject.scale.x);
                     } else if(prevx > nextx) {
                         hunter.displayobject.scale.x = Math.abs(hunter.displayobject.scale.x) * -1;
-                        console.log('LEFT');
                     } else {
                         // pas de changement de direction
                     }

@@ -7,7 +7,8 @@ import { Graphics } from 'pixi.js';
 import Background from '../Entity/Background';
 import Mummy from '../Entity/Mummy';
 import FireballTower from '../Entity/FireballTower';
-import ArcherPinTower from '../Entity/ArcherPinTower';
+//import ArcherPinTower from '../Entity/ArcherPinTower';
+import ArcherTower from '../Entity/ArcherTower';
 import BarrackTower from '../Entity/BarrackTower';
 
 export default function({ resolution, state }) {
@@ -19,7 +20,8 @@ export default function({ resolution, state }) {
             Background.loadAssets(loader);
             Mummy.loadAssets(loader);
             FireballTower.loadAssets(loader);
-            ArcherPinTower.loadAssets(loader);
+            //ArcherPinTower.loadAssets(loader);
+            ArcherTower.loadAssets(loader);
             BarrackTower.loadAssets(loader);
         },
 
@@ -38,17 +40,17 @@ export default function({ resolution, state }) {
 
         waves({ layer, spatialhash }) {
 
-            const wavesprops = [
-                { number: 9, frequency: 400, vps: 20, delay: 0 },
-                { number: 15, frequency: 400, vps: 23, delay: 20000 },
-                { number: 25, frequency: 400, vps: 30, delay: 30000 },
-                { number: 40, frequency: 400, vps: 35, delay: 50000 },
-                { number: 70, frequency: 400, vps: 38, delay: 75000 }
-            ];
-
             // const wavesprops = [
-            //     { number: 300, frequency: 10, vps: 50, delay: 0 }
+            //     { number: 9, frequency: 400, vps: 20, delay: 0 },
+            //     { number: 15, frequency: 400, vps: 23, delay: 20000 },
+            //     { number: 25, frequency: 400, vps: 30, delay: 30000 },
+            //     { number: 40, frequency: 400, vps: 35, delay: 50000 },
+            //     { number: 70, frequency: 400, vps: 38, delay: 75000 }
             // ];
+
+            const wavesprops = [
+                { number: 300, frequency: 10, vps: 50, delay: 0 }
+            ];
 
             // Vagues de creeps
             let mummyindex = 0;
@@ -119,7 +121,7 @@ export default function({ resolution, state }) {
                         }
                     } else {
                         if(state.coins >= 70) {
-                            tower = ArcherPinTower({ worldscale: resolution.worldscale });
+                            tower = ArcherTower({ worldscale: resolution.worldscale });
                             state.coins -= 70;
                         }
                     }
@@ -128,10 +130,10 @@ export default function({ resolution, state }) {
                         tower.setPosition(clickpoint.x, clickpoint.y);
                         creepslayer.addEntity(tower);
 
-                        let circle = new Graphics();
-                        circle.lineStyle(1, 0xFFFF00);
-                        backgroundlayer.addChild(circle);
-                        circle.drawCircle(tower.displayobject.x, tower.displayobject.y, tower.range);
+                        // let circle = new Graphics();
+                        // circle.lineStyle(1, 0xFFFF00);
+                        // backgroundlayer.addChild(circle);
+                        // circle.drawCircle(tower.displayobject.x, tower.displayobject.y, tower.range);
                     }
                 }
             }));
