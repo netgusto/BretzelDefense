@@ -3,7 +3,7 @@
 /* @flow */
 
 import compose from 'compose-js';
-import { Graphics, Sprite } from 'pixi.js';
+import { Sprite } from 'pixi.js';
 import GenericEntity from './Generic';
 
 const Soldier = compose(GenericEntity).compose({
@@ -15,7 +15,7 @@ const Soldier = compose(GenericEntity).compose({
     },
     init: function({ worldscale }) {
         this.hunter = true;
-        this.range = 100 * worldscale;
+        this.rangeX = 100 * worldscale;
         this.firerate = 1500;
         this.firedamage = 70;
         this.speedperms = (100 * worldscale)/1000;

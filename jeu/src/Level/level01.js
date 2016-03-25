@@ -2,7 +2,7 @@
 
 import { curveToLane } from '../Utils/lane';
 //import creepsautospawn from '../Utils/creepsautospawn';
-import { Graphics } from 'pixi.js';
+import { Graphics, Sprite } from 'pixi.js';
 
 import Background from '../Entity/Background';
 import Mummy from '../Entity/Mummy';
@@ -15,6 +15,8 @@ export default function({ resolution, state }) {
 
     Background.setTexturePath('/assets/sprites/level-' + resolution.width + '-' + resolution.height + '.jpg');
 
+    let buildspotHighlightTexture;
+
     return {
         loadAssets(loader) {
             Background.loadAssets(loader);
@@ -23,6 +25,11 @@ export default function({ resolution, state }) {
             //ArcherPinTower.loadAssets(loader);
             ArcherTower.loadAssets(loader);
             BarrackTower.loadAssets(loader);
+
+            loader.add('buildspothighlight', '/assets/sprites/buildspot-highlight.png');
+            loader.once('complete', (_, resources) => {
+                buildspotHighlightTexture = resources.buildspothighlight.texture;
+            });
         },
 
         init() {
@@ -33,24 +40,117 @@ export default function({ resolution, state }) {
                 { name: 'blue',     width: 2048, height: 1536, color: 0x0000FF, offsetx: resolution.offsetx, offsety: resolution.offsety, path: 'M947.185318,1615.31075 C947.185318,1615.31075 933.100278,1263.32563 976.658575,1200.90086 C1020.21687,1138.47609 1198.53437,1151.85049 1244.61707,1111.50305 C1347.95977,1021.02194 1337.19011,955.041572 1321.49511,895.508487 C1305.80012,835.975403 1279.38555,808.805216 1198.36418,768.464665 C1105.10066,722.028749 959.076703,790.951645 821.344481,808.805227 C725.485455,821.230983 633.359386,804.746667 605.735661,755.000829 C578.694428,706.303964 583.842179,669.17308 612.876177,636.950093 C676.796986,566.008456 938.383376,602.717268 1009.26083,560.586238 C1080.13828,518.455209 1094.44325,398.7663 1109.80687,357.402099 C1125.17049,316.037898 1138.07944,245.042972 1225.0922,245.042972 C1265.52286,245.042972 1332.21028,261.448151 1347.95973,333.050122 C1363.70917,404.652094 1384.87665,531.747299 1429.17595,560.586238 C1491.05889,600.872165 1658.90938,585.969882 1712.06305,585.969882 C1776.5347,585.969882 1937.76607,572.55721 2067.86252,540.806034 C2188.44746,511.376223 2279.71828,464.893012 2305.25319,430.54472' }
             ].map(curveToLane(resolution.width, resolution.height));
 
+            this.buildspots = [
+                {x: 759, y: 673, tower: null },
+                {x: 893, y: 645, tower: null },
+                {x: 911, y: 843, tower: null },
+                {x: 660, y: 472, tower: null },
+                {x: 990, y: 358, tower: null },
+                {x: 992, y: 250, tower: null },
+                {x: 751, y: 277, tower: null }
+            ];
+
             const before = performance.now();
             const promises = this.lanes.map(lane => lane.memoizeAllAsync());
             return Promise.all(promises).then(() => console.log('Lanes async memoization took ' + (performance.now() - before) + ' ms'));
         },
 
+        setup({ cursor, spatialhash, backgroundlayer, buildspotslayer, creepslayer, meleeSystem }) {
+
+            this.buildspots.map(function(spot) {
+
+                const buildspot = new Sprite(buildspotHighlightTexture);
+                buildspot.pivot.set(buildspot.width / 2, buildspot.height / 2 + (15 * resolution.worldscale));
+                buildspot.position.set(spot.x, spot.y);
+                buildspot.scale.set(resolution.worldscale);
+                buildspot.alpha = 0;
+                buildspot.tint = 0xf1c40f;
+
+                buildspot.interactive = true;
+                buildspot.mouseover = function() {
+                    if(spot.tower === null) {
+                        buildspot.alpha = 0.6;
+                    }
+                };
+
+                buildspot.mouseout = function() {
+                    buildspot.alpha = 0;
+                };
+
+                buildspot.click = function() {
+                    if(spot.tower === null) {
+                        let tower;
+
+                        if(cursor.alt) {
+                            tower = BarrackTower({ worldscale: resolution.worldscale })
+                                .mount({
+                                    worldscale: resolution.worldscale,
+                                    clickpoint: { x: spot.x, y: spot.y },
+                                    creepslayer,
+                                    meleeSystem
+                                });
+                        } else if(cursor.shift) {
+                            if(state.coins >= 100) {
+                                tower = FireballTower({ worldscale: resolution.worldscale })
+                                    .mount({
+                                        worldscale: resolution.worldscale,
+                                        clickpoint: { x: spot.x, y: spot.y },
+                                        creepslayer
+                                    });
+                                state.coins -= 100;
+                            }
+                        } else {
+                            if(state.coins >= 70) {
+                                tower = ArcherTower({ worldscale: resolution.worldscale })
+                                    .mount({
+                                        worldscale: resolution.worldscale,
+                                        clickpoint: { x: spot.x, y: spot.y },
+                                        creepslayer
+                                    });
+                                state.coins -= 70;
+                            }
+                        }
+
+                        if(tower) {
+                            buildspot.mouseout();
+                            spot.tower = tower;
+
+                            let circle = new Graphics();
+                            circle.lineStyle(1, 0xFFFF00);
+                            backgroundlayer.addChild(circle);
+                            //circle.drawCircle(tower.displayobject.x, tower.displayobject.y, tower.rangeX);
+                            circle.drawEllipse(tower.displayobject.x, tower.displayobject.y, tower.rangeX, tower.rangeY);
+                        }
+                    }
+                }
+
+                buildspotslayer.addChild(buildspot);
+            });
+
+            //creepsautospawn({ layer: creepslayer, resolution, spatialhash, lanes: this.lanes, vps: 20, frequency: 50 });
+            this.waves({ layer: creepslayer, resolution, spatialhash });
+
+            backgroundlayer.addEntity(Background({
+                viewwidth: resolution.width,
+                viewheight: resolution.height
+            }));
+
+            return Promise.resolve();
+        },
+
         waves({ layer, spatialhash }) {
 
-            // const wavesprops = [
-            //     { number: 9, frequency: 400, vps: 20, delay: 0 },
-            //     { number: 15, frequency: 400, vps: 23, delay: 20000 },
-            //     { number: 25, frequency: 400, vps: 30, delay: 30000 },
-            //     { number: 40, frequency: 400, vps: 35, delay: 50000 },
-            //     { number: 70, frequency: 400, vps: 38, delay: 75000 }
-            // ];
-
             const wavesprops = [
-                { number: 300, frequency: 10, vps: 50, delay: 0 }
+                { number: 9, frequency: 400, vps: 20, delay: 0 },
+                { number: 15, frequency: 400, vps: 23, delay: 20000 },
+                { number: 25, frequency: 400, vps: 30, delay: 30000 },
+                { number: 40, frequency: 400, vps: 35, delay: 50000 },
+                { number: 70, frequency: 400, vps: 38, delay: 75000 }
             ];
+
+            // const wavesprops = [
+            //     { number: 300, frequency: 10, vps: 50, delay: 0 }
+            // ];
 
             // Vagues de creeps
             let mummyindex = 0;
@@ -91,54 +191,6 @@ export default function({ resolution, state }) {
                     spawn(waveprops)
                 }, waveprops.delay);
             });
-        },
-
-        setup({ cursor, spatialhash, creepslayer, backgroundlayer, meleeSystem }) {
-
-            //creepsautospawn({ layer: creepslayer, resolution, spatialhash, lanes: this.lanes, vps: 20, frequency: 50 });
-            this.waves({ layer: creepslayer, resolution, spatialhash });
-
-            backgroundlayer.addEntity(Background({
-                viewwidth: resolution.width,
-                viewheight: resolution.height,
-                onclick(event) {
-
-                    const clickpoint = event.data.global;
-
-                    let tower;
-                    if(cursor.alt) {
-                        BarrackTower({ worldscale: resolution.worldscale })
-                            .mount({
-                                worldscale: resolution.worldscale,
-                                clickpoint,
-                                creepslayer,
-                                meleeSystem
-                            });
-                    } else if(cursor.shift) {
-                        if(state.coins >= 100) {
-                            tower = FireballTower({ worldscale: resolution.worldscale });
-                            state.coins -= 100;
-                        }
-                    } else {
-                        if(state.coins >= 70) {
-                            tower = ArcherTower({ worldscale: resolution.worldscale });
-                            state.coins -= 70;
-                        }
-                    }
-
-                    if(tower) {
-                        tower.setPosition(clickpoint.x, clickpoint.y);
-                        creepslayer.addEntity(tower);
-
-                        // let circle = new Graphics();
-                        // circle.lineStyle(1, 0xFFFF00);
-                        // backgroundlayer.addChild(circle);
-                        // circle.drawCircle(tower.displayobject.x, tower.displayobject.y, tower.range);
-                    }
-                }
-            }));
-
-            return Promise.resolve();
         }
     }
 }

@@ -28,7 +28,7 @@ const FireballTower = compose(GenericEntity).compose({
     },
     init: function({ worldscale }) {
         this.hunter = true;
-        this.range = 500 * worldscale;
+        this.rangeX = 500 * worldscale;
         this.firerate = 1500;
         this.firedamage = 70;
 
@@ -37,6 +37,11 @@ const FireballTower = compose(GenericEntity).compose({
         this.lastfired = performance.now();
     },
     methods: {
+        mount({/* worldscale,*/ clickpoint, creepslayer }) {
+            this.setPosition(clickpoint.x, clickpoint.y);
+            creepslayer.addEntity(this);
+            return this;
+        },
         getRangeCenterPoint() {
             return { x: this.displayobject.x, y: this.displayobject.y };
         },

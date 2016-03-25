@@ -19,6 +19,8 @@ const ArcherTower = compose(GenericEntity).compose({
     loadAssets(loader) {
         loader.add('arrow', '/assets/sprites/arrow.png');
         loader.add('archertower', '/assets/sprites/archertower.png');
+        loader.add('archertowerfacade', '/assets/sprites/archertower-facade.png');
+        loader.add('archer', '/assets/sprites/archer.png');
         loader.add('bloodspray', '/assets/sprites/bloodspray.png');
         loader.once('complete', (_, resources) => {
             ArcherTower.arrowtexture = resources.arrow.texture;
@@ -27,22 +29,47 @@ const ArcherTower = compose(GenericEntity).compose({
             ArcherTower.bloodspraytexture = resources.bloodspray.texture;
             ArcherTower.bloodspraytexture.scaleMode = SCALE_MODES.NEAREST;
 
+            ArcherTower.archertexture = resources.archer.texture;
+            ArcherTower.archertexture.scaleMode = SCALE_MODES.NEAREST;
+
             ArcherTower.texture = resources.archertower.texture;
+            ArcherTower.facadetexture = resources.archertowerfacade.texture;
         });
     },
     init: function({ worldscale }) {
+
+        const range = 350;
         this.worldscale = worldscale;
         this.hunter = true;
-        this.range = 250 * worldscale;
+        this.rangeX = range * worldscale;
+        this.rangeY = (range * (3/5)) * worldscale;
         this.firerate = 700;
         this.firedamage = 9;
 
         this.displayobject = new Sprite(ArcherTower.texture);
         this.displayobject.pivot.set(this.displayobject.width / 2, (this.displayobject.height / 2) + (45 * worldscale));
-        this.lastfired = performance.now();
         this.displayobject.scale.set(worldscale);
+
+        this.archerleft = new Sprite(ArcherTower.archertexture);
+        this.archerleft.pivot.set(this.archerleft.width / 2, this.archerleft.height / 2);
+        this.archerleft.position.set(this.displayobject.width / 2 + 10 * worldscale, 85 * worldscale);
+
+        this.archerright = new Sprite(ArcherTower.archertexture);
+        this.archerright.pivot.set(this.archerright.width / 2, this.archerright.height / 2);
+        this.archerright.position.set(this.displayobject.width / 2 + 60 * worldscale, 85 * worldscale);
+
+        this.displayobject.addChild(this.archerleft);
+        this.displayobject.addChild(this.archerright);
+        this.displayobject.addChild(new Sprite(ArcherTower.facadetexture));
+
+        this.lastfired = performance.now();
     },
     methods: {
+        mount({/* worldscale,*/ clickpoint, creepslayer }) {
+            this.setPosition(clickpoint.x, clickpoint.y);
+            creepslayer.addEntity(this);
+            return this;
+        },
         getRangeCenterPoint() {
             return { x: this.displayobject.x, y: this.displayobject.y };
         },
@@ -54,25 +81,28 @@ const ArcherTower = compose(GenericEntity).compose({
 
             matches.sort(sort);
 
-            const fire = (match, archer) => {
+            const fire = (match, archerside) => {
                 const { distance, entity } = match;
 
                 const projectile = new Sprite(ArcherTower.arrowtexture);
                 projectile.scale.set(0.75);
                 projectile.pivot.set(projectile.width/2, projectile.height/2);
 
-                if(archer === 'left') {
-                    projectile.position.set(this.displayobject.x - (25 * this.worldscale), this.displayobject.y - (75 * this.worldscale));
+                const archer = archerside === 'left' ? this.archerleft : this.archerright;
+                const archerposition = this.displayobject.toGlobal(archer.position);
+
+                projectile.position.set(archerposition.x + 10 * this.worldscale, archerposition.y - 20 * this.worldscale);
+
+                if(archerposition.x < entity.displayobject.x) {
+                    archer.scale.set(Math.abs(archer.scale.x) * -1, archer.scale.y);
                 } else {
-                    projectile.position.set(this.displayobject.x + (25 * this.worldscale), this.displayobject.y - (75 * this.worldscale));
+                    archer.scale.set(Math.abs(archer.scale.x), archer.scale.y);
                 }
 
                 ballisticSystem.fire({
                     hunter: this,
                     target: entity,
                     distance,
-
-                    // TODO: actuellement, la distance est calculée depuis la base de la tour, et pas depuis la position du tir (généralement le sommet de la tour)
                     flightduration: 250 + distance,   // la durée de vol du projectile est fonction de la distance; la durée de vol doit être fixe pour permettre le ciblage prédictif
                     displayobject: projectile,
                     damage: this.firedamage,

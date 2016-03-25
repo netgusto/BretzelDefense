@@ -49,6 +49,8 @@ const BarrackTower = compose(GenericEntity).compose({
 
             meleeSystem.repositionHunter(soldier1);
             meleeSystem.repositionHunter(soldier2);
+
+            return this;
         }
     }
 });

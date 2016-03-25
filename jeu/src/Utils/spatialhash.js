@@ -44,7 +44,15 @@ export default class SpatialHash {
         this.stackindex[id] = this.grid[gridcell].length - 1;
     }
 
-    retrieve(centerx, centery, range) {
+    retrieve(centerx, centery, range, rangeY) {
+        let rangeX;
+        let ellipsis = !!rangeY && range !== rangeY;
+
+        if(ellipsis) {
+            // ellipsis
+            rangeX = range;
+            range = rangeX > rangeY ? rangeX : rangeY;
+        } // else circle
 
         // on récupère toutes les boîtes dans lesquelles le cercle est inscrit
         let diameter = range * 2;
@@ -75,21 +83,43 @@ export default class SpatialHash {
 
         //console.log({ first: firstcelly * this.nbcellsx + firstcellx, last: lastcelly * this.nbcellsx + lastcellx });
 
-        const radiussq = Math.pow(range, 2);
         const matching = [];
 
-        for(let gridy = firstcelly; gridy <= lastcelly; gridy++) {
-            for(let gridx = firstcellx; gridx <= lastcellx; gridx++) {
-                const cell = this.grid[gridy * this.nbcellsx + gridx];
-                for(let k = 0; k < cell.length; k++) {
-                    let item = cell[k];
-                    const dsq = Math.pow(centerx - item.centerx, 2) + Math.pow(centery - item.centery, 2);
-                    if(dsq <= radiussq) {
-                        item.distance = Math.sqrt(dsq);
-                        matching.push(item);
+        if(ellipsis) {
+            const widthsq = Math.pow(rangeX, 2);
+            const heightsq = Math.pow(rangeY, 2);
+            for(let gridy = firstcelly; gridy <= lastcelly; gridy++) {
+                for(let gridx = firstcellx; gridx <= lastcellx; gridx++) {
+                    const cell = this.grid[gridy * this.nbcellsx + gridx];
+                    for(let k = 0; k < cell.length; k++) {
+                        const item = cell[k];
+
+                        const dxsq = Math.pow(item.centerx - centerx, 2);
+                        const dysq = Math.pow(item.centery - centery, 2);
+
+                        if(((dxsq / widthsq) + (dysq / heightsq)) <= 1) {
+                            item.distance = Math.sqrt(dxsq + dysq);
+                            matching.push(item);
+                        }
                     }
                 }
-                //result = result.concat(matching);
+            }
+        } else {
+            const radiussq = Math.pow(range, 2);
+
+            for(let gridy = firstcelly; gridy <= lastcelly; gridy++) {
+                for(let gridx = firstcellx; gridx <= lastcellx; gridx++) {
+                    const cell = this.grid[gridy * this.nbcellsx + gridx];
+                    for(let k = 0; k < cell.length; k++) {
+                        const item = cell[k];
+                        const dsq = Math.pow(centerx - item.centerx, 2) + Math.pow(centery - item.centery, 2);
+                        if(dsq <= radiussq) {
+                            item.distance = Math.sqrt(dsq);
+                            matching.push(item);
+                        }
+                    }
+                    //result = result.concat(matching);
+                }
             }
         }
 

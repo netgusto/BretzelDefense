@@ -30,6 +30,7 @@ export default function({ resolution, canvas, debug, eventbus }) {
     const layers = {
         background: new GameLayer(stage),
         lifebar: new GameLayer(stage),
+        buildspots: new GameLayer(stage),
         creeps: new GameLayer(stage),
         projectiles: new GameLayer(stage),
         interface: new GameLayer(stage),
@@ -110,8 +111,9 @@ export default function({ resolution, canvas, debug, eventbus }) {
             return level
                 .init()
                 .then(() => { console.log('laaa'); level.setup({
-                    creepslayer: layers.creeps,
                     backgroundlayer: layers.background,
+                    buildspotslayer: layers.buildspots,
+                    creepslayer: layers.creeps,
                     spatialhash,
                     cursor,
                     meleeSystem
