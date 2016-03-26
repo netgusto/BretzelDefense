@@ -36,13 +36,13 @@ const ArcherTower = compose(GenericEntity).compose({
             ArcherTower.facadetexture = resources.archertowerfacade.texture;
         });
     },
-    init: function({ worldscale }) {
+    init: function({ worldscale, whratio }) {
 
-        const range = 350;
+        const range = 290;
         this.worldscale = worldscale;
         this.hunter = true;
         this.rangeX = range * worldscale;
-        this.rangeY = (range * (3/5)) * worldscale;
+        this.rangeY = (range / whratio) * worldscale;
         this.firerate = 700;
         this.firedamage = 9;
 
