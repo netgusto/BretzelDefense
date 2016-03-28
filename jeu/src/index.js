@@ -6,6 +6,11 @@ import 'perfnow';
 import Emitter from 'tiny-emitter';
 
 const eventbus = new Emitter();
+const stdemit = eventbus.emit;
+eventbus.emit = function(name) {
+    console.info('EVENT:' + name);
+    stdemit.apply(eventbus, arguments);
+};
 
 import { Container, autoDetectRenderer } from 'pixi.js';
 import { gameloop } from 'bobo';

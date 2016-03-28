@@ -11,7 +11,9 @@ export default function({ eventbus }) {
                 }
             }
 
-            eventbus.emit('entity.death.batch', deaths);
+            if(deaths.length > 0) {
+                eventbus.emit('entity.death.batch', deaths);
+            }
         }
     };
 }

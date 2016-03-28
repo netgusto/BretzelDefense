@@ -24,6 +24,7 @@ import Mummy from '../Entity/Mummy';
 import FireballTower from '../Entity/FireballTower';
 import ArcherTower from '../Entity/ArcherTower';
 import BarrackTower from '../Entity/BarrackTower';
+import TowerMenu from '../Entity/TowerMenu';
 
 const gridcellsize = 128;
 
@@ -33,7 +34,8 @@ export default function({ resolution, canvas, debug, eventbus }) {
 
     const state = {
         life: 20,
-        coins: 100
+        coins: 100,
+        activetowerspot: null
     };
 
     const stage = new GameStage(canvas);
@@ -131,7 +133,8 @@ export default function({ resolution, canvas, debug, eventbus }) {
                     worldscale: resolution.worldscale,
                     whratio,
                     meleeSystem,
-                    state
+                    state,
+                    eventbus
                 }))
                 .addSystem(SpatialTrackingSystem({ spatialhash }))
                 .addSystem(RangeDetectionSystem({
@@ -170,19 +173,87 @@ export default function({ resolution, canvas, debug, eventbus }) {
                 }
             });
 
+            eventbus.on('buildspot.focus', function({ spot }) {
+
+                if(!spot.menu) {
+                    spot.menu = TowerMenu({ spot, eventbus, worldscale: resolution.worldscale });
+                    layers.ingamemenus.addEntity(spot.menu);
+                }
+
+                if(spot.tower) {
+                    spot.menu.setPosition(spot.x, spot.y - 20 * resolution.worldscale);
+                } else {
+                    spot.menu.setPosition(spot.x, spot.y);
+                }
+
+                spot.menu.enable();
+
+                state.activetowerspot = spot;
+            });
+
+            eventbus.on('buildspot.blur', function({ spot }) {
+                if(spot.menu) spot.menu.disable();
+
+                state.activetowerspot = null;
+            });
+
+            eventbus.on('tower.add', function({ spot, type }) {
+                if(spot.tower !== null) return;
+
+                let tower = null;
+                switch(type) {
+                    case 'ArcherTower': {
+                        if(state.coins < 70) return;
+                        state.coins -= 70;
+                        tower = ArcherTower({ worldscale: resolution.worldscale, whratio })
+                            .mount({
+                                worldscale: resolution.worldscale,
+                                clickpoint: { x: spot.x, y: spot.y },
+                                creepslayer: layers.creeps
+                            });
+                        break;
+                    }
+
+                    case 'BarrackTower': {
+                        if(state.coins < 70) return;
+                        state.coins -= 70;
+                        tower = BarrackTower({ worldscale: resolution.worldscale, whratio })
+                            .mount({
+                                worldscale: resolution.worldscale,
+                                clickpoint: { x: spot.x, y: spot.y },
+                                creepslayer: layers.creeps,
+                                meleeSystem
+                            });
+                        break;
+                    }
+                }
+
+                if(tower !== null) {
+                    eventbus.emit('tower.added', { spot, tower });
+                }
+
+            });
+
             /*****************************************************************/
             /* Setup du level                                                */
             /*****************************************************************/
 
             const setup = function({ spatialhash, backgroundlayer, creepslayer }) {
 
+                const background = Background({
+                    viewwidth: resolution.width,
+                    viewheight: resolution.height
+                });
+
+                background.displayobject.interactive = true;
+                background.displayobject.click = function(e) {
+                    eventbus.emit('background.click', e);
+                };
+
                 //creepsautospawn({ layer: creepslayer, resolution, spatialhash, lanes: this.lanes, vps: 20, frequency: 50 });
                 waves({ layer: creepslayer, resolution, spatialhash });
 
-                backgroundlayer.addEntity(Background({
-                    viewwidth: resolution.width,
-                    viewheight: resolution.height
-                }));
+                backgroundlayer.addEntity(background);
 
                 return Promise.resolve();
             };

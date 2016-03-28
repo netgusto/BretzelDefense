@@ -47,16 +47,16 @@ const ArcherTower = compose(GenericEntity).compose({
         this.firedamage = 9;
 
         this.displayobject = new Sprite(ArcherTower.texture);
-        this.displayobject.pivot.set(this.displayobject.width / 2, (this.displayobject.height / 2) + (45 * worldscale));
+        this.displayobject.pivot.set(this.displayobject.width / 2, (this.displayobject.height / 2));
         this.displayobject.scale.set(worldscale);
 
         this.archerleft = new Sprite(ArcherTower.archertexture);
         this.archerleft.pivot.set(this.archerleft.width / 2, this.archerleft.height / 2);
-        this.archerleft.position.set(this.displayobject.width / 2 + 10 * worldscale, 85 * worldscale);
+        this.archerleft.position.set(this.displayobject.width / 2 + 10 * worldscale, 12 * worldscale);
 
         this.archerright = new Sprite(ArcherTower.archertexture);
         this.archerright.pivot.set(this.archerright.width / 2, this.archerright.height / 2);
-        this.archerright.position.set(this.displayobject.width / 2 + 60 * worldscale, 85 * worldscale);
+        this.archerright.position.set(this.displayobject.width / 2 + 60 * worldscale, 12 * worldscale);
 
         this.displayobject.addChild(this.archerleft);
         this.displayobject.addChild(this.archerright);
