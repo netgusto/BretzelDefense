@@ -4,10 +4,7 @@
 
 import { Sprite, Graphics } from 'pixi.js';
 
-import ArcherTower from '../Entity/ArcherTower';
-import BarrackTower from '../Entity/BarrackTower';
-
-export default function({ rangeslayer, towerslayer, backgroundlayer, buildspots, buildspotHighlightTexture, cursor, worldscale, whratio, meleeSystem, state, eventbus }) {
+export default function({ rangeslayer, backgroundlayer, buildspots, buildspotHighlightTexture, worldscale, eventbus }) {
 
     let currentbuildspot = null;
 
@@ -35,7 +32,7 @@ export default function({ rangeslayer, towerslayer, backgroundlayer, buildspots,
         spot.terrain.alpha = 0;
     };
 
-    eventbus.on('background.click', function(e) {
+    eventbus.on('background.click', function(/*e*/) {
         buildspots.map(disable);
         if(currentbuildspot) {
             eventbus.emit('buildspot.blur', { spot: currentbuildspot });

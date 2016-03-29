@@ -24,13 +24,13 @@ const BarrackTower = compose(GenericEntity).compose({
         this.displayobject.scale.set(worldscale);
     },
     methods: {
-        mount({ worldscale, clickpoint, creepslayer, meleeSystem }) {
+        mount({ worldscale, clickpoint, deploypoint, creepslayer, meleeSystem }) {
 
             this.setPosition(clickpoint.x, clickpoint.y);
 
             const offsetpos = 20 * worldscale;
 
-            const rangecenterpoint = [clickpoint.x, clickpoint.y + (155 * worldscale)]
+            const rangecenterpoint = [deploypoint.x, deploypoint.y]
 
             const soldier1 = Soldier({ worldscale })
                 .setRangeCenterPoint(rangecenterpoint[0], rangecenterpoint[1])

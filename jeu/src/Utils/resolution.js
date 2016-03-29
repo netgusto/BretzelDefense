@@ -24,9 +24,9 @@ export default function() {
     // normalizing resolution
     const resolutionsbyratio = {
         '4:3': [
-            { width: 640, height: 480, offsetx: 0, offsety: 0, worldscale: 480/1536 },
+            { width: 640, height: 480, offsetx: 0, offsety: -3, worldscale: 480/1536 },
             { width: 800, height: 600, offsetx: 0, offsety: 0, worldscale: 600/1536 },
-            { width: 1024, height: 768, offsetx: 0, offsety: 0, worldscale: 768/1536 },
+            { width: 1024, height: 768, offsetx: 0, offsety: -3, worldscale: 768/1536 },
             { width: 2048, height: 1536, offsetx: 0, offsety: 0, worldscale: 1 }
         ],
         '3:2': [
@@ -37,7 +37,7 @@ export default function() {
             { width: 1024, height: 640, offsetx: 0, offsety: 0, worldscale: 640/1536 },
             { width: 1152, height: 720, offsetx: 0, offsety: 0, worldscale: 730/1536 },
             { width: 1280, height: 800, offsetx: 0, offsety: 0, worldscale: 800/1536 },
-            { width: 1680, height: 1050, offsetx: 150, offsety: 0, worldscale: 1050/1536 }
+            { width: 1680, height: 1050, offsetx: 153, offsety: -2, worldscale: 1050/1536 }
         ]/*,
         '16:9': [
             { width: 1136, height: 640 },
@@ -60,6 +60,8 @@ export default function() {
     //normalizedresolution = resolutionsbyratio['4:3'][1];    // 800x600
     //normalizedresolution = resolutionsbyratio['4:3'][2];    // 1024x768
     //normalizedresolution = resolutionsbyratio['4:3'][3];    // 2048x1536
+
+    //console.log(normalizedresolution);
 
     return normalizedresolution;
 }

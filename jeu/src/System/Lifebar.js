@@ -3,10 +3,10 @@
 import { Graphics } from 'pixi.js';
 import GenericEntity from '../Entity/Generic';
 
-export default function({ layer }) {
+export default function({ layer, worldscale }) {
 
     // Lifebar
-    const lifebarwidth = 16;
+    const lifebarwidth = 28 * worldscale | 0;
     const lifebarheight = 2;
     const halfwidth = lifebarwidth/2;
     const lifebar = new Graphics();

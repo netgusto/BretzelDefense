@@ -34,7 +34,7 @@ export default function({ resolution, canvas, debug, eventbus }) {
 
     const state = {
         life: 20,
-        coins: 100,
+        coins: 1000,
         activetowerspot: null
     };
 
@@ -66,13 +66,13 @@ export default function({ resolution, canvas, debug, eventbus }) {
     ].map(curveToLane(resolution.width, resolution.height));
 
     const buildspots = [
-        { x: 759, y: 673, tower: null },
-        { x: 893, y: 645, tower: null },
-        { x: 911, y: 843, tower: null },
-        { x: 660, y: 472, tower: null },
-        { x: 990, y: 358, tower: null },
-        { x: 992, y: 250, tower: null },
-        { x: 751, y: 277, tower: null }
+        { x: 741 * resolution.worldscale + resolution.offsetx, y: 695 * resolution.worldscale + resolution.offsety, deploy: [540 * resolution.worldscale + resolution.offsetx, 701 * resolution.worldscale + resolution.offsety], tower: null },
+        { x: 874 * resolution.worldscale + resolution.offsetx, y: 409 * resolution.worldscale + resolution.offsety, deploy: [912 * resolution.worldscale + resolution.offsetx, 546 * resolution.worldscale + resolution.offsety], tower: null },
+        { x: 887 * resolution.worldscale + resolution.offsetx, y: 988 * resolution.worldscale + resolution.offsety, deploy: [856 * resolution.worldscale + resolution.offsetx, 843 * resolution.worldscale + resolution.offsety], tower: null },
+        { x: 1082 * resolution.worldscale + resolution.offsetx, y: 949 * resolution.worldscale + resolution.offsety, deploy: [1285 * resolution.worldscale + resolution.offsetx, 945 * resolution.worldscale + resolution.offsety], tower: null },
+        { x: 1108 * resolution.worldscale + resolution.offsetx, y: 1237 * resolution.worldscale + resolution.offsety, deploy: [954 * resolution.worldscale + resolution.offsetx, 1148 * resolution.worldscale + resolution.offsety], tower: null },
+        { x: 1224 * resolution.worldscale + resolution.offsetx, y: 527 * resolution.worldscale + resolution.offsety, deploy: [1444 * resolution.worldscale + resolution.offsetx, 480 * resolution.worldscale + resolution.offsety], tower: null },
+        { x: 1228 * resolution.worldscale + resolution.offsetx, y: 369 * resolution.worldscale + resolution.offsety, deploy: [1225 * resolution.worldscale + resolution.offsetx, 224 * resolution.worldscale + resolution.offsety], tower: null }
     ];
 
     const init = function() {
@@ -150,7 +150,7 @@ export default function({ resolution, canvas, debug, eventbus }) {
                 .addSystem(ballisticSystem)
                 .addSystem(meleeSystem)
                 .addSystem(DeathSystem({ eventbus }))
-                .addSystem(LifebarSystem({ layer: layers.lifebar }))
+                .addSystem(LifebarSystem({ layer: layers.lifebar, worldscale: resolution.worldscale }))
                 .addSystem(HUDSystem({ layer: layers.interface, state }))
                 .addSystem(ZIndexSystem(layers.creeps));
 
@@ -221,6 +221,7 @@ export default function({ resolution, canvas, debug, eventbus }) {
                             .mount({
                                 worldscale: resolution.worldscale,
                                 clickpoint: { x: spot.x, y: spot.y },
+                                deploypoint: { x: spot.deploy[0], y: spot.deploy[1] },
                                 creepslayer: layers.creeps,
                                 meleeSystem
                             });

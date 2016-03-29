@@ -85,7 +85,7 @@ const ArcherTower = compose(GenericEntity).compose({
                 const { distance, entity } = match;
 
                 const projectile = new Sprite(ArcherTower.arrowtexture);
-                projectile.scale.set(0.75);
+                projectile.scale.set(this.worldscale);
                 projectile.pivot.set(projectile.width/2, projectile.height/2);
 
                 const archer = archerside === 'left' ? this.archerleft : this.archerright;
@@ -143,7 +143,7 @@ const ArcherTower = compose(GenericEntity).compose({
             }, 100);
 
             displayobject.texture = ArcherTower.bloodspraytexture;
-            displayobject.scale.set(0.25);
+            displayobject.scale.set(0.5 * this.worldscale);
             displayobject.pivot.set(displayobject.width/2, displayobject.height/2);
             displayobject.alpha = 0.7;
             displayobject.rotation = Math.random() * 2 * Math.PI;
