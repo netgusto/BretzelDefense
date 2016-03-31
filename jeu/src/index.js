@@ -30,7 +30,7 @@ const debug = true;
 
     const swapstage = function(newstage) {
         if(previousstage) previousstage.destroy();
-        newstage({ resolution, canvas, debug, swapstage, eventbus })
+        newstage({ resolution, canvas, debug, swapstage, eventbus, renderer })
             .then(stage => stage.run(renderer, gameloop()))
             .then(stage => previousstage = stage);
     };

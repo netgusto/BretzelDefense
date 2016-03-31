@@ -36,8 +36,15 @@ let Mummy = compose(GenericEntity, SpatialTrackable).compose({
         this.displayobject.play();
         this.displayobject.pivot.set(this.displayobject.width/2, this.displayobject.height);    // pas d'utilisation de la propriété anchor, car cause problème dans le calcul des déplacements de hitArea
         this.displayobject.scale.set(worldscale);
+
+        this.offsetx = ((20 * worldscale * Math.random()) | 0) * (Math.random() > .5 ? 1 : -1);
+        this.offsety = ((20 * worldscale * Math.random()) | 0) * (Math.random() > .5 ? 1 : -1);
+        //this.offsety = -60 * worldscale;
     },
     methods: {
+        setPosition(x, y) {
+            this.displayobject.position.set(x + this.offsetx, y + this.offsety);
+        },
         getSpatialTrackPoint() {
             // on calcule le centroide de la bounding box
             const bounds = this.displayobject.getBounds();

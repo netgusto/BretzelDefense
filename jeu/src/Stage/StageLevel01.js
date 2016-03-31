@@ -1,9 +1,10 @@
 'use strict';
 
 import { GameStage, GameLayer, cursorkeys } from 'bobo';
-//import { Graphics, Sprite } from 'pixi.js';
+import { Graphics, RenderTexture } from 'pixi.js';
+import GenericEntity from '../Entity/Generic';
+import { drawSVGPath } from '../Utils/svg';
 
-///import Level01 from '../Level/level01';
 import SpatialHash from '../Utils/spatialhash';
 import { curveToLane } from '../Utils/lane';
 
@@ -28,7 +29,7 @@ import TowerMenu from '../Entity/TowerMenu';
 
 const gridcellsize = 128;
 
-export default function({ resolution, canvas, debug, eventbus }) {
+export default function({ resolution, canvas, debug, eventbus, renderer }) {
 
     const whratio = 36/25;
 
@@ -157,8 +158,14 @@ export default function({ resolution, canvas, debug, eventbus }) {
             // Debug
             if(debug) {
                 stage.addSystem(DebugSystem({ layer: layers.debug, cbk: (msg) => msg += '; '  + layers.creeps.entities.length + ' creeps' }));
-                // const graphics = new Graphics(); stage.addEntity(GenericEntity({ displayobject: graphics })); level.lanes.map(lane => drawSVGPath(graphics, lane.path, lane.color, 0, 0));
+                //const graphics = new Graphics(); layers.debug.addEntity(GenericEntity({ displayobject: graphics })); lanes.map(lane => drawSVGPath(graphics, lane.path, lane.color, 0, 0));
             }
+
+            // Building the path texture to have a testable in path / out path reference
+            const pathtexture = new RenderTexture(renderer, resolution.width, resolution.height);
+            const pathgraphics = new Graphics(); drawSVGPath(pathgraphics, lanes[1].path, 0xFFFFFF, 0, 0, 170 * resolution.worldscale);
+            //layers.debug.addEntity(GenericEntity({ displayobject: pathgraphics }));
+            pathtexture.render(pathgraphics);
 
             // Events
             eventbus.on('entity.death.batch', function(entities) {
@@ -249,6 +256,12 @@ export default function({ resolution, canvas, debug, eventbus }) {
                 background.displayobject.interactive = true;
                 background.displayobject.click = function(e) {
                     eventbus.emit('background.click', e);
+                    const pixel = pathtexture.getPixel(e.data.global.x, e.data.global.y);
+                    if(pixel[0] === 255) {
+                        console.log('Dans le chemin !');
+                    } else {
+                        console.log('Hors du chemin !');
+                    }
                 };
 
                 //creepsautospawn({ layer: creepslayer, resolution, spatialhash, lanes: this.lanes, vps: 20, frequency: 50 });

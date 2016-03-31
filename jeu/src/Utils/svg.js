@@ -113,10 +113,10 @@ export function jsToSVGPath(jspath) {
     }).join(' ');
 }
 
-export function drawSVGPath(graphics, path, color, offsetx = 0, offsety = 0) {
+export function drawSVGPath(graphics, path, color, offsetx = 0, offsety = 0, width = 5) {
     const jspath = path2js(path);
 
-    graphics.lineStyle(5, color);
+    graphics.lineStyle(width, color);
 
     jspath.map(instruction => {
         switch(instruction.instruction) {

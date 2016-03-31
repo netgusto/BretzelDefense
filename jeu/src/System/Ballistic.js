@@ -26,7 +26,7 @@ export default function({ layer }) {
                     const targetpixelswalkedwhenprojectilehits = target.pixelswalked + (target.velocitypermillisecond * flightduration);
 
                     const pointatlength = target.lane.getPointAtLengthLoop(targetpixelswalkedwhenprojectilehits);
-                    const predictiveimpact = [pointatlength.x, pointatlength.y - (target.displayobject.height / 2)];
+                    const predictiveimpact = [pointatlength.x + target.offsetx, pointatlength.y - (target.displayobject.height / 2) + target.offsety];    // tir au centre vertical de la cible
                     projectileprops.predictiveimpact = predictiveimpact;
 
                     if(projectileprops.parabolic) {
