@@ -6,9 +6,11 @@ import compose from 'compose-js';
 import { extras as PixiExtras } from 'pixi.js';
 import { loadspritesheet } from 'bobo';
 
-import GenericEntity from './Generic';
+import eventbus from '../../Singleton/eventbus';
+
+import GenericEntity from '../Generic';
 //import Debugable from '../Component/Debugable';
-import SpatialTrackable from '../Component/SpatialTrackable';
+import SpatialTrackable from '../../Component/SpatialTrackable';
 
 let loaded = false;
 
@@ -82,7 +84,7 @@ let Mummy = compose(GenericEntity, SpatialTrackable).compose({
             this.displayobject.stop();
             this.displayobject.rotation = (this.displayobject.scale.x > 0) ? -Math.PI / 2 : Math.PI / 2;
             setTimeout(() => {
-                this.remove();
+                eventbus.emit('entity.remove.batch', [this]);
             }, 1000);
         }
     }

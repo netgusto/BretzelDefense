@@ -7,6 +7,14 @@ import { extras as PixiExtras, Texture, Rectangle, loader, Container } from 'pix
 // $FlowFixMe
 import keyboardjs from 'keyboardjs';
 
+const recursiveremove = function(node) {
+    if(node === undefined) return;
+    for(let i = node.children.length; i >= 0; i--) {
+        recursiveremove(node.children[i]);
+    }
+    node.parent.removeChild(node);
+};
+
 export class GameLayer {
     constructor(stage) : void {
         this.stage = stage;
@@ -20,10 +28,10 @@ export class GameLayer {
         this.stage.entitybyid[entity.id] = entity;
         this.container.addChild(entity.displayobject);
         entity.remove = () => {
-            let index;
-            entity.displayobject.parent.removeChild(entity.displayobject);
 
-            index = this.entities.indexOf(entity);
+            recursiveremove(entity.displayobject);
+
+            let index = this.entities.indexOf(entity);
             if(index !== -1) {
                 this.entities.splice(index, 1);
             }
@@ -87,7 +95,7 @@ export class GameStage {
     load({ onbegin = null, onprogress = null, oncomplete = null }) {
 
         const p = new Promise((resolve, reject) => {
-            if(onprogress !== null) loader.onprogress((loader, loadedresource) => onprogress(loader.progress, loadedresource));
+            //if(onprogress !== null) loader.onprogress((loader, loadedresource) => onprogress(loader.progress, loadedresource));
             if(onbegin !== null) onbegin();
             loader.load();
             loader.once('complete', (loader, resources) => {

@@ -1,6 +1,8 @@
 'use strict';
 
-export default function({ eventbus }) {
+import eventbus from '../Singleton/eventbus';
+
+export default function() {
     return {
         process(entities) {
             const deaths = [];

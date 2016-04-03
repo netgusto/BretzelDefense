@@ -34,7 +34,20 @@ export default function() {
             });
         },
         repositionHunter(hunter) {
-            inrepositionhunter.push(hunter);
+            if(this.isHunterEngaged(hunter)) {
+                // hunter will be repositionned by the meleeSystem (see forfaitbatch)
+                this.forfaitbatch([hunter.id]);
+                hunter.releaseMelee();
+            } else {
+                for(let i = 0; i < inrepositionhunter.length; i++) {
+                    if(inrepositionhunter[i].id === hunter.id) {
+                        // already repositionning; no-op
+                        return;
+                    }
+                }
+
+                inrepositionhunter.push(hunter);
+            }
         },
         selectForEngagement(hunter, matches) {
 
@@ -89,7 +102,7 @@ export default function() {
 
             return newcreep;
         },
-        forfait(entityids) {
+        forfaitbatch(entityids) {
             // Processed as a batch to handle case when both hunter and creep die at the same time
             for(let entityindex = 0; entityindex < entityids.length; entityindex++) {
                 const entityid = entityids[entityindex];
@@ -140,12 +153,19 @@ export default function() {
 
                 infight.splice(fightindex, 1);
 
-                if(hunterforfait) {
-                    creepsreleased.push(creep);
-                }
 
-                if(creepforfait) {
+                if(!hunterforfait && !creepforfait) {
+                    // hunter has been re-deployed and left the fight
+                    creepsreleased.push(creep);
                     huntersreleased.push(hunter);
+                } else {
+                    if(hunterforfait) {
+                        creepsreleased.push(creep);
+                    }
+
+                    if(creepforfait) {
+                        huntersreleased.push(hunter);
+                    }
                 }
             }
 

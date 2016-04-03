@@ -3,15 +3,6 @@
 import 'babel-polyfill';
 import 'perfnow';
 
-import Emitter from 'tiny-emitter';
-
-const eventbus = new Emitter();
-const stdemit = eventbus.emit;
-eventbus.emit = function(name) {
-    console.info('EVENT:' + name);
-    stdemit.apply(eventbus, arguments);
-};
-
 import { Container, autoDetectRenderer } from 'pixi.js';
 import { gameloop } from 'bobo';
 
@@ -29,10 +20,12 @@ const debug = true;
     let previousstage = null;
 
     const swapstage = function(newstage) {
-        if(previousstage) previousstage.destroy();
-        newstage({ resolution, canvas, debug, swapstage, eventbus, renderer })
-            .then(stage => stage.run(renderer, gameloop()))
-            .then(stage => previousstage = stage);
+        window.setImmediate(function() {    // allow pixi mouse events triggering swapstage to complete before tearing the stage down
+            if(previousstage) previousstage.destroy();
+            newstage({ resolution, canvas, debug, swapstage, renderer })
+                .then(stage => stage.run(renderer, gameloop()))
+                .then(stage => previousstage = stage);
+        });
     };
 
     swapstage(Stage);

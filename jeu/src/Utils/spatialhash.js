@@ -44,6 +44,37 @@ export default class SpatialHash {
         this.stackindex[id] = this.grid[gridcell].length - 1;
     }
 
+    iswithinrange(centerx, centery, targetx, targety, range, rangeY) {
+        let ellipsis = !!rangeY && range !== rangeY;
+
+        if(ellipsis) {
+            // ellipsis
+
+            const widthsq = Math.pow(range, 2);
+            const heightsq = Math.pow(rangeY, 2);
+
+            const dxsq = Math.pow(targetx - centerx, 2);
+            const dysq = Math.pow(targety - centery, 2);
+
+            if(((dxsq / widthsq) + (dysq / heightsq)) <= 1) {
+                return Math.sqrt(dxsq + dysq);  // distance
+            }
+
+            return false;
+        }
+
+        // else circle
+
+        const radiussq = Math.pow(range, 2);
+
+        const dsq = Math.pow(centerx - targetx, 2) + Math.pow(centery - targety, 2);
+        if(dsq <= radiussq) {
+            return Math.sqrt(dsq);  // distance
+        }
+
+        return false;
+    }
+
     retrieve(centerx, centery, range, rangeY) {
         let rangeX;
         let ellipsis = !!rangeY && range !== rangeY;
@@ -159,6 +190,12 @@ export default class SpatialHash {
         this.stackindex[id] = newcell.length - 1;
 
         //console.log(this.list);
+    }
+
+    removebatch(ids) {
+        for(let i = ids.length - 1; i >= 0; i--) {
+            this.remove(ids[i]);
+        }
     }
 
     remove(id) {

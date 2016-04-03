@@ -4,19 +4,25 @@
 
 import { Sprite, Graphics } from 'pixi.js';
 
-export default function({ rangeslayer, backgroundlayer, buildspots, buildspotHighlightTexture, worldscale, eventbus }) {
+import eventbus from '../Singleton/eventbus';
+
+export default function({ rangeslayer, backgroundlayer, buildspots, buildspotHighlightTexture, worldscale }) {
 
     let currentbuildspot = null;
 
     const disable = function(spot) {
+        spot.current = false;
         if(spot.rangeviewer) {
             spot.rangeviewer.renderable = false;
         }
 
         lowlight(spot);
+        currentbuildspot = null;
     };
 
     const enable = function(spot) {
+        currentbuildspot = spot;
+        spot.current = true;
         if(spot.rangeviewer) {
             spot.rangeviewer.renderable = true;
         }
@@ -33,11 +39,10 @@ export default function({ rangeslayer, backgroundlayer, buildspots, buildspotHig
     };
 
     eventbus.on('background.click', function(/*e*/) {
+        const prevbuildspot = currentbuildspot;
         buildspots.map(disable);
-        if(currentbuildspot) {
-            eventbus.emit('buildspot.blur', { spot: currentbuildspot });
-            disable(currentbuildspot);
-            currentbuildspot = null;
+        if(prevbuildspot) {
+            eventbus.emit('buildspot.blur', { spot: prevbuildspot });
         }
     });
 
@@ -63,7 +68,25 @@ export default function({ rangeslayer, backgroundlayer, buildspots, buildspotHig
 
         eventbus.emit('buildspot.blur', { spot });
         disable(spot);
-        currentbuildspot = null;
+    });
+
+    eventbus.on('tower.redeployed', function({ spot }) {
+        if(spot.current) {
+            eventbus.emit('buildspot.blur', { spot });
+            disable(spot);
+        }
+    });
+
+    eventbus.on('tower.sold', function({ spot }) {
+        eventbus.emit('buildspot.blur', { spot });
+        disable(spot);
+
+        delete spot.tower;
+        spot.tower = null;
+
+        spot.rangeviewer.parent.removeChild(spot.rangeviewer);
+        delete spot.rangeviewer;
+        spot.rangeviewer = null;
     });
 
     buildspots.map(function(spot) {
@@ -89,7 +112,6 @@ export default function({ rangeslayer, backgroundlayer, buildspots, buildspotHig
         spot.terrain.click = function(e) {
 
             e.stopPropagation();    // prevent background click
-            buildspots.map(disable);
 
             if(spot.tower === null) {
 
@@ -98,27 +120,22 @@ export default function({ rangeslayer, backgroundlayer, buildspots, buildspotHig
                 if(currentbuildspot) {
                     eventbus.emit('buildspot.blur', { spot: currentbuildspot });
                     disable(currentbuildspot);
-                    currentbuildspot = null;
                 }
 
                 if(hasfocused) {
                     enable(spot);
-                    currentbuildspot = spot;
                     eventbus.emit('buildspot.focus', { spot });
                 }
             } else {
                 if(currentbuildspot === spot) {
                     eventbus.emit('buildspot.blur', { spot });
                     disable(spot);
-                    currentbuildspot = null;
                 } else {
                     if(currentbuildspot) {
                         eventbus.emit('buildspot.blur', { spot: currentbuildspot });
                         disable(currentbuildspot);
-                        currentbuildspot = null;
                     }
 
-                    currentbuildspot = spot;
                     enable(spot);
                     eventbus.emit('buildspot.focus', { spot });
                 }

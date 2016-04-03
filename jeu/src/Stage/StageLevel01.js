@@ -2,8 +2,10 @@
 
 import { GameStage, GameLayer, cursorkeys } from 'bobo';
 import { Graphics, RenderTexture } from 'pixi.js';
-import GenericEntity from '../Entity/Generic';
+//import GenericEntity from '../Entity/Generic';
 import { drawSVGPath } from '../Utils/svg';
+
+import eventbus from '../Singleton/eventbus';
 
 import SpatialHash from '../Utils/spatialhash';
 import { curveToLane } from '../Utils/lane';
@@ -21,22 +23,21 @@ import HUDSystem from '../System/HUD';
 import ZIndexSystem from '../System/ZIndex';
 
 import Background from '../Entity/Background';
-import Mummy from '../Entity/Mummy';
-import FireballTower from '../Entity/FireballTower';
-import ArcherTower from '../Entity/ArcherTower';
-import BarrackTower from '../Entity/BarrackTower';
-import TowerMenu from '../Entity/TowerMenu';
+import Mummy from '../Entity/Creep/Mummy';
+import FireballTower from '../Entity/Tower/FireballTower';
+import ArcherTower from '../Entity/Tower/ArcherTower';
+import BarrackTower from '../Entity/Tower/BarrackTower';
+import SpotMenu from '../Entity/Menu/SpotMenu';
 
 const gridcellsize = 128;
 
-export default function({ resolution, canvas, debug, eventbus, renderer }) {
+export default function({ resolution, canvas, debug, renderer }) {
 
     const whratio = 36/25;
 
     const state = {
         life: 20,
-        coins: 1000,
-        activetowerspot: null
+        coins: 100
     };
 
     const stage = new GameStage(canvas);
@@ -55,8 +56,6 @@ export default function({ resolution, canvas, debug, eventbus, renderer }) {
 
     Object.values(layers).map(layer => stage.addLayer(layer));
 
-    //const level = Level01({ resolution, eventbus, state });
-
     Background.setTexturePath('/assets/sprites/level-' + resolution.width + '-' + resolution.height + '.jpg');
     let buildspotHighlightTexture;
 
@@ -67,13 +66,13 @@ export default function({ resolution, canvas, debug, eventbus, renderer }) {
     ].map(curveToLane(resolution.width, resolution.height));
 
     const buildspots = [
-        { x: 741 * resolution.worldscale + resolution.offsetx, y: 695 * resolution.worldscale + resolution.offsety, deploy: [540 * resolution.worldscale + resolution.offsetx, 701 * resolution.worldscale + resolution.offsety], tower: null },
-        { x: 874 * resolution.worldscale + resolution.offsetx, y: 409 * resolution.worldscale + resolution.offsety, deploy: [912 * resolution.worldscale + resolution.offsetx, 546 * resolution.worldscale + resolution.offsety], tower: null },
-        { x: 887 * resolution.worldscale + resolution.offsetx, y: 988 * resolution.worldscale + resolution.offsety, deploy: [856 * resolution.worldscale + resolution.offsetx, 843 * resolution.worldscale + resolution.offsety], tower: null },
-        { x: 1082 * resolution.worldscale + resolution.offsetx, y: 949 * resolution.worldscale + resolution.offsety, deploy: [1285 * resolution.worldscale + resolution.offsetx, 945 * resolution.worldscale + resolution.offsety], tower: null },
-        { x: 1108 * resolution.worldscale + resolution.offsetx, y: 1237 * resolution.worldscale + resolution.offsety, deploy: [954 * resolution.worldscale + resolution.offsetx, 1148 * resolution.worldscale + resolution.offsety], tower: null },
-        { x: 1224 * resolution.worldscale + resolution.offsetx, y: 527 * resolution.worldscale + resolution.offsety, deploy: [1444 * resolution.worldscale + resolution.offsetx, 480 * resolution.worldscale + resolution.offsety], tower: null },
-        { x: 1228 * resolution.worldscale + resolution.offsetx, y: 369 * resolution.worldscale + resolution.offsety, deploy: [1225 * resolution.worldscale + resolution.offsetx, 224 * resolution.worldscale + resolution.offsety], tower: null }
+        { x: 741 * resolution.worldscale + resolution.offsetx, y: 695 * resolution.worldscale + resolution.offsety, deploy: [540 * resolution.worldscale + resolution.offsetx, 701 * resolution.worldscale + resolution.offsety], tower: null, current: false },
+        { x: 874 * resolution.worldscale + resolution.offsetx, y: 409 * resolution.worldscale + resolution.offsety, deploy: [912 * resolution.worldscale + resolution.offsetx, 546 * resolution.worldscale + resolution.offsety], tower: null, current: false },
+        { x: 887 * resolution.worldscale + resolution.offsetx, y: 988 * resolution.worldscale + resolution.offsety, deploy: [856 * resolution.worldscale + resolution.offsetx, 843 * resolution.worldscale + resolution.offsety], tower: null, current: false },
+        { x: 1082 * resolution.worldscale + resolution.offsetx, y: 949 * resolution.worldscale + resolution.offsety, deploy: [1285 * resolution.worldscale + resolution.offsetx, 945 * resolution.worldscale + resolution.offsety], tower: null, current: false },
+        { x: 1108 * resolution.worldscale + resolution.offsetx, y: 1237 * resolution.worldscale + resolution.offsety, deploy: [954 * resolution.worldscale + resolution.offsetx, 1148 * resolution.worldscale + resolution.offsety], tower: null, current: false },
+        { x: 1224 * resolution.worldscale + resolution.offsetx, y: 527 * resolution.worldscale + resolution.offsety, deploy: [1444 * resolution.worldscale + resolution.offsetx, 480 * resolution.worldscale + resolution.offsety], tower: null, current: false },
+        { x: 1228 * resolution.worldscale + resolution.offsetx, y: 369 * resolution.worldscale + resolution.offsety, deploy: [1225 * resolution.worldscale + resolution.offsetx, 224 * resolution.worldscale + resolution.offsety], tower: null, current: false }
     ];
 
     const init = function() {
@@ -92,22 +91,14 @@ export default function({ resolution, canvas, debug, eventbus, renderer }) {
                 BarrackTower.loadAssets(loader);
 
                 loader.add('buildspothighlight', '/assets/sprites/buildspot-highlight.png');
-                loader.add('towerhighlight', '/assets/sprites/tower-highlight.png');
                 loader.once('complete', (_, resources) => {
                     buildspotHighlightTexture = resources.buildspothighlight.texture;
                 });
             }
         })
         .load({
-            onbegin() {
-                console.log('begin');
-            },
-            onprogress(progress, loadedresource) {
-                console.log('progress', progress, loadedresource);
-            },
-            oncomplete() {
-                console.log('end');
-            }
+            onbegin() { console.log('begin'); },
+            oncomplete() { console.log('end'); }
         })
         .then(init)
         .then(function(/*{ loader, resources }*/) {
@@ -134,8 +125,7 @@ export default function({ resolution, canvas, debug, eventbus, renderer }) {
                     worldscale: resolution.worldscale,
                     whratio,
                     meleeSystem,
-                    state,
-                    eventbus
+                    state
                 }))
                 .addSystem(SpatialTrackingSystem({ spatialhash }))
                 .addSystem(RangeDetectionSystem({
@@ -150,7 +140,7 @@ export default function({ resolution, canvas, debug, eventbus, renderer }) {
                 }))
                 .addSystem(ballisticSystem)
                 .addSystem(meleeSystem)
-                .addSystem(DeathSystem({ eventbus }))
+                .addSystem(DeathSystem())
                 .addSystem(LifebarSystem({ layer: layers.lifebar, worldscale: resolution.worldscale }))
                 .addSystem(HUDSystem({ layer: layers.interface, state }))
                 .addSystem(ZIndexSystem(layers.creeps));
@@ -169,39 +159,41 @@ export default function({ resolution, canvas, debug, eventbus, renderer }) {
 
             // Events
             eventbus.on('entity.death.batch', function(entities) {
-
-                meleeSystem.forfait(entities.map(entity => entity.id));
-
+                eventbus.emit('entity.untrack.batch', entities);
                 for(let i = entities.length - 1; i >= 0; i--) {
-                    const entity = entities[i];
-                    spatialhash.remove(entity.id);
-                    entity.die();
-                    if(entity.creep) state.coins += 4;
+                    entities[i].die();
+                    if(entities[i].creep) state.coins += 4;
                 }
             });
+
+            eventbus.on('entity.untrack.batch', function(entities) {
+                const entityids = entities.map(entity => entity.id);
+                meleeSystem.forfaitbatch(entityids);
+                spatialhash.removebatch(entityids);
+            });
+
+            eventbus.on('entity.remove.batch', function(entities) {
+                for(let i = entities.length - 1; i >= 0; i--) {
+                    entities[i].remove()
+                }
+            });
+
+            const towermenu = SpotMenu({ worldscale: resolution.worldscale });
+            layers.ingamemenus.addEntity(towermenu);
 
             eventbus.on('buildspot.focus', function({ spot }) {
 
-                if(!spot.menu) {
-                    spot.menu = TowerMenu({ spot, eventbus, worldscale: resolution.worldscale });
-                    layers.ingamemenus.addEntity(spot.menu);
-                }
-
                 if(spot.tower) {
-                    spot.menu.setPosition(spot.x, spot.y - 20 * resolution.worldscale);
+                    towermenu.setPosition(spot.x, spot.y - 20 * resolution.worldscale);
                 } else {
-                    spot.menu.setPosition(spot.x, spot.y);
+                    towermenu.setPosition(spot.x, spot.y);
                 }
 
-                spot.menu.enable();
-
-                state.activetowerspot = spot;
+                towermenu.enable(spot);
             });
 
-            eventbus.on('buildspot.blur', function({ spot }) {
-                if(spot.menu) spot.menu.disable();
-
-                state.activetowerspot = null;
+            eventbus.on('buildspot.blur', function(/*{ spot }*/) {
+                towermenu.disable();
             });
 
             eventbus.on('tower.add', function({ spot, type }) {
@@ -224,13 +216,12 @@ export default function({ resolution, canvas, debug, eventbus, renderer }) {
                     case 'BarrackTower': {
                         if(state.coins < 70) return;
                         state.coins -= 70;
-                        tower = BarrackTower({ worldscale: resolution.worldscale, whratio })
+                        tower = BarrackTower({ worldscale: resolution.worldscale, whratio, meleeSystem })
                             .mount({
                                 worldscale: resolution.worldscale,
                                 clickpoint: { x: spot.x, y: spot.y },
                                 deploypoint: { x: spot.deploy[0], y: spot.deploy[1] },
-                                creepslayer: layers.creeps,
-                                meleeSystem
+                                creepslayer: layers.creeps
                             });
                         break;
                     }
@@ -240,6 +231,46 @@ export default function({ resolution, canvas, debug, eventbus, renderer }) {
                     eventbus.emit('tower.added', { spot, tower });
                 }
 
+            });
+
+            eventbus.on('tower.sell', function({ spot }) {
+                console.log('SELLING TOWER !', spot);
+                spot.tower.unmount();
+                eventbus.emit('tower.sold', { spot });
+            });
+
+            eventbus.on('tower.redeploy', function({ spot }) {
+                console.log('REDEPLOYING TOWER !', spot);
+                // 1. Fermeture du menu
+                towermenu.disable();
+
+                // 2. Surveillance du clic sur le background
+                eventbus.once('background.click.preemption', function(e) {
+                    if(spot.current === false) return; // focus has changed since premption was set up; just ignoring the premption, that is now consumed
+                    e.stopPropagation();
+
+                    const rangecenter = spot.tower.getRangeCenterPoint();
+
+                    if(spatialhash.iswithinrange(
+                        rangecenter.x, rangecenter.y,
+                        e.data.global.x, e.data.global.y,
+                        spot.tower.rangeX, spot.tower.rangeY
+                    ) !== false) {
+                        // click is within range; check if it is on the path
+
+                        const pixel = pathtexture.getPixel(e.data.global.x, e.data.global.y);
+                        if(pixel[0] === 255) {
+                            console.log('Dans le chemin !');
+                            spot.tower.setDeployPoint({ x: e.data.global.x, y: e.data.global.y });
+                        } else {
+                            console.log('Hors du chemin !');
+                        }
+
+                        eventbus.emit('tower.redeployed', { spot });
+                    }
+
+                    //towermenu.enable(spot);
+                });
             });
 
             /*****************************************************************/
@@ -255,12 +286,9 @@ export default function({ resolution, canvas, debug, eventbus, renderer }) {
 
                 background.displayobject.interactive = true;
                 background.displayobject.click = function(e) {
-                    eventbus.emit('background.click', e);
-                    const pixel = pathtexture.getPixel(e.data.global.x, e.data.global.y);
-                    if(pixel[0] === 255) {
-                        console.log('Dans le chemin !');
-                    } else {
-                        console.log('Hors du chemin !');
+                    eventbus.emit('background.click.preemption', e);
+                    if(e.stopped === false) {
+                        eventbus.emit('background.click', e);
                     }
                 };
 

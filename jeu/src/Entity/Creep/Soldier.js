@@ -4,7 +4,7 @@
 
 import compose from 'compose-js';
 import { Sprite } from 'pixi.js';
-import GenericEntity from './Generic';
+import GenericEntity from '../Generic';
 
 const Soldier = compose(GenericEntity).compose({
     loadAssets(loader) {
@@ -15,7 +15,7 @@ const Soldier = compose(GenericEntity).compose({
     },
     init: function({ worldscale }) {
         this.hunter = true;
-        this.rangeX = 100 * worldscale;
+        this.rangeX = 90 * worldscale;
         this.firerate = 1500;
         this.firedamage = 70;
         this.speedperms = (100 * worldscale)/1000;

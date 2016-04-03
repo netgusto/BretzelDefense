@@ -24,6 +24,14 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
+var recursiveremove = function recursiveremove(node) {
+    if (node === undefined) return;
+    for (var i = node.children.length; i >= 0; i--) {
+        recursiveremove(node.children[i]);
+    }
+    node.parent.removeChild(node);
+};
+
 var GameLayer = exports.GameLayer = function () {
     function GameLayer(stage) {
         _classCallCheck(this, GameLayer);
@@ -43,10 +51,10 @@ var GameLayer = exports.GameLayer = function () {
             this.stage.entitybyid[entity.id] = entity;
             this.container.addChild(entity.displayobject);
             entity.remove = function () {
-                var index = void 0;
-                entity.displayobject.parent.removeChild(entity.displayobject);
 
-                index = _this.entities.indexOf(entity);
+                recursiveremove(entity.displayobject);
+
+                var index = _this.entities.indexOf(entity);
                 if (index !== -1) {
                     _this.entities.splice(index, 1);
                 }
@@ -138,12 +146,12 @@ var GameStage = exports.GameStage = function () {
             var oncomplete = _ref$oncomplete === undefined ? null : _ref$oncomplete;
 
 
-            if (onbegin !== null) onbegin();
             var p = new Promise(function (resolve, reject) {
+                //if(onprogress !== null) loader.onprogress((loader, loadedresource) => onprogress(loader.progress, loadedresource));
+                if (onbegin !== null) onbegin();
                 _pixi.loader.load();
-                if (onbegin !== null) onprogress();
                 _pixi.loader.once('complete', function (loader, resources) {
-                    oncomplete();
+                    if (oncomplete !== null) oncomplete();
                     resolve({ loader: loader, resources: resources });
                 });
             });

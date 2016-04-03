@@ -5,10 +5,10 @@
 // * animer les archers sur le toit du bâtiment
 
 import compose from 'compose-js';
+import { SCALE_MODES, Sprite, Graphics } from 'pixi.js';
 
-import { SCALE_MODES, Sprite } from 'pixi.js';
-
-import GenericEntity from './Generic';
+import eventbus from '../../Singleton/eventbus';
+import GenericEntity from '../Generic';
 
 const sort = function(a, b) {
     //return (b.entity.lane.length - (b.entity.pixelswalked % b.entity.lane.length)) - (a.entity.lane.length - (a.entity.pixelswalked % a.entity.lane.length));
@@ -43,8 +43,8 @@ const ArcherTower = compose(GenericEntity).compose({
         this.hunter = true;
         this.rangeX = range * worldscale;
         this.rangeY = (range / whratio) * worldscale;
-        this.firerate = 700;
-        this.firedamage = 9;
+        this.firerate = 1200;
+        this.firedamage = 8;
 
         this.displayobject = new Sprite(ArcherTower.texture);
         this.displayobject.pivot.set(this.displayobject.width / 2, (this.displayobject.height / 2));
@@ -70,6 +70,10 @@ const ArcherTower = compose(GenericEntity).compose({
             creepslayer.addEntity(this);
             return this;
         },
+        unmount() {
+            eventbus.emit('entity.untrack.batch', [this]);
+            eventbus.emit('entity.remove.batch', [this]);
+        },
         getRangeCenterPoint() {
             return { x: this.displayobject.x, y: this.displayobject.y };
         },
@@ -91,7 +95,7 @@ const ArcherTower = compose(GenericEntity).compose({
                 const archer = archerside === 'left' ? this.archerleft : this.archerright;
                 const archerposition = this.displayobject.toGlobal(archer.position);
 
-                projectile.position.set(archerposition.x + 10 * this.worldscale, archerposition.y - 20 * this.worldscale);
+                projectile.position.set(archerposition.x, archerposition.y);
 
                 if(archerposition.x < entity.displayobject.x) {
                     archer.scale.set(Math.abs(archer.scale.x) * -1, archer.scale.y);
@@ -103,7 +107,7 @@ const ArcherTower = compose(GenericEntity).compose({
                     hunter: this,
                     target: entity,
                     distance,
-                    flightduration: 250 + distance,   // la durée de vol du projectile est fonction de la distance; la durée de vol doit être fixe pour permettre le ciblage prédictif
+                    flightduration: 350 + distance,   // la durée de vol du projectile est fonction de la distance; la durée de vol doit être fixe pour permettre le ciblage prédictif
                     displayobject: projectile,
                     damage: this.firedamage,
                     orient: true,
@@ -158,6 +162,27 @@ const ArcherTower = compose(GenericEntity).compose({
             setTimeout(function() {
                 displayobject.parent.removeChild(displayobject);
             }, 1000);
+        },
+        getSpotMenuProps({ spot, linewidth, worldscale }) {
+
+            const buttongraphics = new Graphics();
+            buttongraphics.clear();
+            buttongraphics.lineStyle(linewidth, 0x00FFFF);
+            buttongraphics.beginFill(0xFFFF00);
+            buttongraphics.drawCircle(0, 0, 50 * worldscale);
+
+            const button1 = new Sprite(buttongraphics.generateTexture());
+
+            return { buttons: [
+                {
+                    displayobject: button1,
+                    position: 's',
+                    click: function(e) {
+                        e.stopPropagation();
+                        eventbus.emit('tower.sell', { spot });
+                    }
+                }
+            ] };
         }
     }
 });

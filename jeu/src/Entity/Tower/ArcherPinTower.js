@@ -6,7 +6,7 @@ import compose from 'compose-js';
 
 import { SCALE_MODES, Sprite } from 'pixi.js';
 
-import GenericEntity from './Generic';
+import GenericEntity from '../Generic';
 
 const sort = function(a, b) {
     //return (b.entity.lane.length - (b.entity.pixelswalked % b.entity.lane.length)) - (a.entity.lane.length - (a.entity.pixelswalked % a.entity.lane.length));
