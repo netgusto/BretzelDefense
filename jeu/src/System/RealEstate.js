@@ -109,7 +109,7 @@ export default function({ rangeslayer, backgroundlayer, buildspots, buildspotHig
             }
         };
 
-        spot.terrain.click = function(e) {
+        spot.terrain.click = spot.terrain.tap = function(e) {
 
             e.stopPropagation();    // prevent background click
 

@@ -289,7 +289,7 @@ export default function({ resolution, canvas, debug, renderer }) {
                 });
 
                 background.displayobject.interactive = true;
-                background.displayobject.click = function(e) {
+                background.displayobject.click = background.displayobject.tap = function(e) {
                     eventbus.emit('background.click.preemption', e);
                     if(e.stopped === false) {
                         eventbus.emit('background.click', e);
