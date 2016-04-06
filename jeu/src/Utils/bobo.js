@@ -2,7 +2,7 @@
 
 /* @flow */
 
-import { extras as PixiExtras, Texture, Rectangle, loader, Container } from 'pixi.js';
+import { Texture, Rectangle, loader, Container } from 'pixi.js';
 
 // $FlowFixMe
 import keyboardjs from 'keyboardjs';
@@ -56,7 +56,7 @@ export class GameLayer {
     sort(cbk) {
         this.container.children.sort(cbk);
     }
-};
+}
 
 export class GameStage {
 
@@ -92,9 +92,9 @@ export class GameStage {
         return this;
     }
 
-    load({ onbegin = null, onprogress = null, oncomplete = null }) {
+    load({ onbegin = null, /*onprogress = null,*/ oncomplete = null }) {
 
-        const p = new Promise((resolve, reject) => {
+        const p = new Promise((resolve/*, reject*/) => {
             //if(onprogress !== null) loader.onprogress((loader, loadedresource) => onprogress(loader.progress, loadedresource));
             if(onbegin !== null) onbegin();
             loader.load();
@@ -134,9 +134,9 @@ export class GameStage {
 
         delete this;
     }
-};
+}
 
-export function loadspritesheet(basetexture: BaseTexture, width: number, height: number, nbframes: ?number) : Array<Texture> {
+export function loadspritesheet(basetexture, width, height, nbframes = null) {
     if(!basetexture.hasLoaded) { throw new Error('BaseTexture not loaded in loadspritesheet'); }
     const frames = [];
 
@@ -185,7 +185,6 @@ export function cursorkeys() : {
 
 export function gameloop() {
     let then = performance.now();
-    let start;
     let costtime;
 
     // Systems
@@ -204,4 +203,4 @@ export function gameloop() {
         then = start;
         costtime = performance.now() - start;
     };
-};
+}

@@ -1,39 +1,37 @@
 'use strict';
 
-import { GameStage, GameLayer, cursorkeys } from 'bobo';
 import { Graphics, RenderTexture } from 'pixi.js';
 //import GenericEntity from '../Entity/Generic';
-import { drawSVGPath } from '../Utils/svg';
+import { GameStage, GameLayer, cursorkeys } from '../../Utils/bobo';
+import { drawSVGPath } from '../../Utils/svg';
 
-import eventbus from '../Singleton/eventbus';
+import eventbus from '../../Singleton/eventbus';
 
-import SpatialHash from '../Utils/spatialhash';
-import { curveToLane } from '../Utils/lane';
+import SpatialHash from '../../Utils/spatialhash';
+import { curveToLane } from '../../Utils/lane';
 
-import BallisticSystem from '../System/Ballistic';
-import MeleeSystem from '../System/Melee';
-import DeathSystem from '../System/Death';
-import DebugSystem from '../System/Debug';
-import LifebarSystem from '../System/Lifebar';
-import MoveCreepsSystem from '../System/MoveCreeps';
-import RangeDetectionSystem from '../System/RangeDetection';
-import SpatialTrackingSystem from '../System/SpatialTracking';
-import RealEstateSystem from '../System/RealEstate';
-import HUDSystem from '../System/HUD';
-import ZIndexSystem from '../System/ZIndex';
+import BallisticSystem from '../../System/Ballistic';
+import MeleeSystem from '../../System/Melee';
+import DeathSystem from '../../System/Death';
+import DebugSystem from '../../System/Debug';
+import LifebarSystem from '../../System/Lifebar';
+import MoveCreepsSystem from '../../System/MoveCreeps';
+import RangeDetectionSystem from '../../System/RangeDetection';
+import SpatialTrackingSystem from '../../System/SpatialTracking';
+import RealEstateSystem from '../../System/RealEstate';
+import HUDSystem from '../../System/HUD';
+import ZIndexSystem from '../../System/ZIndex';
 
-import Background from '../Entity/Background';
-import Mummy from '../Entity/Creep/Mummy';
-import FireballTower from '../Entity/Tower/FireballTower';
-import ArcherTower from '../Entity/Tower/ArcherTower';
-import BarrackTower from '../Entity/Tower/BarrackTower';
-import SpotMenu from '../Entity/Menu/SpotMenu';
+import Background from '../../Entity/Background';
+import Mummy from '../../Entity/Creep/Mummy';
+import FireballTower from '../../Entity/Tower/FireballTower';
+import ArcherTower from '../../Entity/Tower/ArcherTower';
+import BarrackTower from '../../Entity/Tower/BarrackTower';
+import SpotMenu from '../../Entity/Menu/SpotMenu';
 
-const gridcellsize = 128;
+import { gridcellsize, whratio, lanesprops } from './props';
 
 export default function({ resolution, canvas, debug, renderer }) {
-
-    const whratio = 36/25;
 
     const state = {
         life: 20,
@@ -58,12 +56,9 @@ export default function({ resolution, canvas, debug, renderer }) {
 
     Background.setTexturePath('/assets/sprites/level-' + resolution.width + '-' + resolution.height + '.jpg');
     let buildspotHighlightTexture;
+    let compiledlevel;
 
-    const lanes = [
-        { name: 'red',      width: 2048, height: 1536, color: 0xFF0000, offsetx: resolution.offsetx, offsety: resolution.offsety, path: 'M2276.65616,357.166917 C2082.14438,484.51356 1659.32294,534.252411 1530.08137,501.5071 C1400.83979,468.76179 1475.63003,241.634048 1364.54643,189.102672 C1253.46283,136.571296 1174.69682,144.155127 1087.60182,212.639606 C1000.50682,281.124085 1076.87659,432.070036 947.57263,493.733283 C886.15357,523.023171 816.895948,502.653254 754.32565,501.507105 C685.168314,500.240295 623.534217,517.867285 575.331707,550.038229 C483.517837,611.315925 468.924267,743.803707 553.660052,814.336812 C638.395837,884.869917 694.522993,891.366362 821.047811,880.859423 C947.57263,870.352484 1047.47437,810.600144 1138.92525,831.307672 C1230.37613,852.015199 1286.4468,942.426278 1198.08134,1025.05219 C1109.71588,1107.67811 1020.11398,1032.85437 917.126816,1103.09093 C814.139652,1173.32749 866.325184,1399.12555 853.370966,1584.01323' },
-        { name: 'yellow',   width: 2048, height: 1536, color: 0xFFFF00, offsetx: resolution.offsetx, offsety: resolution.offsety, path: 'M2317.62852,383.918842 C2222.36978,442.933659 2045.32055,492.874547 1872.29619,524.216196 C1720.35579,551.738691 1570.66481,566.871992 1493.85607,534.53593 C1329.58026,465.3767 1443.74639,208.143149 1236.71712,208.143149 C1029.68785,208.143149 1099.76369,469.944388 981.308041,524.216206 C871.446738,574.550426 710.528598,514.743787 604.752204,589.922294 C524.57204,646.90878 505.416369,739.442191 631.198193,820.488961 C756.980018,901.535731 1027.55529,769.13681 1136.88912,794.712306 C1246.22295,820.287803 1338.31472,892.256486 1260.49866,1019.45572 C1182.68261,1146.65494 1059.42461,1083.90763 962.387178,1138.56926 C865.349741,1193.2309 913.552481,1434.00814 901.637342,1594.92832' },
-        { name: 'blue',     width: 2048, height: 1536, color: 0x0000FF, offsetx: resolution.offsetx, offsety: resolution.offsety, path: 'M2341.68235,424.693132 C2201.65883,526.881182 1600.58212,630.314867 1451.11392,571.244699 C1301.64573,512.174531 1419.31121,263.223313 1230.9433,263.223313 C1042.57539,263.223313 1130.47848,517.178693 1022.70028,563.533249 C922.741742,606.524631 714.493125,563.533249 647.91501,612.699411 C581.336895,661.865574 572.047781,754.822564 668.858439,795.279325 C765.669098,835.736085 1028.33799,733.100091 1156.33746,759.94274 C1284.33693,786.78539 1381.05679,888.026519 1309.97312,1032.81466 C1238.88945,1177.6028 1092.44549,1113.20652 1002.53165,1167.58358 C912.617807,1221.96064 967.034763,1452.13644 956.19364,1589.58133' }
-    ].map(curveToLane(resolution.width, resolution.height));
+    const lanes = lanesprops.map(curveToLane(resolution.width, resolution.height, resolution.offsetx, resolution.offsety));
 
     const buildspots = [
         { x: 741 * resolution.worldscale + resolution.offsetx, y: 695 * resolution.worldscale + resolution.offsety, deploy: [540 * resolution.worldscale + resolution.offsetx, 701 * resolution.worldscale + resolution.offsety], tower: null, current: false },
@@ -75,10 +70,17 @@ export default function({ resolution, canvas, debug, renderer }) {
         { x: 1228 * resolution.worldscale + resolution.offsetx, y: 369 * resolution.worldscale + resolution.offsety, deploy: [1225 * resolution.worldscale + resolution.offsetx, 224 * resolution.worldscale + resolution.offsety], tower: null, current: false }
     ];
 
-    const init = function() {
+    /*const init = function() {
         const before = performance.now();
         const promises = lanes.map(lane => lane.memoizeAllAsync());
         return Promise.all(promises).then(() => console.log('Lanes async memoization took ' + (performance.now() - before) + ' ms'));
+    };*/
+
+    const init = function() {
+        for(var laneindex in compiledlevel) {
+            lanes[laneindex].memoizePrecalc(compiledlevel[laneindex]);
+        }
+        return Promise.resolve();
     };
 
     return stage
@@ -89,10 +91,12 @@ export default function({ resolution, canvas, debug, renderer }) {
                 FireballTower.loadAssets(loader);
                 ArcherTower.loadAssets(loader);
                 BarrackTower.loadAssets(loader);
+                loader.add('compiledlevel', '/assets/compiled/level1.' + resolution.width + 'x' + resolution.height + '.json');
 
                 loader.add('buildspothighlight', '/assets/sprites/buildspot-highlight.png');
                 loader.once('complete', (_, resources) => {
                     buildspotHighlightTexture = resources.buildspothighlight.texture;
+                    compiledlevel = resources.compiledlevel.data;
                 });
             }
         })
@@ -147,7 +151,7 @@ export default function({ resolution, canvas, debug, renderer }) {
 
             // Debug
             if(debug) {
-                stage.addSystem(DebugSystem({ layer: layers.debug, cbk: (msg) => msg += '; '  + layers.creeps.entities.length + ' creeps' }));
+                stage.addSystem(DebugSystem({ layer: layers.debug, cbk: (msg) => msg += '; '  + layers.creeps.entities.length + ' creeps; ' + resolution.width + 'x' + resolution.height }));
                 //const graphics = new Graphics(); layers.debug.addEntity(GenericEntity({ displayobject: graphics })); lanes.map(lane => drawSVGPath(graphics, lane.path, lane.color, 0, 0));
             }
 

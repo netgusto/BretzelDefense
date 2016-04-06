@@ -1,9 +1,10 @@
 'use strict';
 
-import { GameStage, GameLayer } from 'bobo';
 import { Text } from 'pixi.js';
 
-import StageLevel01 from './StageLevel01';
+import { GameStage, GameLayer } from '../Utils/bobo';
+
+import StageLevel01 from './Level01';
 import GenericEntity from '../Entity/Generic';
 
 export default function({ resolution, canvas/*, debug */, swapstage }) {

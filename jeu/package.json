@@ -9,18 +9,22 @@
     "babel-preset-es2015": "^6.5.0",
     "babel-preset-react": "^6.5.0",
     "babel-preset-stage-0": "^6.5.0",
+    "benv": "^3.0.0",
     "chalk": "^1.1.1",
     "eslint": "^2.2.0",
     "eslint-loader": "^1.3.0",
     "eslint-plugin-react": "^4.1.0",
     "gl-matrix": "^2.3.2",
     "json-loader": "^0.5.4",
+    "node-phantom-simple": "^2.2.4",
+    "phantomjs-prebuilt": "^2.1.7",
     "webpack": "^1.12.14",
     "webpack-dev-server": "^1.14.1"
   },
   "scripts": {
     "serve:dev": "node ./scripts/servedev.js",
-    "build": "node ./scripts/build.js"
+    "build": "node ./scripts/build.js",
+    "compile-stage": "node ./node_modules/babel-cli/bin/babel-node.js ./scripts/compile-stage.js"
   },
   "dependencies": {
     "bezier-js": "^1.7.3",

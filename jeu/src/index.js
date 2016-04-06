@@ -4,8 +4,8 @@ import 'babel-polyfill';
 import 'perfnow';
 
 import { Container, autoDetectRenderer } from 'pixi.js';
-import { gameloop } from 'bobo';
 
+import { gameloop } from './Utils/bobo';
 import resolutionFinder from './Utils/resolution';
 import Stage from './Stage/TitleScreen';
 

@@ -4,10 +4,10 @@
 
 import compose from 'compose-js';
 import { extras as PixiExtras } from 'pixi.js';
-import { loadspritesheet } from 'bobo';
+
+import { loadspritesheet } from '../../Utils/bobo';
 
 import eventbus from '../../Singleton/eventbus';
-
 import GenericEntity from '../Generic';
 //import Debugable from '../Component/Debugable';
 import SpatialTrackable from '../../Component/SpatialTrackable';

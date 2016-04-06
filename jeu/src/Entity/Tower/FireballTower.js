@@ -3,9 +3,9 @@
 /* @flow */
 
 import compose from 'compose-js';
-
-import { loadspritesheet } from 'bobo';
 import { SCALE_MODES, extras as PixiExtras, Sprite } from 'pixi.js';
+
+import { loadspritesheet } from '../../Utils/bobo';
 
 import GenericEntity from '../Generic';
 
