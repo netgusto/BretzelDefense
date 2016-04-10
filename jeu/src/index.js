@@ -9,11 +9,28 @@ import { gameloop } from './Utils/bobo';
 import resolutionFinder from './Utils/resolution';
 import Stage from './Stage/TitleScreen';
 
-const debug = true;
+import world from './Singleton/world';
+import eventbus from './Singleton/eventbus';
 
-(function(mountnode: HTMLElement, resolution) {
+(function(mountnode, resolution) {
 
-    const renderer = autoDetectRenderer(resolution.width, resolution.height);
+    window.onfocus = function() {
+        eventbus.emit('game.focus');
+    };
+
+    window.onblur = function() {
+        eventbus.emit('game.blur');
+    };
+
+    world
+    .set('debug', true)
+    .set('timescale', 1)
+    .set('scale', resolution.worldscale)
+    .set('resolution', resolution);
+
+    var dpr = window.devicePixelRatio || 1;
+
+    const renderer = autoDetectRenderer(resolution.width, resolution.height, { resolution: dpr });
     mountnode.appendChild(renderer.view);
 
     const canvas = new Container(0xFF0000 /* white */, true /* interactive */);
@@ -22,8 +39,8 @@ const debug = true;
     const swapstage = function(newstage) {
         window.setImmediate(function() {    // allow pixi mouse events triggering swapstage to complete before tearing the stage down
             if(previousstage) previousstage.destroy();
-            newstage({ resolution, canvas, debug, swapstage, renderer })
-                .then(stage => stage.run(renderer, gameloop()))
+            newstage({ world, canvas, swapstage, renderer })
+                .then(stage => stage.run(renderer, gameloop({ world })))
                 .then(stage => previousstage = stage);
         });
     };

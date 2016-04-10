@@ -8,6 +8,8 @@ import compose from 'compose-js';
 import { SCALE_MODES, Sprite, Graphics } from 'pixi.js';
 
 import eventbus from '../../Singleton/eventbus';
+import timers from '../../Singleton/timers';
+
 import GenericEntity from '../Generic';
 
 const sort = function(a, b) {
@@ -77,11 +79,11 @@ const ArcherTower = compose(GenericEntity).compose({
         getRangeCenterPoint() {
             return { x: this.displayobject.x, y: this.displayobject.y };
         },
-        engage(matches, { ballisticSystem }) {
+        engage(matches, { ballisticSystem, timescale }) {
 
             const now = performance.now();
 
-            if((now - this.lastfired) < this.firerate) return;
+            if((now - this.lastfired) * timescale < this.firerate) return;
 
             matches.sort(sort);
 
@@ -141,7 +143,7 @@ const ArcherTower = compose(GenericEntity).compose({
         ballisticHit(projectileprops) {
             const { target, displayobject } = projectileprops;
 
-            setTimeout(function() {
+            timers.addTimeout(function() {
                 // On remplace la flêche par une éclaboussure de sang
                 displayobject.parent.removeChild(displayobject);
             }, 100);
@@ -159,7 +161,7 @@ const ArcherTower = compose(GenericEntity).compose({
         },
         ballisticMiss(projectileprops) {
             const displayobject = projectileprops.displayobject;
-            setTimeout(function() {
+            timers.addTimeout(function() {
                 displayobject.parent.removeChild(displayobject);
             }, 1000);
         },

@@ -12,6 +12,9 @@ import GenericEntity from '../Generic';
 //import Debugable from '../Component/Debugable';
 import SpatialTrackable from '../../Component/SpatialTrackable';
 
+import world from '../../Singleton/world';
+import timers from '../../Singleton/timers';
+
 let loaded = false;
 
 let Mummy = compose(GenericEntity, SpatialTrackable).compose({
@@ -75,7 +78,7 @@ let Mummy = compose(GenericEntity, SpatialTrackable).compose({
         setVelocityPerSecond(vps) {
             this.velocitypersecond = vps;
             this.velocitypermillisecond = vps/1000;
-            this.displayobject.animationSpeed = 9 * this.velocitypermillisecond;
+            this.displayobject.animationSpeed = 9 * this.velocitypermillisecond * world.timescale;
             return this;
         },
         die() {
@@ -83,9 +86,16 @@ let Mummy = compose(GenericEntity, SpatialTrackable).compose({
             this.dead = true;
             this.displayobject.stop();
             this.displayobject.rotation = (this.displayobject.scale.x > 0) ? -Math.PI / 2 : Math.PI / 2;
-            setTimeout(() => {
+            timers.addTimeout(() => {
                 eventbus.emit('entity.remove.batch', [this]);
             }, 1000);
+        },
+        pause() {
+            this.displayobject._animationSpeed = this.displayobject.animationSpeed;
+            this.displayobject.animationSpeed = 0;
+        },
+        resume() {
+            this.displayobject.animationSpeed = this.displayobject._animationSpeed;
         }
     }
 })/*.compose(Debugable)*/;

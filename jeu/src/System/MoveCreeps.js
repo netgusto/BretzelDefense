@@ -10,7 +10,6 @@ export default function() {
                 if(entities[i].dead) continue;
 
                 const creep = entities[i];
-
                 const newpos = creep.lane.getPointAtLengthLoop(creep.pixelswalked);
                 const prevpos = creep.prevpos;
 

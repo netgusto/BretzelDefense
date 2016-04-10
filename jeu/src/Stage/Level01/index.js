@@ -1,11 +1,12 @@
 'use strict';
 
-import { Graphics, RenderTexture } from 'pixi.js';
+import { Graphics, RenderTexture, Text } from 'pixi.js';
 //import GenericEntity from '../Entity/Generic';
 import { GameStage, GameLayer, cursorkeys } from '../../Utils/bobo';
 import { drawSVGPath } from '../../Utils/svg';
 
 import eventbus from '../../Singleton/eventbus';
+import timers from '../../Singleton/timers';
 
 import SpatialHash from '../../Utils/spatialhash';
 import { curveToLane } from '../../Utils/lane';
@@ -31,7 +32,7 @@ import SpotMenu from '../../Entity/Menu/SpotMenu';
 
 import { gridcellsize, whratio, lanesprops } from './props';
 
-export default function({ resolution, canvas, debug, renderer }) {
+export default function({ world, canvas, renderer }) {
 
     const state = {
         life: 20,
@@ -49,25 +50,26 @@ export default function({ resolution, canvas, debug, renderer }) {
         projectiles: new GameLayer(stage),
         ingamemenus: new GameLayer(stage),
         interface: new GameLayer(stage),
+        pause: new GameLayer(stage),
         debug: new GameLayer(stage)
     };
 
     Object.values(layers).map(layer => stage.addLayer(layer));
 
-    Background.setTexturePath('/assets/sprites/level-' + resolution.width + '-' + resolution.height + '.jpg');
+    Background.setTexturePath('/assets/sprites/level-' + world.resolution.width + '-' + world.resolution.height + '.jpg');
     let buildspotHighlightTexture;
     let compiledlevel;
 
-    const lanes = lanesprops.map(curveToLane(resolution.width, resolution.height, resolution.offsetx, resolution.offsety));
+    const lanes = lanesprops.map(curveToLane(world.resolution.width, world.resolution.height, world.resolution.offsetx, world.resolution.offsety));
 
     const buildspots = [
-        { x: 741 * resolution.worldscale + resolution.offsetx, y: 695 * resolution.worldscale + resolution.offsety, deploy: [540 * resolution.worldscale + resolution.offsetx, 701 * resolution.worldscale + resolution.offsety], tower: null, current: false },
-        { x: 874 * resolution.worldscale + resolution.offsetx, y: 409 * resolution.worldscale + resolution.offsety, deploy: [912 * resolution.worldscale + resolution.offsetx, 546 * resolution.worldscale + resolution.offsety], tower: null, current: false },
-        { x: 887 * resolution.worldscale + resolution.offsetx, y: 988 * resolution.worldscale + resolution.offsety, deploy: [856 * resolution.worldscale + resolution.offsetx, 843 * resolution.worldscale + resolution.offsety], tower: null, current: false },
-        { x: 1082 * resolution.worldscale + resolution.offsetx, y: 949 * resolution.worldscale + resolution.offsety, deploy: [1285 * resolution.worldscale + resolution.offsetx, 945 * resolution.worldscale + resolution.offsety], tower: null, current: false },
-        { x: 1108 * resolution.worldscale + resolution.offsetx, y: 1237 * resolution.worldscale + resolution.offsety, deploy: [954 * resolution.worldscale + resolution.offsetx, 1148 * resolution.worldscale + resolution.offsety], tower: null, current: false },
-        { x: 1224 * resolution.worldscale + resolution.offsetx, y: 527 * resolution.worldscale + resolution.offsety, deploy: [1444 * resolution.worldscale + resolution.offsetx, 480 * resolution.worldscale + resolution.offsety], tower: null, current: false },
-        { x: 1228 * resolution.worldscale + resolution.offsetx, y: 369 * resolution.worldscale + resolution.offsety, deploy: [1225 * resolution.worldscale + resolution.offsetx, 224 * resolution.worldscale + resolution.offsety], tower: null, current: false }
+        { x: 741 * world.scale + world.resolution.offsetx, y: 695 * world.scale + world.resolution.offsety, deploy: [540 * world.scale + world.resolution.offsetx, 701 * world.scale + world.resolution.offsety], tower: null, current: false },
+        { x: 874 * world.scale + world.resolution.offsetx, y: 409 * world.scale + world.resolution.offsety, deploy: [912 * world.scale + world.resolution.offsetx, 546 * world.scale + world.resolution.offsety], tower: null, current: false },
+        { x: 887 * world.scale + world.resolution.offsetx, y: 988 * world.scale + world.resolution.offsety, deploy: [856 * world.scale + world.resolution.offsetx, 843 * world.scale + world.resolution.offsety], tower: null, current: false },
+        { x: 1082 * world.scale + world.resolution.offsetx, y: 949 * world.scale + world.resolution.offsety, deploy: [1285 * world.scale + world.resolution.offsetx, 945 * world.scale + world.resolution.offsety], tower: null, current: false },
+        { x: 1108 * world.scale + world.resolution.offsetx, y: 1237 * world.scale + world.resolution.offsety, deploy: [954 * world.scale + world.resolution.offsetx, 1148 * world.scale + world.resolution.offsety], tower: null, current: false },
+        { x: 1224 * world.scale + world.resolution.offsetx, y: 527 * world.scale + world.resolution.offsety, deploy: [1444 * world.scale + world.resolution.offsetx, 480 * world.scale + world.resolution.offsety], tower: null, current: false },
+        { x: 1228 * world.scale + world.resolution.offsetx, y: 369 * world.scale + world.resolution.offsety, deploy: [1225 * world.scale + world.resolution.offsetx, 224 * world.scale + world.resolution.offsety], tower: null, current: false }
     ];
 
     /*const init = function() {
@@ -91,7 +93,7 @@ export default function({ resolution, canvas, debug, renderer }) {
                 FireballTower.loadAssets(loader);
                 ArcherTower.loadAssets(loader);
                 BarrackTower.loadAssets(loader);
-                loader.add('compiledlevel', '/assets/compiled/level1.' + resolution.width + 'x' + resolution.height + '.json');
+                loader.add('compiledlevel', '/assets/compiled/level1.' + world.resolution.width + 'x' + world.resolution.height + '.json');
 
                 loader.add('buildspothighlight', '/assets/sprites/buildspot-highlight.png');
                 loader.once('complete', (_, resources) => {
@@ -108,10 +110,10 @@ export default function({ resolution, canvas, debug, renderer }) {
         .then(function(/*{ loader, resources }*/) {
 
             const spatialhash = new SpatialHash({
-                cellwidth: (gridcellsize * resolution.worldscale)|0,
-                cellheight: (gridcellsize * resolution.worldscale)|0,
-                worldwidth: resolution.width,
-                worldheight: resolution.height
+                cellwidth: (gridcellsize * world.scale)|0,
+                cellheight: (gridcellsize * world.scale)|0,
+                worldwidth: world.resolution.width,
+                worldheight: world.resolution.height
             });
 
             const ballisticSystem = BallisticSystem({ layer: layers.projectiles });
@@ -126,7 +128,7 @@ export default function({ resolution, canvas, debug, renderer }) {
                     buildspots,
                     buildspotHighlightTexture,
                     cursor,
-                    worldscale: resolution.worldscale,
+                    worldscale: world.scale,
                     whratio,
                     meleeSystem,
                     state
@@ -138,26 +140,38 @@ export default function({ resolution, canvas, debug, renderer }) {
                     onrange: function(/*entity, hunterentity, distance*/) { },
                     onrangebulk: function(matches, hunter) {
                         // engagement for both ballistic and melee systems
-                        if(matches.length) hunter.engage(matches, { ballisticSystem, meleeSystem });
+                        if(matches.length) hunter.engage(matches, { ballisticSystem, meleeSystem, timescale: world.timescale });
                     },
                     onleave: function(/*entityid, hunterentity*/) { }
                 }))
                 .addSystem(ballisticSystem)
                 .addSystem(meleeSystem)
                 .addSystem(DeathSystem())
-                .addSystem(LifebarSystem({ layer: layers.lifebar, worldscale: resolution.worldscale }))
+                .addSystem(LifebarSystem({ layer: layers.lifebar, worldscale: world.scale }))
                 .addSystem(HUDSystem({ layer: layers.interface, state }))
                 .addSystem(ZIndexSystem(layers.creeps));
 
             // Debug
-            if(debug) {
-                stage.addSystem(DebugSystem({ layer: layers.debug, cbk: (msg) => msg += '; '  + layers.creeps.entities.length + ' creeps; ' + resolution.width + 'x' + resolution.height }));
+            if(world.debug) {
+                stage.addSystem(DebugSystem({ layer: layers.debug, cbk: (msg) => msg += '; '  + layers.creeps.entities.length + ' creeps; ' + world.resolution.width + 'x' + world.resolution.height + '; ' + world.resolution.screenwidth + 'x' + world.resolution.screenheight }));
                 //const graphics = new Graphics(); layers.debug.addEntity(GenericEntity({ displayobject: graphics })); lanes.map(lane => drawSVGPath(graphics, lane.path, lane.color, 0, 0));
             }
 
+            // Pause overlay
+            const pauseoverlay = new Graphics();
+            pauseoverlay.beginFill(0x000000);
+            pauseoverlay.alpha = 0.83;
+            pauseoverlay.drawRect(0, 0, world.resolution.width, world.resolution.height);
+            layers.pause.addChild(pauseoverlay);
+            const pausetext = new Text('Pause - Cliquez pour reprendre', { font: '28px Arial', fill: 'white' });
+            pausetext.pivot.set(0.5, 0.5);
+            pausetext.position.set(world.resolution.width/2, world.resolution.height/2);
+            layers.pause.addChild(pausetext);
+            layers.pause.container.renderable = false;
+
             // Building the path texture to have a testable in path / out path reference
-            const pathtexture = new RenderTexture(renderer, resolution.width, resolution.height);
-            const pathgraphics = new Graphics(); drawSVGPath(pathgraphics, lanes[1].path, 0xFFFFFF, 0, 0, 170 * resolution.worldscale);
+            const pathtexture = new RenderTexture(renderer, world.resolution.width, world.resolution.height);
+            const pathgraphics = new Graphics(); drawSVGPath(pathgraphics, lanes[1].path, 0xFFFFFF, 0, 0, 170 * world.scale);
             //layers.debug.addEntity(GenericEntity({ displayobject: pathgraphics }));
             pathtexture.render(pathgraphics);
 
@@ -182,13 +196,13 @@ export default function({ resolution, canvas, debug, renderer }) {
                 }
             });
 
-            const towermenu = SpotMenu({ worldscale: resolution.worldscale });
+            const towermenu = SpotMenu({ worldscale: world.scale });
             layers.ingamemenus.addEntity(towermenu);
 
             eventbus.on('buildspot.focus', function({ spot }) {
 
                 if(spot.tower) {
-                    towermenu.setPosition(spot.x, spot.y - 20 * resolution.worldscale);
+                    towermenu.setPosition(spot.x, spot.y - 20 * world.scale);
                 } else {
                     towermenu.setPosition(spot.x, spot.y);
                 }
@@ -208,9 +222,9 @@ export default function({ resolution, canvas, debug, renderer }) {
                     case 'ArcherTower': {
                         if(state.coins < 70) return;
                         state.coins -= 70;
-                        tower = ArcherTower({ worldscale: resolution.worldscale, whratio })
+                        tower = ArcherTower({ worldscale: world.scale, whratio })
                             .mount({
-                                worldscale: resolution.worldscale,
+                                worldscale: world.scale,
                                 clickpoint: { x: spot.x, y: spot.y },
                                 creepslayer: layers.creeps
                             });
@@ -220,9 +234,9 @@ export default function({ resolution, canvas, debug, renderer }) {
                     case 'BarrackTower': {
                         if(state.coins < 70) return;
                         state.coins -= 70;
-                        tower = BarrackTower({ worldscale: resolution.worldscale, whratio, meleeSystem })
+                        tower = BarrackTower({ worldscale: world.scale, whratio, meleeSystem })
                             .mount({
-                                worldscale: resolution.worldscale,
+                                worldscale: world.scale,
                                 clickpoint: { x: spot.x, y: spot.y },
                                 deploypoint: { x: spot.deploy[0], y: spot.deploy[1] },
                                 creepslayer: layers.creeps
@@ -277,6 +291,30 @@ export default function({ resolution, canvas, debug, renderer }) {
                 });
             });
 
+            eventbus.on('game.blur', function() {
+                eventbus.emit('game.pause');
+            });
+
+            eventbus.on('game.focus', function() {
+                eventbus.emit('game.resume');
+            });
+
+            eventbus.on('game.pause', function() {
+                world.set('timescale', 0);
+                timers.pauseAll();
+
+                layers.creeps.entities.map(item => item.pause());
+                layers.pause.container.renderable = true;
+            });
+
+            eventbus.on('game.resume', function() {
+                world.set('timescale', 1);
+                timers.resumeAll();
+
+                layers.creeps.entities.map(item => item.resume());
+                layers.pause.container.renderable = false;
+            });
+
             /*****************************************************************/
             /* Setup du level                                                */
             /*****************************************************************/
@@ -284,8 +322,8 @@ export default function({ resolution, canvas, debug, renderer }) {
             const setup = function({ spatialhash, backgroundlayer, creepslayer }) {
 
                 const background = Background({
-                    viewwidth: resolution.width,
-                    viewheight: resolution.height
+                    viewwidth: world.resolution.width,
+                    viewheight: world.resolution.height
                 });
 
                 background.displayobject.interactive = true;
@@ -297,7 +335,7 @@ export default function({ resolution, canvas, debug, renderer }) {
                 };
 
                 //creepsautospawn({ layer: creepslayer, resolution, spatialhash, lanes: this.lanes, vps: 20, frequency: 50 });
-                waves({ layer: creepslayer, resolution, spatialhash });
+                waves({ layer: creepslayer, resolution: world.resolution, spatialhash });
 
                 backgroundlayer.addEntity(background);
 
@@ -307,7 +345,7 @@ export default function({ resolution, canvas, debug, renderer }) {
             const waves = function({ layer, spatialhash }) {
 
                 const wavesprops = [
-                    { number: 9, frequency: 400, vps: 20, delay: 0 },
+                    { number: 9, frequency: 3000, vps: 20, delay: 0 },
                     { number: 15, frequency: 400, vps: 23, delay: 20000 },
                     { number: 25, frequency: 400, vps: 30, delay: 30000 },
                     { number: 40, frequency: 400, vps: 35, delay: 50000 },
@@ -319,12 +357,13 @@ export default function({ resolution, canvas, debug, renderer }) {
 
                 const spawn = function({ vps, frequency, number }) {
                     let count = 0;
-                    let interval = window.setInterval(function() {
+                    let intervalid = timers.addInterval(function() {
+                        console.log('ADD MUMMY !');
                         if(count >= number) return;
                         const mummy = Mummy({
-                            worldscale: resolution.worldscale
+                            worldscale: world.scale
                         })
-                            .setVelocityPerSecond((vps + Math.floor(Math.random() * 50)) * resolution.worldscale);
+                            .setVelocityPerSecond((vps + Math.floor(Math.random() * 50)) * world.scale);
                         layer.addEntity(mummy);
                         mummy.creep = true;
                         mummy.lane = lanes[mummyindex % lanes.length];
@@ -343,14 +382,14 @@ export default function({ resolution, canvas, debug, renderer }) {
 
                         count++;
 
-                        if(count === number) window.clearInterval(interval);
+                        if(count === number) timers.remove(intervalid);
                     }, frequency);
                 };
 
                 wavesprops.map(waveprops => {
-                    window.setTimeout(function() {
+                    timers.addTimeout(function() {
                         spawn(waveprops)
-                    }, waveprops.delay);
+                    }, waveprops.delay / world.timescale);
                 });
             };
 
@@ -358,7 +397,7 @@ export default function({ resolution, canvas, debug, renderer }) {
                 backgroundlayer: layers.background,
                 creepslayer: layers.creeps,
                 spatialhash,
-                resolution
+                resolution: world.resolution
             })
             .then(() => stage);
         });

@@ -9,6 +9,6 @@ export default [
     { ratio: '8:5', width: 1152, height: 720, offsetx: 0, offsety: 0, worldscale: 730/1536 },
     { ratio: '8:5', width: 1280, height: 800, offsetx: 0, offsety: 0, worldscale: 800/1536 },
     { ratio: '8:5', width: 1680, height: 1050, offsetx: 153, offsety: -2, worldscale: 1050/1536 },
-    { ratio: '16:9', width: 1136, height: 640, offsetx: 0, offsety: 0, worldscale: 640/1536 },
+    { ratio: '16:9', width: 1136, height: 640, offsetx: 0, offsety: 0, worldscale: 640/1536 },  // actually 71:40
     { ratio: '16:9', width: 1600, height: 900, offsetx: 0, offsety: 0, worldscale: 900/1536 }
 ];

@@ -183,7 +183,7 @@ export function cursorkeys() : {
     shift: boolean; alt: boolean; ctrl: boolean;
 } { return cursors; }
 
-export function gameloop() {
+export function gameloop({ world }) {
     let then = performance.now();
     let costtime;
 
@@ -191,12 +191,13 @@ export function gameloop() {
 
     return (stage: GameStage) => {
         const start = performance.now();
-        const deltatime = start - then;
+        const walldeltatime = start - then;
+        const deltatime = walldeltatime * world.timescale;
 
         stage.systems.map(system => {
             system.process(
                 system.match ? stage.entities.filter(system.match) : stage.entities,
-                { deltatime, costtime, game: stage }
+                { deltatime, costtime, walldeltatime, timescale: world.timescale, game: stage }
             );
         });
 

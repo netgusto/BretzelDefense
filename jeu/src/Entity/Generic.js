@@ -19,7 +19,9 @@ const GenericEntity = compose(Taggable, Identifiable, AssetLoader, Displayable, 
         render: function() {},
         remove() {
             this.displayobject.parent.removeChild(this.displayobject);
-        }
+        },
+        pause: function() {},
+        resume: function() {}
     }
 });
 

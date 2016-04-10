@@ -10,7 +10,7 @@ export default function({ layer }) {
             pendinglaunch.push(projectileprops);
         },
 
-        process(entities, { deltatime }) {
+        process(entities, { worldscale, deltatime, timescale }) {
 
             const now = performance.now();
 
@@ -23,7 +23,7 @@ export default function({ layer }) {
                     // On détermine la position supposée de la cible en T+flightduration
 
                     const { target, hunter, flightduration } = projectileprops;
-                    const targetpixelswalkedwhenprojectilehits = target.pixelswalked + (target.velocitypermillisecond * flightduration);
+                    const targetpixelswalkedwhenprojectilehits = target.pixelswalked + (target.velocitypermillisecond * flightduration * timescale);
 
                     const pointatlength = target.lane.getPointAtLengthLoop(targetpixelswalkedwhenprojectilehits);
                     const predictiveimpact = [pointatlength.x + target.offsetx, pointatlength.y - (target.displayobject.height / 2) + target.offsety];    // tir au centre vertical de la cible
@@ -57,7 +57,7 @@ export default function({ layer }) {
                 const { target, displayobject, orient, homing, firetime, flightduration, parabolic } = projectileprops;
                 const bounds = target.displayobject.getBounds();
 
-                const elapsedtime = now - firetime;
+                const elapsedtime = (now - firetime) * timescale;
                 const remainingtime = flightduration - elapsedtime;
 
                 let targetx = (bounds.x + bounds.width/2);
@@ -88,7 +88,7 @@ export default function({ layer }) {
                     const aimtargetvec = [targetx-aimx, targety-aimy];
                     const aimtargetdistancesquared = Math.pow(aimtargetvec[0], 2) + Math.pow(aimtargetvec[1], 2);
 
-                    if(aimtargetdistancesquared > 25) { // 25 = 5^2 = 5 px radius
+                    if(aimtargetdistancesquared > (64 * worldscale)) { // 64 = 8^2 = 8 px radius
                         hits.push({ index: i, missed: true });
                     } else {
                         hits.push({ index: i, missed: false });
