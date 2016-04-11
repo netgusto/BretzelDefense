@@ -22,10 +22,10 @@ export default function({ world, canvas, swapstage, renderer }) {
     container.addChild(g);
     const title = GenericEntity({ displayobject: container });
 
-    title.displayobject.position.set(200, 200);
+    title.displayobject.position.set(100, 100);
     title.displayobject.interactive = true;
     layer.container.interactive = true;
-    layer.container.click = layer.container.tap = function() {
+    title.displayobject.click = title.displayobject.tap = layer.container.click = layer.container.tap = function() {
 
         renderer.view.style.width = world.resolution.effectivewidth + 'px';
         renderer.view.style.height = world.resolution.effectiveheight + 'px';

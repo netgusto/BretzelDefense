@@ -29,8 +29,10 @@ import eventbus from './Singleton/eventbus';
     .set('resolution', resolution);
 
     var dpr = window.devicePixelRatio || 1;
+    if(dpr < 1) dpr = 1; // browser unzoomed
+    console.log('Screen: ' + resolution.screenwidth + 'x' + resolution.screenheight + '; Res: ' + resolution.width + 'x' + resolution.height + '@' + dpr + 'X');
 
-    const renderer = autoDetectRenderer(resolution.width, resolution.height, { resolution: dpr });
+    const renderer = autoDetectRenderer(resolution.effectivewidth, resolution.effectiveheight, { resolution: dpr });
     mountnode.appendChild(renderer.view);
 
     const canvas = new Container(0xFF0000 /* white */, true /* interactive */);

@@ -35,7 +35,7 @@ export default function({ layer, worldscale }) {
                 lifebar.lineTo(xend, y);
 
                 lifebar.lineStyle(lifebarheight, 0xC32427);
-                lifebar.moveTo(xstart + Math.ceil((life/maxlife)*lifebarwidth), y);
+                lifebar.moveTo(xstart + (life/maxlife)*lifebarwidth, y);
                 lifebar.lineTo(xend, y);
             }
         }

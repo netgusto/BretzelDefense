@@ -1,7 +1,7 @@
 'use strict';
 
 import { Graphics, RenderTexture, Text } from 'pixi.js';
-//import GenericEntity from '../Entity/Generic';
+//import GenericEntity from '../../Entity/Generic';
 import { GameStage, GameLayer, cursorkeys } from '../../Utils/bobo';
 import { drawSVGPath } from '../../Utils/svg';
 
@@ -164,10 +164,15 @@ export default function({ world, canvas, renderer }) {
             pauseoverlay.drawRect(0, 0, world.resolution.width, world.resolution.height);
             layers.pause.addChild(pauseoverlay);
             const pausetext = new Text('Pause - Cliquez pour reprendre', { font: '28px Arial', fill: 'white' });
-            pausetext.pivot.set(0.5, 0.5);
-            pausetext.position.set(world.resolution.width/2, world.resolution.height/2);
+            pausetext.pivot.set(0, 0);
+            pausetext.position.set(30, 100);
             layers.pause.addChild(pausetext);
             layers.pause.container.renderable = false;
+            layers.pause.container.interactive = false;
+            layers.pause.container.click = layers.pause.container.tap = function(e) {
+                e.stopPropagation();
+                eventbus.emit('game.resume');
+            };
 
             // Building the path texture to have a testable in path / out path reference
             const pathtexture = new RenderTexture(renderer, world.resolution.width, world.resolution.height);
@@ -176,6 +181,11 @@ export default function({ world, canvas, renderer }) {
             pathtexture.render(pathgraphics);
 
             // Events
+
+            eventbus.on('background.click', function(e) {
+                console.log('CLICK COORDS :' + (e.data.global.x|0) + 'x' + (e.data.global.y|0));
+            });
+
             eventbus.on('entity.death.batch', function(entities) {
                 eventbus.emit('entity.untrack.batch', entities);
                 for(let i = entities.length - 1; i >= 0; i--) {
@@ -296,7 +306,7 @@ export default function({ world, canvas, renderer }) {
             });
 
             eventbus.on('game.focus', function() {
-                eventbus.emit('game.resume');
+                //eventbus.emit('game.resume');
             });
 
             eventbus.on('game.pause', function() {
@@ -305,6 +315,7 @@ export default function({ world, canvas, renderer }) {
 
                 layers.creeps.entities.map(item => item.pause());
                 layers.pause.container.renderable = true;
+                layers.pause.container.interactive = true;
             });
 
             eventbus.on('game.resume', function() {
@@ -313,6 +324,7 @@ export default function({ world, canvas, renderer }) {
 
                 layers.creeps.entities.map(item => item.resume());
                 layers.pause.container.renderable = false;
+                layers.pause.container.interactive = false;
             });
 
             /*****************************************************************/
@@ -322,8 +334,8 @@ export default function({ world, canvas, renderer }) {
             const setup = function({ spatialhash, backgroundlayer, creepslayer }) {
 
                 const background = Background({
-                    viewwidth: world.resolution.width,
-                    viewheight: world.resolution.height
+                    viewwidth: world.resolution.effectivewidth,
+                    viewheight: world.resolution.effectiveheight
                 });
 
                 background.displayobject.interactive = true;

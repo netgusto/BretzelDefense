@@ -1,21 +1,22 @@
 'use strict';
 
-//import { path2js, scalejspath, jsToSVGPath } from './svg';
+import { path2js, scalejspath, jsToSVGPath } from './svg';
 
 export function curveToLane(towidth, toheight, offsetx, offsety) {
 
     return function(curve) {
 
-        //const xratio = towidth / curve.width;
-        //const yratio = toheight / curve.height;
-
+        // scaling path to world (useful for in-path click detection)
         let svgpath = curve.path;
 
-        /*
+        const xratio = towidth / curve.width;
+        const yratio = toheight / curve.height;
+
         if(xratio !== 1 || yratio !== 1) {
             svgpath = jsToSVGPath(scalejspath(path2js(svgpath), yratio, yratio, offsetx, offsety));   // yratio utilisé à la place de xratio : les différents ratios de cartes utilisent la hauteur comme dimension commune
         }
 
+        /*
         const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
         path.setAttribute('d', svgpath);
         const totallength = path.getTotalLength();
