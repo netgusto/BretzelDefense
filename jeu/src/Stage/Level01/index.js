@@ -231,27 +231,31 @@ export default function({ world, canvas, renderer }) {
                 let tower = null;
                 switch(type) {
                     case 'ArcherTower': {
-                        if(state.coins < 70) return;
-                        state.coins -= 70;
+                        let cost = 40;
+                        if(state.coins < cost) return;
+                        state.coins -= cost;
                         tower = ArcherTower({ worldscale: world.scale, whratio })
                             .mount({
                                 worldscale: world.scale,
                                 clickpoint: { x: spot.x, y: spot.y },
                                 creepslayer: layers.creeps
-                            });
+                            })
+                            .addCost(cost);
                         break;
                     }
 
                     case 'BarrackTower': {
-                        if(state.coins < 70) return;
-                        state.coins -= 70;
+                        let cost = 70;
+                        if(state.coins < cost) return;
+                        state.coins -= cost;
                         tower = BarrackTower({ worldscale: world.scale, whratio, meleeSystem })
                             .mount({
                                 worldscale: world.scale,
                                 clickpoint: { x: spot.x, y: spot.y },
                                 deploypoint: { x: spot.deploy[0], y: spot.deploy[1] },
                                 creepslayer: layers.creeps
-                            });
+                            })
+                            .addCost(cost);
                         break;
                     }
                 }
@@ -264,6 +268,7 @@ export default function({ world, canvas, renderer }) {
 
             eventbus.on('tower.sell', function({ spot }) {
                 console.log('SELLING TOWER !', spot);
+                state.coins += (spot.tower.getTotalCost() * 0.9)|0;
                 spot.tower.unmount();
                 eventbus.emit('tower.sold', { spot });
             });
@@ -326,6 +331,19 @@ export default function({ world, canvas, renderer }) {
                 layers.creeps.entities.map(item => item.resume());
                 layers.pause.container.renderable = false;
                 layers.pause.container.interactive = false;
+            });
+
+            eventbus.on('creep.succeeded', function({ creep }) {
+                eventbus.emit('life.decrease', 1);
+                creep.remove();
+            });
+
+            eventbus.on('life.decrease', function(amount) {
+                state.life -= amount;
+                if(state.life <= 0) {
+                    state.life = 0;
+                    eventbus.emit('game.over');
+                }
             });
 
             /*****************************************************************/

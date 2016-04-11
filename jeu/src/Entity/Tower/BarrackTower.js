@@ -37,6 +37,13 @@ const BarrackTower = compose(GenericEntity).compose({
         getRangeCenterPoint() {
             return { x: this.displayobject.x, y: this.displayobject.y };
         },
+        addCost(cost) {
+            this.totalcost += cost;
+            return this;
+        },
+        getTotalCost() {
+            return this.totalcost;
+        },
         mount({ worldscale, clickpoint, deploypoint, creepslayer }) {
 
             const offsetpos = 20 * worldscale;

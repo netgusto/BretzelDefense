@@ -1,5 +1,7 @@
 'use strict';
 
+import eventbus from '../Singleton/eventbus';
+
 export default function() {
     return {
         process(entities, { deltatime }) {
@@ -10,6 +12,11 @@ export default function() {
                 if(entities[i].dead) continue;
 
                 const creep = entities[i];
+                if(creep.pixelswalked > creep.lane.pathlength) {
+                    eventbus.emit('creep.succeeded', { creep });
+                    continue;
+                }
+
                 const newpos = creep.lane.getPointAtLengthLoop(creep.pixelswalked);
                 const prevpos = creep.prevpos;
 

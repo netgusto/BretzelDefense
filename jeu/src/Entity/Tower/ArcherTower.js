@@ -47,6 +47,7 @@ const ArcherTower = compose(GenericEntity).compose({
         this.rangeY = (range / whratio) * worldscale;
         this.firerate = 1200;
         this.firedamage = 8;
+        this.totalcost = 0;
 
         this.displayobject = new Sprite(ArcherTower.texture);
         this.displayobject.scale.set(worldscale);
@@ -78,6 +79,13 @@ const ArcherTower = compose(GenericEntity).compose({
         unmount() {
             eventbus.emit('entity.untrack.batch', [this]);
             eventbus.emit('entity.remove.batch', [this]);
+        },
+        addCost(cost) {
+            this.totalcost += cost;
+            return this;
+        },
+        getTotalCost() {
+            return this.totalcost;
         },
         getRangeCenterPoint() {
             return { x: this.displayobject.x, y: this.displayobject.y };

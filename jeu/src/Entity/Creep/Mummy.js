@@ -81,14 +81,15 @@ let Mummy = compose(GenericEntity, SpatialTrackable).compose({
             this.displayobject.animationSpeed = 9 * this.velocitypermillisecond * world.timescale;
             return this;
         },
+        remove() {
+            eventbus.emit('entity.remove.batch', [this]);
+        },
         die() {
             this.setTint(0xFFFFFF);
             this.dead = true;
             this.displayobject.stop();
             this.displayobject.rotation = (this.displayobject.scale.x > 0) ? -Math.PI / 2 : Math.PI / 2;
-            timers.addTimeout(() => {
-                eventbus.emit('entity.remove.batch', [this]);
-            }, 1000);
+            timers.addTimeout(this.remove.bind(this), 1000);
         },
         pause() {
             this.displayobject._animationSpeed = this.displayobject.animationSpeed;
