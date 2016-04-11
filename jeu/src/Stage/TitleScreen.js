@@ -1,6 +1,7 @@
 'use strict';
 
 import { Container, Graphics, Text } from 'pixi.js';
+import screenfull from 'screenfull';
 
 import { GameStage, GameLayer } from '../Utils/bobo';
 
@@ -22,7 +23,7 @@ export default function({ world, canvas, swapstage, renderer }) {
     container.addChild(g);
     const title = GenericEntity({ displayobject: container });
 
-    title.displayobject.position.set(100, 100);
+    title.displayobject.position.set(300, 300);
     title.displayobject.interactive = true;
     layer.container.interactive = true;
     title.displayobject.click = title.displayobject.tap = layer.container.click = layer.container.tap = function() {
@@ -31,12 +32,14 @@ export default function({ world, canvas, swapstage, renderer }) {
         renderer.view.style.height = world.resolution.effectiveheight + 'px';
 
         if(screenfull.enabled) {
-            screenfull.request(renderer.view);
+            screenfull.request();
         }
 
         swapstage(StageLevel01);
     };
     layer.addEntity(title);
 
-    return Promise.resolve(stage);
+    return Promise.resolve(stage)/*.then(function() {
+        title.displayobject.click();
+    })*/;
 }

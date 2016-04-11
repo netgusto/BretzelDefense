@@ -1,7 +1,11 @@
 'use strict';
 
+// Polyfills (imports with side effect)
 import 'babel-polyfill';
 import 'perfnow';
+
+if(!('Uint8Array' in global)) global.Uint8Array = Array;
+if(!('Uint16Array' in global)) global.Uint16Array = Array;
 
 import { Container, autoDetectRenderer } from 'pixi.js';
 

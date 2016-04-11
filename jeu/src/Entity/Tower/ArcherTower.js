@@ -49,20 +49,23 @@ const ArcherTower = compose(GenericEntity).compose({
         this.firedamage = 8;
 
         this.displayobject = new Sprite(ArcherTower.texture);
-        this.displayobject.pivot.set(this.displayobject.width / 2, (this.displayobject.height / 2));
         this.displayobject.scale.set(worldscale);
+        this.displayobject.anchor.set(.5, .5);
 
         this.archerleft = new Sprite(ArcherTower.archertexture);
+        this.displayobject.addChild(this.archerleft);
         this.archerleft.pivot.set(this.archerleft.width / 2, this.archerleft.height / 2);
-        this.archerleft.position.set(this.displayobject.width / 2 + 10 * worldscale, 12 * worldscale);
+        this.archerleft.position.set(-20, -60); // pas de worldscale; traité par le transform du container (la tour)
+        this.archerleft.tint = 0xFF0000;
 
         this.archerright = new Sprite(ArcherTower.archertexture);
-        this.archerright.pivot.set(this.archerright.width / 2, this.archerright.height / 2);
-        this.archerright.position.set(this.displayobject.width / 2 + 60 * worldscale, 12 * worldscale);
-
-        this.displayobject.addChild(this.archerleft);
         this.displayobject.addChild(this.archerright);
-        this.displayobject.addChild(new Sprite(ArcherTower.facadetexture));
+        this.archerright.pivot.set(this.archerleft.width / 2, this.archerleft.height / 2);
+        this.archerright.position.set(15, -60); // pas de worldscale; traité par le transform du container (la tour)
+
+        const facade = new Sprite(ArcherTower.facadetexture);
+        facade.anchor.set(.5, .5);
+        this.displayobject.addChild(facade);
 
         this.lastfired = performance.now();
     },

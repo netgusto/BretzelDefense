@@ -44,6 +44,7 @@ export default function({ world, canvas, renderer }) {
 
     const layers = {
         background: new GameLayer(stage),
+        spots: new GameLayer(stage),
         lifebar: new GameLayer(stage),
         ranges: new GameLayer(stage),
         creeps: new GameLayer(stage),
@@ -124,7 +125,7 @@ export default function({ world, canvas, renderer }) {
                 .addSystem(RealEstateSystem({
                     rangeslayer: layers.ranges,
                     towerslayer: layers.creeps,
-                    backgroundlayer: layers.background,
+                    backgroundlayer: layers.spots,
                     buildspots,
                     buildspotHighlightTexture,
                     cursor,
@@ -153,7 +154,7 @@ export default function({ world, canvas, renderer }) {
 
             // Debug
             if(world.debug) {
-                stage.addSystem(DebugSystem({ layer: layers.debug, cbk: (msg) => msg += '; '  + layers.creeps.entities.length + ' creeps; ' + world.resolution.width + 'x' + world.resolution.height + '; ' + world.resolution.screenwidth + 'x' + world.resolution.screenheight }));
+                stage.addSystem(DebugSystem({ layer: layers.debug, cbk: (msg) => msg += '; '  + layers.creeps.entities.length + ' creeps; Assets: ' + world.resolution.width + 'x' + world.resolution.height + '; Effective: ' + world.resolution.effectivewidth + 'x' + world.resolution.effectiveheight + '; Screen: ' + world.resolution.screenwidth + 'x' + world.resolution.screenheight }));
                 //const graphics = new Graphics(); layers.debug.addEntity(GenericEntity({ displayobject: graphics })); lanes.map(lane => drawSVGPath(graphics, lane.path, lane.color, 0, 0));
             }
 
@@ -335,7 +336,8 @@ export default function({ world, canvas, renderer }) {
 
                 const background = Background({
                     viewwidth: world.resolution.effectivewidth,
-                    viewheight: world.resolution.effectiveheight
+                    viewheight: world.resolution.effectiveheight,
+                    renderer
                 });
 
                 background.displayobject.interactive = true;

@@ -66,8 +66,10 @@ export default function() {
     normalizedresolution.effectivewidth = effectivewidth;
     normalizedresolution.effectiveheight = effectiveheight;
 
+    /* // REQUIS ?
     // on adapte le worldscale pour convenir à la résolution étirée (exemple: écran de 1152x864 utilisant le setup 1536x1152)
     normalizedresolution.worldscale = normalizedresolution.worldscale * (effectiveheight/normalizedresolution.height);
+    */
 
 
     console.log(normalizedresolution);

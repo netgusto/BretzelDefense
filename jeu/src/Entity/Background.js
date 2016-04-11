@@ -18,9 +18,14 @@ const Background = compose(GenericEntity).compose({
             Background.texture = resources.background.texture;
         });
     },
-    init: function({ viewwidth, viewheight, onclick = null }) {
-        this.displayobject = new Sprite(Background.texture);
-        this.displayobject.scale.set(viewwidth / Background.texture.width, viewheight / Background.texture.height);
+    init: function({ viewwidth, viewheight, renderer, onclick = null }) {
+
+        // using scaled bg as texture
+        // Fixes incorrect mouse event coordinates
+        const scaledtexture = new Sprite(Background.texture);
+        scaledtexture.scale.set(viewwidth / Background.texture.width, viewheight / Background.texture.height);
+
+        this.displayobject = new Sprite(scaledtexture.generateTexture(renderer));
 
         this.displayobject.interactive = true;
         this.displayobject.click = this.displayobject.tap = onclick;
@@ -32,12 +37,13 @@ const Background = compose(GenericEntity).compose({
         pointer.addChild(text);
         this.displayobject.addChild(pointer);
 
-        this.displayobject.mousemove = function(e) {
+        this.displayobject.mousemove = e => {
             pointer.clear();
             pointer.lineStyle(2, 0xFF0000);
-            pointer.position.set(e.data.global.x, e.data.global.y);
+            const glob = this.displayobject.toLocal(e.data.global);
+            pointer.position.set(glob.x, glob.y);
             pointer.drawCircle(0, 0, 2);
-            text.text = e.data.global.x + ',' + e.data.global.y;
+            text.text = glob.x + ',' + glob.y;
             text.position.set(-text.width/2, -20);
         };
     }
