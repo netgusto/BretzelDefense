@@ -1,6 +1,7 @@
 'use strict';
 
-import { Graphics, RenderTexture, Text } from 'pixi.js';
+import { Graphics, RenderTexture, Text, Sprite } from 'pixi.js';
+import screenfull from 'screenfull';
 //import GenericEntity from '../../Entity/Generic';
 import { GameStage, GameLayer, cursorkeys } from '../../Utils/bobo';
 import { drawSVGPath } from '../../Utils/svg';
@@ -36,7 +37,8 @@ export default function({ world, canvas, renderer }) {
 
     const state = {
         life: 20,
-        coins: 100
+        coins: 100,
+        pause: false
     };
 
     const stage = new GameStage(canvas);
@@ -58,7 +60,10 @@ export default function({ world, canvas, renderer }) {
     Object.values(layers).map(layer => stage.addLayer(layer));
 
     Background.setTexturePath('/assets/sprites/level-' + world.resolution.width + '-' + world.resolution.height + '.jpg');
+
     let buildspotHighlightTexture;
+    let fullscreenButtonTexture;
+    let pausebuttonTexture;
     let compiledlevel;
 
     const lanes = lanesprops.map(curveToLane(world.resolution.width, world.resolution.height, world.resolution.offsetx, world.resolution.offsety));
@@ -94,11 +99,17 @@ export default function({ world, canvas, renderer }) {
                 FireballTower.loadAssets(loader);
                 ArcherTower.loadAssets(loader);
                 BarrackTower.loadAssets(loader);
+                
                 loader.add('compiledlevel', '/assets/compiled/level1.' + world.resolution.width + 'x' + world.resolution.height + '.json');
 
                 loader.add('buildspothighlight', '/assets/sprites/buildspot-highlight.png');
+                loader.add('fullscreenbutton', '/assets/sprites/button-fullscreen.png');
+                loader.add('pausebutton', '/assets/sprites/pausebutton.png');
+
                 loader.once('complete', (_, resources) => {
                     buildspotHighlightTexture = resources.buildspothighlight.texture;
+                    fullscreenButtonTexture = resources.fullscreenbutton.texture;
+                    pausebuttonTexture = resources.pausebutton.texture;
                     compiledlevel = resources.compiledlevel.data;
                 });
             }
@@ -173,6 +184,36 @@ export default function({ world, canvas, renderer }) {
             layers.pause.container.click = layers.pause.container.tap = function(e) {
                 e.stopPropagation();
                 eventbus.emit('game.resume');
+            };
+
+            //
+            // Interface
+            //
+
+            // Fullscreen button
+            if(screenfull.enabled) {
+                const fullscreenbutton = new Sprite(fullscreenButtonTexture);
+                fullscreenbutton.scale.set(world.scale * 0.3);
+                fullscreenbutton.pivot.set(fullscreenbutton.width / 2, fullscreenbutton.height / 2);
+                fullscreenbutton.position.set(world.resolution.effectivewidth - (180 * world.scale) - fullscreenbutton.width, 10 * world.scale);
+                fullscreenbutton.interactive = true;
+                layers.interface.addChild(fullscreenbutton);
+                fullscreenbutton.click = fullscreenbutton.tap = function(e) {
+                    e.stopPropagation();
+                    eventbus.emit('game.fullscreentoggle');
+                };
+            }
+
+            // Pause button
+            const pausebutton = new Sprite(pausebuttonTexture);
+            pausebutton.scale.set(world.scale * 0.09);
+            pausebutton.pivot.set(pausebutton.width / 2, pausebutton.height / 2);
+            pausebutton.position.set(world.resolution.effectivewidth - (90 * world.scale) - pausebutton.width, 19 * world.scale);
+            pausebutton.interactive = true;
+            layers.interface.addChild(pausebutton);
+            pausebutton.click = pausebutton.tap = function(e) {
+                e.stopPropagation();
+                eventbus.emit('game.pausetoggle');
             };
 
             // Building the path texture to have a testable in path / out path reference
@@ -316,6 +357,7 @@ export default function({ world, canvas, renderer }) {
             });
 
             eventbus.on('game.pause', function() {
+                state.pause = true;
                 world.set('timescale', 0);
                 timers.pauseAll();
 
@@ -324,13 +366,26 @@ export default function({ world, canvas, renderer }) {
                 layers.pause.container.interactive = true;
             });
 
+            eventbus.on('game.pausetoggle', function() {
+                if(state.pause) {
+                    eventbus.emit('game.resume');
+                } else {
+                    eventbus.emit('game.pause');
+                }
+            });
+
             eventbus.on('game.resume', function() {
+                state.pause = false;
                 world.set('timescale', 1);
                 timers.resumeAll();
 
                 layers.creeps.entities.map(item => item.resume());
                 layers.pause.container.renderable = false;
                 layers.pause.container.interactive = false;
+            });
+
+            eventbus.on('game.fullscreentoggle', function() {
+                screenfull.toggle();
             });
 
             eventbus.on('creep.succeeded', function({ creep }) {
