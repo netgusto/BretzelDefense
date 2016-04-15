@@ -21,6 +21,7 @@ import MoveCreepsSystem from '../../System/MoveCreeps';
 import RangeDetectionSystem from '../../System/RangeDetection';
 import SpatialTrackingSystem from '../../System/SpatialTracking';
 import RealEstateSystem from '../../System/RealEstate';
+import EntityUpdateSystem from '../../System/EntityUpdate';
 import HUDSystem from '../../System/HUD';
 import ZIndexSystem from '../../System/ZIndex';
 
@@ -99,7 +100,7 @@ export default function({ world, canvas, renderer }) {
                 FireballTower.loadAssets(loader);
                 ArcherTower.loadAssets(loader);
                 BarrackTower.loadAssets(loader);
-                
+
                 loader.add('compiledlevel', '/assets/compiled/level1.' + world.resolution.width + 'x' + world.resolution.height + '.json');
 
                 loader.add('buildspothighlight', '/assets/sprites/buildspot-highlight.png');
@@ -159,6 +160,7 @@ export default function({ world, canvas, renderer }) {
                 .addSystem(ballisticSystem)
                 .addSystem(meleeSystem)
                 .addSystem(DeathSystem())
+                .addSystem(EntityUpdateSystem())
                 .addSystem(LifebarSystem({ layer: layers.lifebar, worldscale: world.scale }))
                 .addSystem(HUDSystem({ layer: layers.interface, state }))
                 .addSystem(ZIndexSystem(layers.creeps));

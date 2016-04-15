@@ -40,6 +40,9 @@ const Soldier = compose(GenericEntity).compose({
         */
 
         this.lastfired = null;
+        this.engaged = false;
+        this.idleelapsed = 0;
+        this.randomidleduration = 2000 + (Math.random() * 1000);
     },
     methods: {
 
@@ -69,14 +72,18 @@ const Soldier = compose(GenericEntity).compose({
         // engage: ballistique comme melee
         engage(matches, { meleeSystem }) {
             const creep = meleeSystem.selectForEngagement(this, matches);
-            if(creep !== null) {
-                meleeSystem.fight({
-                    hunter: this,
-                    creep
-                });
-            }
+            if(creep === null) return;
+
+            meleeSystem.fight({
+                hunter: this,
+                creep
+            });
+
+            this.engaged = true;
         },
         fightMelee(creep) {
+
+            this.engaged = true;
 
             const now = performance.now();
 
@@ -91,10 +98,24 @@ const Soldier = compose(GenericEntity).compose({
         releaseMelee() {
             this.lastfired = null;
             this.displayobject.tint = 0xFFFFFF;
+            this.engaged = false;
+            this.idleelapsed = 0;
+            this.randomidleduration = 2000 + (Math.random() * 1000);
         },
         die() {
             this.dead = true;
             this.remove();
+        },
+        update(deltatime) {
+            if(this.engaged) return;
+
+            this.idleelapsed += deltatime;
+            if(this.idleelapsed >= this.randomidleduration) {
+                this.idleelapsed = 0;
+                this.displayobject.tint = 0xFFFF00;
+                this.displayobject.scale.x = Math.abs(this.displayobject.scale.x) * (Math.random() >= .5) ? -1 : 1;
+                this.randomidleduration = 2000 + (Math.random() * 1000);
+            }
         }
     }
 });
