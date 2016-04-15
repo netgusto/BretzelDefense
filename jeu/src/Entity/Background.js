@@ -4,7 +4,7 @@
 
 import compose from 'compose-js';
 
-import { Sprite, Graphics, Text } from 'pixi.js';
+import { Container, Sprite, Graphics, Text } from 'pixi.js';
 
 import GenericEntity from './Generic';
 
@@ -18,14 +18,15 @@ const Background = compose(GenericEntity).compose({
             Background.texture = resources.background.texture;
         });
     },
-    init: function({ viewwidth, viewheight, renderer, onclick = null }) {
+    init: function({ viewwidth, viewheight, onclick = null }) {
 
         // using scaled bg as texture
         // Fixes incorrect mouse event coordinates
-        const scaledtexture = new Sprite(Background.texture);
-        scaledtexture.scale.set(viewwidth / Background.texture.width, viewheight / Background.texture.height);
+        const scaledbg = new Sprite(Background.texture);
+        scaledbg.scale.set(viewwidth / Background.texture.width, viewheight / Background.texture.height);
 
-        this.displayobject = new Sprite(scaledtexture.generateTexture(renderer));
+        this.displayobject = new Container();
+        this.displayobject.addChild(scaledbg);
 
         this.displayobject.interactive = true;
         this.displayobject.click = this.displayobject.tap = onclick;

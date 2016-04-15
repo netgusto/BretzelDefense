@@ -2,18 +2,15 @@
 
 import { path2js, scalejspath, jsToSVGPath } from './svg';
 
-export function curveToLane(towidth, toheight, offsetx, offsety) {
+export function curveToLane(scale, offsetx, offsety) {
 
     return function(curve) {
 
         // scaling path to world (useful for in-path click detection)
         let svgpath = curve.path;
 
-        const xratio = towidth / curve.width;
-        const yratio = toheight / curve.height;
-
-        if(xratio !== 1 || yratio !== 1) {
-            svgpath = jsToSVGPath(scalejspath(path2js(svgpath), yratio, yratio, offsetx, offsety));   // yratio utilisé à la place de xratio : les différents ratios de cartes utilisent la hauteur comme dimension commune
+        if(scale !== 1) {
+            svgpath = jsToSVGPath(scalejspath(path2js(svgpath), scale, scale, offsetx, offsety));
         }
 
         /*
@@ -73,7 +70,8 @@ export function curveToLane(towidth, toheight, offsetx, offsety) {
 
                 if(floatpart === 0) {
                     if(this.memoized[roundlengthpx] !== undefined) {
-                        return this.memoized[roundlengthpx];
+                        const val = this.memoized[roundlengthpx];
+                        return [val[0] * scale, val[1] * scale];
                     }
 
                     throw new Error('LANE SHOULD BE PRE-CALC MEMOIZED AT LENGTH ', roundlengthpx);
@@ -104,8 +102,8 @@ export function curveToLane(towidth, toheight, offsetx, offsety) {
                 }
 
                 return {
-                    x: posforroundedlength.x + ((posforroundedlength.x - prevval.x) * floatpart),
-                    y: posforroundedlength.y + ((posforroundedlength.y - prevval.y) * floatpart)
+                    x: (posforroundedlength.x + ((posforroundedlength.x - prevval.x) * floatpart)) * scale,
+                    y: (posforroundedlength.y + ((posforroundedlength.y - prevval.y) * floatpart)) * scale
                 };
             }
         };

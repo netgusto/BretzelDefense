@@ -154,6 +154,12 @@ const ArcherTower = compose(GenericEntity).compose({
         ballisticHit(projectileprops) {
             const { target, displayobject } = projectileprops;
 
+            if(target.dead) {
+                return timers.addTimeout(function() {
+                    displayobject.parent.removeChild(displayobject);
+                }, 1500);
+            }
+
             timers.addTimeout(function() {
                 // On remplace la flêche par une éclaboussure de sang
                 displayobject.parent.removeChild(displayobject);
@@ -171,6 +177,7 @@ const ArcherTower = compose(GenericEntity).compose({
             //console.log(displayobject.x, displayobject.y);
         },
         ballisticMiss(projectileprops) {
+            console.log('MISS !', projectileprops);
             const displayobject = projectileprops.displayobject;
             timers.addTimeout(function() {
                 displayobject.parent.removeChild(displayobject);

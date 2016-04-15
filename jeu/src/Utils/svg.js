@@ -66,23 +66,23 @@ export function path2js(path) {
     return pathData;
 }
 
-export function scalejspath(jspath, scalex, scaley, offsetx, offsety) {
+export function scalejspath(jspath, scale, offsetx, offsety) {
     return jspath.map(instruction => {
         switch(instruction.instruction) {
             case 'M': {
                 // Move to
-                instruction.data[0] = scalex * instruction.data[0] + offsetx;
-                instruction.data[1] = scaley * instruction.data[1] + offsety;
+                instruction.data[0] = scale * instruction.data[0] + offsetx;
+                instruction.data[1] = scale * instruction.data[1] + offsety;
                 break;
             }
             case 'C': {
                 // Curve to
-                instruction.data[0] = scalex * instruction.data[0] + offsetx;
-                instruction.data[2] = scalex * instruction.data[2] + offsetx;
-                instruction.data[4] = scalex * instruction.data[4] + offsetx;
-                instruction.data[1] = scaley * instruction.data[1] + offsety;
-                instruction.data[3] = scaley * instruction.data[3] + offsety;
-                instruction.data[5] = scaley * instruction.data[5] + offsety;
+                instruction.data[0] = scale * instruction.data[0] + offsetx;
+                instruction.data[2] = scale * instruction.data[2] + offsetx;
+                instruction.data[4] = scale * instruction.data[4] + offsetx;
+                instruction.data[1] = scale * instruction.data[1] + offsety;
+                instruction.data[3] = scale * instruction.data[3] + offsety;
+                instruction.data[5] = scale * instruction.data[5] + offsety;
             }
         }
 

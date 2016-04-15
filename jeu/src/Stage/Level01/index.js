@@ -67,7 +67,7 @@ export default function({ world, canvas, renderer }) {
     let pausebuttonTexture;
     let compiledlevel;
 
-    const lanes = lanesprops.map(curveToLane(world.resolution.width, world.resolution.height, world.resolution.offsetx, world.resolution.offsety));
+    const lanes = lanesprops.map(curveToLane(world.scale, world.resolution.offsetx, world.resolution.offsety));
 
     const buildspots = [
         { x: 741 * world.scale + world.resolution.offsetx, y: 695 * world.scale + world.resolution.offsety, deploy: [540 * world.scale + world.resolution.offsetx, 701 * world.scale + world.resolution.offsety], tower: null, current: false },
@@ -78,12 +78,6 @@ export default function({ world, canvas, renderer }) {
         { x: 1224 * world.scale + world.resolution.offsetx, y: 527 * world.scale + world.resolution.offsety, deploy: [1444 * world.scale + world.resolution.offsetx, 480 * world.scale + world.resolution.offsety], tower: null, current: false },
         { x: 1228 * world.scale + world.resolution.offsetx, y: 369 * world.scale + world.resolution.offsety, deploy: [1225 * world.scale + world.resolution.offsetx, 224 * world.scale + world.resolution.offsety], tower: null, current: false }
     ];
-
-    /*const init = function() {
-        const before = performance.now();
-        const promises = lanes.map(lane => lane.memoizeAllAsync());
-        return Promise.all(promises).then(() => console.log('Lanes async memoization took ' + (performance.now() - before) + ' ms'));
-    };*/
 
     const init = function() {
         for(var laneindex in compiledlevel) {
