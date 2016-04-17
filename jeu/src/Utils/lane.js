@@ -2,15 +2,15 @@
 
 import { path2js, scalejspath, jsToSVGPath } from './svg';
 
-export function curveToLane(scale, offsetx, offsety) {
+export function curveToLane(lanescale, worldscale, offsetx, offsety) {
 
     return function(curve) {
 
         // scaling path to world (useful for in-path click detection)
         let svgpath = curve.path;
 
-        if(scale !== 1) {
-            svgpath = jsToSVGPath(scalejspath(path2js(svgpath), scale, scale, offsetx, offsety));
+        if(worldscale !== 1) {
+            svgpath = jsToSVGPath(scalejspath(path2js(svgpath), worldscale, offsetx, offsety));
         }
 
         /*
@@ -27,22 +27,23 @@ export function curveToLane(scale, offsetx, offsety) {
             offsetx: offsetx,
             offsety: offsety,
             //pathlength: totallength,
-            getPointAtRatio: function(ratio) { return this.getPointAtLength(ratio * this.pathlength); },
-            getPointAtLengthLoop: function(lengthpx) { return this.getPointAtLength(lengthpx % this.pathlength); },
+            //getPointAtRatio: function(ratio) { return this.getPointAtLength(ratio * this.pathlength); },
+            //getPointAtLengthLoop: function(lengthpx) { return this.getPointAtLength(lengthpx % this.pathlength); },
             // memoizeAll: function() {
             //     for(let length = 0; length < this.pathlength; length++) {
             //         this.getPointAtLength(length);
             //     }
             // },
             memoizePrecalc: function({ length, points }) {
+
                 this.memoized = new Array(length);
                 for(var index = 0; index < points.length; index++) {
-                    this.memoized[index] = { x: points[index][0], y: points[index][1] };
+                    this.memoized[index] = { x: points[index][0] * lanescale, y: points[index][1] * lanescale };
                 }
 
                 //console.log('MEMOIZED', this.memoized);
 
-                this.pathlength = length;
+                this.pathlength = Math.floor(lanescale * length);
             },
             // memoizeAllAsync: function() {
             //     const p = new Promise((resolve/*, reject*/) => {
@@ -59,6 +60,9 @@ export function curveToLane(scale, offsetx, offsety) {
             //     return p;
             // },
             getPointAtLength: function(lengthpx) {
+
+                lengthpx = lengthpx / lanescale;
+
                 //let roundlengthpx = parseFloat(lengthpx).toFixed(1);
                 let roundlengthpx = Math.floor(lengthpx);
                 //let roundlengthpx = lengthpx;
@@ -70,11 +74,10 @@ export function curveToLane(scale, offsetx, offsety) {
 
                 if(floatpart === 0) {
                     if(this.memoized[roundlengthpx] !== undefined) {
-                        const val = this.memoized[roundlengthpx];
-                        return [val[0] * scale, val[1] * scale];
+                        return this.memoized[roundlengthpx];
                     }
 
-                    throw new Error('LANE SHOULD BE PRE-CALC MEMOIZED AT LENGTH ', roundlengthpx);
+                    console.error('LANE SHOULD BE PRE-CALC MEMOIZED AT LENGTH "' + roundlengthpx + '"', this.pathlength, this.memoized.length);
 
                     // const pointatlength = path.getPointAtLength(roundlengthpx);
                     // return this.memoized[roundlengthpx] = pointatlength;
@@ -82,7 +85,7 @@ export function curveToLane(scale, offsetx, offsety) {
                     if(this.memoized[roundlengthpx] !== undefined) {
                         posforroundedlength = this.memoized[roundlengthpx];
                     } else {
-                        throw new Error('LANE SHOULD BE PRE-CALC MEMOIZED AT LENGTH ', roundlengthpx);
+                        console.error('LANE SHOULD BE PRE-CALC MEMOIZED AT LENGTH "' + roundlengthpx + '"', this.pathlength, this.memoized.length);
                         //const pointatlength = path.getPointAtLength(roundlengthpx);
                         //posforroundedlength = this.memoized[roundlengthpx] = pointatlength;
                     }
@@ -96,14 +99,14 @@ export function curveToLane(scale, offsetx, offsety) {
                 if(this.memoized[prevroundlength] !== undefined) {
                     prevval = this.memoized[prevroundlength];
                 } else {
-                    throw new Error('LANE SHOULD BE PRE-CALC MEMOIZED AT LENGTH ', roundlengthpx);
+                    console.error('LANE SHOULD BE PRE-CALC MEMOIZED AT LENGTH "' + roundlengthpx + '"', this.pathlength, this.memoized.length);
                     // const pointatlength = path.getPointAtLength(prevroundlength);
                     // prevval = this.memoized[prevroundlength] = pointatlength;
                 }
 
                 return {
-                    x: (posforroundedlength.x + ((posforroundedlength.x - prevval.x) * floatpart)) * scale,
-                    y: (posforroundedlength.y + ((posforroundedlength.y - prevval.y) * floatpart)) * scale
+                    x: (posforroundedlength.x + ((posforroundedlength.x - prevval.x) * floatpart)),
+                    y: (posforroundedlength.y + ((posforroundedlength.y - prevval.y) * floatpart))
                 };
             }
         };

@@ -17,7 +17,7 @@ export default function() {
                     continue;
                 }
 
-                const newpos = creep.lane.getPointAtLengthLoop(creep.pixelswalked);
+                const newpos = creep.lane.getPointAtLength(creep.pixelswalked);
                 const prevpos = creep.prevpos;
 
                 // On détermine la direction du mouvement

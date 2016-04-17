@@ -44,6 +44,7 @@ let Mummy = compose(GenericEntity, SpatialTrackable).compose({
 
         this.offsetx = ((20 * worldscale * Math.random()) | 0) * (Math.random() > .5 ? 1 : -1);
         this.offsety = ((20 * worldscale * Math.random()) | 0) * (Math.random() > .5 ? 1 : -1);
+        this.birth = performance.now();
         //this.offsety = -60 * worldscale;
     },
     methods: {

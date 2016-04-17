@@ -25,7 +25,7 @@ export default function({ layer }) {
                     const { target, hunter, flightduration } = projectileprops;
                     const targetpixelswalkedwhenprojectilehits = target.pixelswalked + (target.velocitypermillisecond * flightduration * timescale);
 
-                    const pointatlength = target.lane.getPointAtLengthLoop(targetpixelswalkedwhenprojectilehits);
+                    const pointatlength = target.lane.getPointAtLength(targetpixelswalkedwhenprojectilehits);
                     const predictiveimpact = [pointatlength.x + target.offsetx, pointatlength.y - (target.displayobject.height / 2) + target.offsety];    // tir au centre vertical de la cible
                     projectileprops.predictiveimpact = predictiveimpact;
 

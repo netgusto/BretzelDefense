@@ -69,6 +69,7 @@ export default function() {
     // REQUIS ?
     // on adapte le worldscale pour convenir à la résolution étirée (exemple: écran de 1152x864 utilisant le setup 1536x1152)
     normalizedresolution.worldscale = normalizedresolution.worldscale * (effectiveheight/normalizedresolution.height);
+    normalizedresolution.lanescale = effectiveheight/normalizedresolution.height;   // les coordonnées de points sur les lanes appliquent déjà le worldscale pour chaque résolution; on ne gère que l'éventuelle adaptation à l'écran
 
     return normalizedresolution;
 }

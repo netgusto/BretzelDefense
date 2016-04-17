@@ -113,7 +113,7 @@ const Soldier = compose(GenericEntity).compose({
             if(this.idleelapsed >= this.randomidleduration) {
                 this.idleelapsed = 0;
                 this.displayobject.tint = 0xFFFF00;
-                this.displayobject.scale.x = Math.abs(this.displayobject.scale.x) * (Math.random() >= .5) ? -1 : 1;
+                this.displayobject.scale.x = Math.abs(this.displayobject.scale.x) * ((Math.random() >= .5) ? -1 : 1);
                 this.randomidleduration = 2000 + (Math.random() * 1000);
             }
         }

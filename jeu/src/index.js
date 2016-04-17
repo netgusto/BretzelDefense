@@ -15,6 +15,7 @@ import Stage from './Stage/TitleScreen';
 
 import world from './Singleton/world';
 import eventbus from './Singleton/eventbus';
+import timers from './Singleton/timers';
 
 (function(mountnode, resolution) {
 
@@ -28,24 +29,28 @@ import eventbus from './Singleton/eventbus';
 
     world
     .set('debug', true)
-    .set('timescale', 1)
+    .set('timescale', 5)
     .set('scale', resolution.worldscale)
     .set('resolution', resolution);
 
     var dpr = window.devicePixelRatio || 1;
     if(dpr < 1) dpr = 1; // browser unzoomed
-    console.log('Screen: ' + resolution.screenwidth + 'x' + resolution.screenheight + '; Res: ' + resolution.width + 'x' + resolution.height + '@' + dpr + 'X');
+    console.log('Screen: ' + resolution.screenwidth + 'x' + resolution.screenheight + '; Res: ' + resolution.width + 'x' + resolution.height + '@' + dpr + 'X; ', resolution);
 
     const renderer = autoDetectRenderer(resolution.effectivewidth, resolution.effectiveheight, { resolution: dpr });
     mountnode.appendChild(renderer.view);
 
-    const canvas = new Container(0xFF0000 /* white */, true /* interactive */);
     let previousstage = null;
 
     const swapstage = function(newstage) {
         window.setImmediate(function() {    // allow pixi mouse events triggering swapstage to complete before tearing the stage down
+            const canvas = new Container(0xFF0000, true);   // true: interactive
+
+            timers.removeAll();
             if(previousstage) previousstage.destroy();
-            newstage({ world, canvas, swapstage, renderer })
+            const s = newstage({ world, canvas, swapstage, renderer });
+            console.log(s, newstage);
+            s
                 .then(stage => stage.run(renderer, gameloop({ world })))
                 .then(stage => previousstage = stage);
         });

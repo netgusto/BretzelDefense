@@ -37,6 +37,7 @@ export default function({ world, canvas, swapstage, renderer }) {
 
         swapstage(StageLevel01);
     };
+
     layer.addEntity(title);
 
     return Promise.resolve(stage)/*.then(function() {

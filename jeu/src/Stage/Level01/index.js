@@ -2,7 +2,7 @@
 
 import { Graphics, RenderTexture, Text, Sprite } from 'pixi.js';
 import screenfull from 'screenfull';
-//import GenericEntity from '../../Entity/Generic';
+import GenericEntity from '../../Entity/Generic';
 import { GameStage, GameLayer, cursorkeys } from '../../Utils/bobo';
 import { drawSVGPath } from '../../Utils/svg';
 
@@ -32,9 +32,17 @@ import ArcherTower from '../../Entity/Tower/ArcherTower';
 import BarrackTower from '../../Entity/Tower/BarrackTower';
 import SpotMenu from '../../Entity/Menu/SpotMenu';
 
+import TitleScreen from '../../Stage/TitleScreen';
+
 import { gridcellsize, whratio, lanesprops } from './props';
 
-export default function({ world, canvas, renderer }) {
+let loaded = false;
+let buildspotHighlightTexture;
+let fullscreenButtonTexture;
+let pausebuttonTexture;
+let compiledlevel;
+
+export default function({ world, canvas, renderer, swapstage }) {
 
     const state = {
         life: 20,
@@ -62,12 +70,7 @@ export default function({ world, canvas, renderer }) {
 
     Background.setTexturePath('/assets/sprites/level-' + world.resolution.width + '-' + world.resolution.height + '.jpg');
 
-    let buildspotHighlightTexture;
-    let fullscreenButtonTexture;
-    let pausebuttonTexture;
-    let compiledlevel;
-
-    const lanes = lanesprops.map(curveToLane(world.scale, world.resolution.offsetx, world.resolution.offsety));
+    const lanes = lanesprops.map(curveToLane(world.resolution.lanescale, world.scale, world.resolution.offsetx, world.resolution.offsety));
 
     const buildspots = [
         { x: 741 * world.scale + world.resolution.offsetx, y: 695 * world.scale + world.resolution.offsety, deploy: [540 * world.scale + world.resolution.offsetx, 701 * world.scale + world.resolution.offsety], tower: null, current: false },
@@ -79,41 +82,48 @@ export default function({ world, canvas, renderer }) {
         { x: 1228 * world.scale + world.resolution.offsetx, y: 369 * world.scale + world.resolution.offsety, deploy: [1225 * world.scale + world.resolution.offsetx, 224 * world.scale + world.resolution.offsety], tower: null, current: false }
     ];
 
-    const init = function() {
-        for(var laneindex in compiledlevel) {
-            lanes[laneindex].memoizePrecalc(compiledlevel[laneindex]);
-        }
-        return Promise.resolve();
-    };
+    let respromise;
 
-    return stage
-        .require({
-            loadAssets(loader) {
-                Background.loadAssets(loader);
-                Mummy.loadAssets(loader);
-                FireballTower.loadAssets(loader);
-                ArcherTower.loadAssets(loader);
-                BarrackTower.loadAssets(loader);
+    if(loaded) {
+        respromise = Promise.resolve();
+    } else {
+        respromise = stage
+            .require({
+                loadAssets(loader) {
+                    Background.loadAssets(loader);
+                    Mummy.loadAssets(loader);
+                    FireballTower.loadAssets(loader);
+                    ArcherTower.loadAssets(loader);
+                    BarrackTower.loadAssets(loader);
 
-                loader.add('compiledlevel', '/assets/compiled/level1.' + world.resolution.width + 'x' + world.resolution.height + '.json');
+                    loader.add('compiledlevel', '/assets/compiled/level1.' + world.resolution.width + 'x' + world.resolution.height + '.json');
 
-                loader.add('buildspothighlight', '/assets/sprites/buildspot-highlight.png');
-                loader.add('fullscreenbutton', '/assets/sprites/button-fullscreen.png');
-                loader.add('pausebutton', '/assets/sprites/pausebutton.png');
+                    loader.add('buildspothighlight', '/assets/sprites/buildspot-highlight.png');
+                    loader.add('fullscreenbutton', '/assets/sprites/button-fullscreen.png');
+                    loader.add('pausebutton', '/assets/sprites/pausebutton.png');
 
-                loader.once('complete', (_, resources) => {
-                    buildspotHighlightTexture = resources.buildspothighlight.texture;
-                    fullscreenButtonTexture = resources.fullscreenbutton.texture;
-                    pausebuttonTexture = resources.pausebutton.texture;
-                    compiledlevel = resources.compiledlevel.data;
-                });
+                    loader.once('complete', (_, resources) => {
+                        loaded = true;
+                        buildspotHighlightTexture = resources.buildspothighlight.texture;
+                        fullscreenButtonTexture = resources.fullscreenbutton.texture;
+                        pausebuttonTexture = resources.pausebutton.texture;
+                        compiledlevel = resources.compiledlevel.data;
+                    });
+                }
+            })
+            .load({
+                onbegin() { console.log('begin'); },
+                oncomplete() { console.log('end'); }
+            });
+    }
+
+    return respromise
+        .then(function() {
+            for(var laneindex in compiledlevel) {
+                lanes[laneindex].memoizePrecalc(compiledlevel[laneindex]);
             }
+            return Promise.resolve();
         })
-        .load({
-            onbegin() { console.log('begin'); },
-            oncomplete() { console.log('end'); }
-        })
-        .then(init)
         .then(function(/*{ loader, resources }*/) {
 
             const spatialhash = new SpatialHash({
@@ -162,7 +172,7 @@ export default function({ world, canvas, renderer }) {
             // Debug
             if(world.debug) {
                 stage.addSystem(DebugSystem({ layer: layers.debug, cbk: (msg) => msg += '; '  + layers.creeps.entities.length + ' creeps; Assets: ' + world.resolution.width + 'x' + world.resolution.height + '; Effective: ' + world.resolution.effectivewidth + 'x' + world.resolution.effectiveheight + '; Screen: ' + world.resolution.screenwidth + 'x' + world.resolution.screenheight }));
-                //const graphics = new Graphics(); layers.debug.addEntity(GenericEntity({ displayobject: graphics })); lanes.map(lane => drawSVGPath(graphics, lane.path, lane.color, 0, 0));
+                //const graphics = new Graphics(); layers.debug.addEntity(GenericEntity({ displayobject: graphics })); lanes.map(lane => drawSVGPath(graphics, lane.path, lane.color, 0, 0, 5 * world.scale));
             }
 
             // Pause overlay
@@ -387,6 +397,7 @@ export default function({ world, canvas, renderer }) {
             eventbus.on('creep.succeeded', function({ creep }) {
                 eventbus.emit('life.decrease', 1);
                 creep.remove();
+                console.log('Lifetime:', performance.now() - creep.birth);
             });
 
             eventbus.on('life.decrease', function(amount) {
@@ -395,6 +406,11 @@ export default function({ world, canvas, renderer }) {
                     state.life = 0;
                     eventbus.emit('game.over');
                 }
+            });
+
+            eventbus.on('game.over', function() {
+                alert('Game over !');
+                swapstage(TitleScreen);
             });
 
             /*****************************************************************/
@@ -428,9 +444,9 @@ export default function({ world, canvas, renderer }) {
             const waves = function({ layer, spatialhash }) {
 
                 const wavesprops = [
-                    { number: 9, frequency: 3000, vps: 20, delay: 0 },
-                    { number: 15, frequency: 400, vps: 23, delay: 20000 },
-                    { number: 25, frequency: 400, vps: 30, delay: 30000 },
+                    { number: 9, frequency: 800, vps: 20, delay: 0 },
+                    { number: 35, frequency: 400, vps: 23, delay: 20000 },
+                    { number: 2500, frequency: 40, vps: 30, delay: 30000 },
                     { number: 40, frequency: 400, vps: 35, delay: 50000 },
                     { number: 70, frequency: 400, vps: 38, delay: 75000 }
                 ];
@@ -446,7 +462,7 @@ export default function({ world, canvas, renderer }) {
                         const mummy = Mummy({
                             worldscale: world.scale
                         })
-                            .setVelocityPerSecond((vps + Math.floor(Math.random() * 50)) * world.scale);
+                            .setVelocityPerSecond((vps + Math.random() * 50) * world.scale);
                         layer.addEntity(mummy);
                         mummy.creep = true;
                         mummy.lane = lanes[mummyindex % lanes.length];
@@ -483,5 +499,6 @@ export default function({ world, canvas, renderer }) {
                 resolution: world.resolution
             })
             .then(() => stage);
-        });
+        })
+        .catch(function(e) { console.error(e); });
 }
