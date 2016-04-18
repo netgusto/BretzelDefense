@@ -9,4 +9,12 @@ eventbus.emit = function(name) {
     stdemit.apply(eventbus, arguments);
 };
 
+eventbus.removeAll = (function() {
+    for (var key in this.e) {
+        if (this.e.hasOwnProperty(key)) {
+            this.off(key);
+        }
+    }
+}).bind(eventbus);
+
 export default eventbus;

@@ -13,6 +13,7 @@ const recursiveremove = function(node) {
         recursiveremove(node.children[i]);
     }
     node.parent.removeChild(node);
+    node = undefined;
 };
 
 export class GameLayer {

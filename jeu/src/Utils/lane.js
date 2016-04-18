@@ -77,6 +77,8 @@ export function curveToLane(lanescale, worldscale, offsetx, offsety) {
                         return this.memoized[roundlengthpx];
                     }
 
+                    if(roundlengthpx >= this.pathlength) return this.memoized[this.pathlength - 1];
+
                     console.error('LANE SHOULD BE PRE-CALC MEMOIZED AT LENGTH "' + roundlengthpx + '"', this.pathlength, this.memoized.length);
 
                     // const pointatlength = path.getPointAtLength(roundlengthpx);
@@ -85,6 +87,7 @@ export function curveToLane(lanescale, worldscale, offsetx, offsety) {
                     if(this.memoized[roundlengthpx] !== undefined) {
                         posforroundedlength = this.memoized[roundlengthpx];
                     } else {
+                        if(roundlengthpx >= this.pathlength) return this.memoized[this.pathlength - 1];
                         console.error('LANE SHOULD BE PRE-CALC MEMOIZED AT LENGTH "' + roundlengthpx + '"', this.pathlength, this.memoized.length);
                         //const pointatlength = path.getPointAtLength(roundlengthpx);
                         //posforroundedlength = this.memoized[roundlengthpx] = pointatlength;

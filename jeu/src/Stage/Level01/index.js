@@ -171,7 +171,7 @@ export default function({ world, canvas, renderer, swapstage }) {
 
             // Debug
             if(world.debug) {
-                stage.addSystem(DebugSystem({ layer: layers.debug, cbk: (msg) => msg += '; '  + layers.creeps.entities.length + ' creeps; Assets: ' + world.resolution.width + 'x' + world.resolution.height + '; Effective: ' + world.resolution.effectivewidth + 'x' + world.resolution.effectiveheight + '; Screen: ' + world.resolution.screenwidth + 'x' + world.resolution.screenheight }));
+                stage.addSystem(DebugSystem({ layer: layers.debug, cbk: (msg) => msg += '; '  + layers.creeps.entities.length + ' creeps; Assets: ' + world.resolution.width + 'x' + world.resolution.height + '; Effective: ' + world.resolution.effectivewidth + 'x' + world.resolution.effectiveheight + '; Screen: ' + world.resolution.screenwidth + 'x' + world.resolution.screenheight + '; ' + (window.performance.memory ? (window.performance.memory.usedJSHeapSize/1024).toFixed(1) + 'KB' : '') }));
                 //const graphics = new Graphics(); layers.debug.addEntity(GenericEntity({ displayobject: graphics })); lanes.map(lane => drawSVGPath(graphics, lane.path, lane.color, 0, 0, 5 * world.scale));
             }
 
@@ -364,6 +364,7 @@ export default function({ world, canvas, renderer, swapstage }) {
 
             eventbus.on('game.pause', function() {
                 state.pause = true;
+                world.set('_timescale', world.timescale);
                 world.set('timescale', 0);
                 timers.pauseAll();
 
@@ -383,6 +384,7 @@ export default function({ world, canvas, renderer, swapstage }) {
             eventbus.on('game.resume', function() {
                 state.pause = false;
                 world.set('timescale', 1);
+                world.set('timescale', world._timescale);
                 timers.resumeAll();
 
                 layers.creeps.entities.map(item => item.resume());
@@ -409,7 +411,12 @@ export default function({ world, canvas, renderer, swapstage }) {
             });
 
             eventbus.on('game.over', function() {
-                alert('Game over !');
+                //alert('Game over !');
+                swapstage(TitleScreen);
+            });
+
+            eventbus.on('game.win', function() {
+                alert('Success !');
                 swapstage(TitleScreen);
             });
 
@@ -446,7 +453,7 @@ export default function({ world, canvas, renderer, swapstage }) {
                 const wavesprops = [
                     { number: 9, frequency: 800, vps: 20, delay: 0 },
                     { number: 35, frequency: 400, vps: 23, delay: 20000 },
-                    { number: 2500, frequency: 40, vps: 30, delay: 30000 },
+                    { number: 2500, frequency: 10, vps: 30, delay: 30000 },
                     { number: 40, frequency: 400, vps: 35, delay: 50000 },
                     { number: 70, frequency: 400, vps: 38, delay: 75000 }
                 ];
@@ -485,10 +492,23 @@ export default function({ world, canvas, renderer, swapstage }) {
                     }, frequency);
                 };
 
+                let totalcreeps = 0;
+
                 wavesprops.map(waveprops => {
+                    totalcreeps += waveprops.number;
                     timers.addTimeout(function() {
                         spawn(waveprops)
                     }, waveprops.delay / world.timescale);
+                });
+
+                eventbus.on('entity.death.batch', function(entities) {
+                    totalcreeps -= entities.length;
+                    if(totalcreeps <= 0) eventbus.emit('game.win');
+                });
+
+                eventbus.on('creep.succeeded', function() {
+                    totalcreeps -= 1;
+                    if(totalcreeps <= 0) eventbus.emit('game.win');
                 });
             };
 

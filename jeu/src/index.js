@@ -47,10 +47,9 @@ import timers from './Singleton/timers';
             const canvas = new Container(0xFF0000, true);   // true: interactive
 
             timers.removeAll();
+            eventbus.removeAll();
             if(previousstage) previousstage.destroy();
-            const s = newstage({ world, canvas, swapstage, renderer });
-            console.log(s, newstage);
-            s
+            newstage({ world, canvas, swapstage, renderer })
                 .then(stage => stage.run(renderer, gameloop({ world })))
                 .then(stage => previousstage = stage);
         });
