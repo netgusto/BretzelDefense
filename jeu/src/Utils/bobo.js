@@ -79,6 +79,7 @@ export class GameStage {
         this.entitybyid = {};
         this.systems = new Array();
         this.layers = new Array();
+        this.destroycallbacks = new Array();
         this.running = false;
         this.rafid = null;
     }
@@ -99,6 +100,14 @@ export class GameStage {
 
     addSystem(system: Object) {
         this.systems.push(system);
+        return this;
+    }
+
+    onDestroy(callback) {
+        if(typeof callback === 'function') {
+            this.destroycallbacks.push(callback);
+        }
+
         return this;
     }
 
@@ -160,6 +169,16 @@ export class GameStage {
 
     destroy() {
         this.stop();
+
+        for(let i = this.destroycallbacks.length - 1; i >= 0; i--) {
+            this.destroycallbacks[i]();
+        }
+
+        for(let i = this.systems.length - 1; i >= 0; i--) {
+            if(this.systems[i] && typeof this.systems[i].destroy === 'function') {
+                this.systems[i].destroy();
+            }
+        }
 
         for(let i = this.entities.length - 1; i >= 0; i--) {
             this.entities[i].remove();

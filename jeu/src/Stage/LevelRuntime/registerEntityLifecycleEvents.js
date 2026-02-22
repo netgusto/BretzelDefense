@@ -1,8 +1,16 @@
 'use strict';
 
 import eventbus from '../../Singleton/eventbus';
+import EVENTS from '../../Singleton/events';
 
 export default function({ state, economy, meleeSystem, spatialhash }) {
+    const listeners = [];
+
+    const on = function(name, handler) {
+        eventbus.on(name, handler);
+        listeners.push({ name, handler });
+    };
+
     const normalizeEntities = function(entities) {
         const source = Array.isArray(entities) ? entities : (entities ? [entities] : []);
         const normalized = [];
@@ -107,7 +115,7 @@ export default function({ state, economy, meleeSystem, spatialhash }) {
         return pending;
     };
 
-    eventbus.on('entity.despawn.batch', function(payload) {
+    const onEntityDespawnBatch = function(payload) {
         if(Array.isArray(payload)) {
             despawnEntities(payload);
             return;
@@ -118,26 +126,37 @@ export default function({ state, economy, meleeSystem, spatialhash }) {
             rewardCreeps: !!(payload && payload.rewardCreeps),
             animateDeath: !!(payload && payload.animateDeath)
         });
-    });
+    };
 
-    eventbus.on('entity.death.batch', function(entities) {
+    const onEntityDeathBatch = function(entities) {
         despawnEntities(entities, {
             rewardCreeps: true,
             animateDeath: true
         });
-    });
+    };
 
-    eventbus.on('entity.untrack.batch', function(entities) {
+    const onEntityUntrackBatch = function(entities) {
         untrackEntities(entities);
-    });
+    };
 
-    eventbus.on('entity.remove.batch', function(entities) {
+    const onEntityRemoveBatch = function(entities) {
         removeEntities(entities);
-    });
+    };
+
+    on(EVENTS.ENTITY_DESPAWN_BATCH, onEntityDespawnBatch);
+    on(EVENTS.ENTITY_DEATH_BATCH, onEntityDeathBatch);
+    on(EVENTS.ENTITY_UNTRACK_BATCH, onEntityUntrackBatch);
+    on(EVENTS.ENTITY_REMOVE_BATCH, onEntityRemoveBatch);
 
     return {
         despawnEntities,
         untrackEntities,
-        removeEntities
+        removeEntities,
+        dispose() {
+            for(let i = 0; i < listeners.length; i++) {
+                eventbus.off(listeners[i].name, listeners[i].handler);
+            }
+            listeners.length = 0;
+        }
     };
 }

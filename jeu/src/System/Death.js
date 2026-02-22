@@ -1,6 +1,7 @@
 'use strict';
 
 import eventbus from '../Singleton/eventbus';
+import EVENTS from '../Singleton/events';
 
 export default function() {
     return {
@@ -14,7 +15,7 @@ export default function() {
             }
 
             if(deaths.length > 0) {
-                eventbus.emit('entity.death.batch', deaths);
+                eventbus.emit(EVENTS.ENTITY_DEATH_BATCH, deaths);
             }
         }
     };

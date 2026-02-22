@@ -14,17 +14,18 @@ import resolutionFinder from './Utils/resolution';
 import Stage from './Stage/TitleScreen';
 
 import world from './Singleton/world';
+import EVENTS from './Singleton/events';
 import eventbus from './Singleton/eventbus';
 import timers from './Singleton/timers';
 
 (function(mountnode, resolution) {
 
     window.onfocus = function() {
-        eventbus.emit('game.focus');
+        eventbus.emit(EVENTS.GAME_FOCUS);
     };
 
     window.onblur = function() {
-        eventbus.emit('game.blur');
+        eventbus.emit(EVENTS.GAME_BLUR);
     };
 
     world

@@ -8,6 +8,7 @@ import { SCALE_MODES, extras as PixiExtras, Sprite, Graphics } from 'pixi.js';
 import { loadspritesheet } from '../../Utils/bobo';
 
 import eventbus from '../../Singleton/eventbus';
+import EVENTS from '../../Singleton/events';
 import GenericEntity from '../Generic';
 
 const sort = function(a, b) {
@@ -50,7 +51,7 @@ const FireballTower = compose(GenericEntity).compose({
             return this;
         },
         unmount() {
-            eventbus.emit('entity.despawn.batch', {
+            eventbus.emit(EVENTS.ENTITY_DESPAWN_BATCH, {
                 entities: [this]
             });
         },
@@ -124,7 +125,7 @@ const FireballTower = compose(GenericEntity).compose({
                     position: 's',
                     click: function(e) {
                         e.stopPropagation();
-                        eventbus.emit('tower.sell', { spot });
+                        eventbus.emit(EVENTS.TOWER_SELL, { spot });
                     }
                 }
             ] };

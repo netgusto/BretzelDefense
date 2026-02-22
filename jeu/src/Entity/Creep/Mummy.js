@@ -8,6 +8,7 @@ import { extras as PixiExtras } from 'pixi.js';
 import { loadspritesheet } from '../../Utils/bobo';
 
 import eventbus from '../../Singleton/eventbus';
+import EVENTS from '../../Singleton/events';
 import GenericEntity from '../Generic';
 import Debugable from '../../Component/Debugable';
 import SpatialTrackable from '../../Component/SpatialTrackable';
@@ -83,7 +84,7 @@ let Mummy = compose(GenericEntity, SpatialTrackable).compose({
             return this;
         },
         remove() {
-            eventbus.emit('entity.remove.batch', [this]);
+            eventbus.emit(EVENTS.ENTITY_REMOVE_BATCH, [this]);
         },
         die() {
             this.setTint(0xFFFFFF);

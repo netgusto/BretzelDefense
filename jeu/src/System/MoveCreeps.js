@@ -1,6 +1,7 @@
 'use strict';
 
 import eventbus from '../Singleton/eventbus';
+import EVENTS from '../Singleton/events';
 
 export default function() {
     return {
@@ -14,7 +15,7 @@ export default function() {
                 const creep = entities[i];
                 if(creep.pixelswalked > creep.lane.pathlength) {
                     creep.dead = true;
-                    eventbus.emit('creep.succeeded', { creep });
+                    eventbus.emit(EVENTS.CREEP_SUCCEEDED, { creep });
                     continue;
                 }
 

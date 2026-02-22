@@ -5,6 +5,7 @@ import { GameStage, cursorkeys } from '../../Utils/bobo';
 import { drawSVGPath } from '../../Utils/svg';
 
 import eventbus from '../../Singleton/eventbus';
+import EVENTS from '../../Singleton/events';
 import timers from '../../Singleton/timers';
 
 import SpatialHash from '../../Utils/spatialhash';
@@ -181,16 +182,43 @@ export default function({ world, canvas, renderer, swapstage }) {
 
             // Events
 
-            eventbus.on('background.click', function(e) {
+            const runtimedisposers = [];
+            const addRuntimeDisposer = function(registration) {
+                if(registration && typeof registration.dispose === 'function') {
+                    runtimedisposers.push(registration.dispose);
+                }
+            };
+
+            const registerRuntimeEvent = function(name, handler) {
+                eventbus.on(name, handler);
+                runtimedisposers.push(function() {
+                    eventbus.off(name, handler);
+                });
+            };
+
+            const disposeRuntime = function() {
+                while(runtimedisposers.length) {
+                    const dispose = runtimedisposers.pop();
+                    try {
+                        dispose();
+                    } catch(e) {
+                        console.error(e);
+                    }
+                }
+            };
+
+            stage.onDestroy(disposeRuntime);
+
+            registerRuntimeEvent(EVENTS.BACKGROUND_CLICK, function(e) {
                 console.log('CLICK COORDS :' + (e.data.global.x|0) + 'x' + (e.data.global.y|0));
             });
 
-            registerEntityLifecycleEvents({
+            addRuntimeDisposer(registerEntityLifecycleEvents({
                 state,
                 economy,
                 meleeSystem,
                 spatialhash
-            });
+            }));
 
             const towermenu = SpotMenu({ worldscale: world.scale });
             layers.ingamemenus.addEntity(towermenu);
@@ -224,7 +252,7 @@ export default function({ world, canvas, renderer, swapstage }) {
                 }
             };
 
-            registerTowerEvents({
+            addRuntimeDisposer(registerTowerEvents({
                 towermenu,
                 worldscale: world.scale,
                 state,
@@ -233,22 +261,24 @@ export default function({ world, canvas, renderer, swapstage }) {
                 towerBuilders,
                 spatialhash,
                 pathtexture
-            });
+            }));
 
-            registerGameStateEvents({
+            addRuntimeDisposer(registerGameStateEvents({
                 state,
                 world,
                 timers,
                 layers,
                 economy,
                 onGameOver: function() {
+                    disposeRuntime();
                     swapstage(TitleScreen);
                 },
                 onGameWin: function() {
                     alert('Success !');
+                    disposeRuntime();
                     swapstage(TitleScreen);
                 }
-            });
+            }));
 
             /*****************************************************************/
             /* Setup du level                                                */
@@ -264,9 +294,9 @@ export default function({ world, canvas, renderer, swapstage }) {
 
                 background.displayobject.interactive = true;
                 background.displayobject.click = background.displayobject.tap = function(e) {
-                    eventbus.emit('background.click.preemption', e);
+                    eventbus.emit(EVENTS.BACKGROUND_CLICK_PREEMPTION, e);
                     if(e.stopped === false) {
-                        eventbus.emit('background.click', e);
+                        eventbus.emit(EVENTS.BACKGROUND_CLICK, e);
                     }
                 };
 
@@ -312,7 +342,7 @@ export default function({ world, canvas, renderer, swapstage }) {
                     }, frequency);
                 };
 
-                startWaveSchedule({
+                addRuntimeDisposer(startWaveSchedule({
                     timers,
                     waveSchedule,
                     scheduleTimescale: world.timescale,
@@ -320,7 +350,7 @@ export default function({ world, canvas, renderer, swapstage }) {
                     isCountedDeath: function(entity) {
                         return entity.creep === true;
                     }
-                });
+                }));
             };
 
             return setup({

@@ -3,16 +3,24 @@
 import screenfull from 'screenfull';
 
 import eventbus from '../../Singleton/eventbus';
+import EVENTS from '../../Singleton/events';
 
 export default function({ state, world, timers, layers, economy, onGameOver, onGameWin }) {
-    eventbus.on('game.blur', function() {
-        eventbus.emit('game.pause');
-    });
+    const listeners = [];
 
-    eventbus.on('game.focus', function() {
-    });
+    const on = function(name, handler) {
+        eventbus.on(name, handler);
+        listeners.push({ name, handler });
+    };
 
-    eventbus.on('game.pause', function() {
+    const onGameBlur = function() {
+        eventbus.emit(EVENTS.GAME_PAUSE);
+    };
+
+    const onGameFocus = function() {
+    };
+
+    const onGamePause = function() {
         if(state.pause) {
             return;
         }
@@ -25,17 +33,17 @@ export default function({ state, world, timers, layers, economy, onGameOver, onG
         layers.creeps.entities.map(item => item.pause());
         layers.pause.container.renderable = true;
         layers.pause.container.interactive = true;
-    });
+    };
 
-    eventbus.on('game.pausetoggle', function() {
+    const onGamePauseToggle = function() {
         if(state.pause) {
-            eventbus.emit('game.resume');
+            eventbus.emit(EVENTS.GAME_RESUME);
         } else {
-            eventbus.emit('game.pause');
+            eventbus.emit(EVENTS.GAME_PAUSE);
         }
-    });
+    };
 
-    eventbus.on('game.resume', function() {
+    const onGameResume = function() {
         if(!state.pause) {
             return;
         }
@@ -47,38 +55,58 @@ export default function({ state, world, timers, layers, economy, onGameOver, onG
         layers.creeps.entities.map(item => item.resume());
         layers.pause.container.renderable = false;
         layers.pause.container.interactive = false;
-    });
+    };
 
-    eventbus.on('game.fullscreentoggle', function() {
+    const onGameFullscreenToggle = function() {
         if(screenfull.enabled) {
             screenfull.toggle();
         }
-    });
+    };
 
-    eventbus.on('creep.succeeded', function({ creep }) {
-        eventbus.emit('life.decrease', economy.creepLifePenalty);
-        eventbus.emit('entity.despawn.batch', {
+    const onCreepSucceeded = function({ creep }) {
+        eventbus.emit(EVENTS.LIFE_DECREASE, economy.creepLifePenalty);
+        eventbus.emit(EVENTS.ENTITY_DESPAWN_BATCH, {
             entities: [creep]
         });
-    });
+    };
 
-    eventbus.on('life.decrease', function(amount) {
+    const onLifeDecrease = function(amount) {
         state.life -= amount;
         if(state.life <= 0) {
             state.life = 0;
-            eventbus.emit('game.over');
+            eventbus.emit(EVENTS.GAME_OVER);
         }
-    });
+    };
 
-    eventbus.on('game.over', function() {
+    const onGameOverEvent = function() {
         if(onGameOver) {
             onGameOver();
         }
-    });
+    };
 
-    eventbus.on('game.win', function() {
+    const onGameWinEvent = function() {
         if(onGameWin) {
             onGameWin();
         }
-    });
+    };
+
+    on(EVENTS.GAME_BLUR, onGameBlur);
+    on(EVENTS.GAME_FOCUS, onGameFocus);
+    on(EVENTS.GAME_PAUSE, onGamePause);
+    on(EVENTS.GAME_PAUSE_TOGGLE, onGamePauseToggle);
+    on(EVENTS.GAME_RESUME, onGameResume);
+    on(EVENTS.GAME_FULLSCREEN_TOGGLE, onGameFullscreenToggle);
+    on(EVENTS.CREEP_SUCCEEDED, onCreepSucceeded);
+    on(EVENTS.LIFE_DECREASE, onLifeDecrease);
+    on(EVENTS.GAME_OVER, onGameOverEvent);
+    on(EVENTS.GAME_WIN, onGameWinEvent);
+
+    return {
+        dispose() {
+            for(let i = 0; i < listeners.length; i++) {
+                eventbus.off(listeners[i].name, listeners[i].handler);
+            }
+            listeners.length = 0;
+        }
+    };
 }

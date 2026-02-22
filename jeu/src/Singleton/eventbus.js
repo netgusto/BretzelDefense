@@ -1,11 +1,15 @@
 'use strict';
 
 import Emitter from 'tiny-emitter';
+import world from './world';
 
 const eventbus = new Emitter();
 const stdemit = eventbus.emit;
 eventbus.emit = function(name) {
-    console.info('EVENT:' + name);
+    if(world.debug) {
+        console.info('EVENT:' + name);
+    }
+
     stdemit.apply(eventbus, arguments);
 };
 

@@ -1,9 +1,18 @@
 'use strict';
 
 import eventbus from '../../Singleton/eventbus';
+import EVENTS from '../../Singleton/events';
 
 export default function({ towermenu, worldscale, state, towerCosts, economy, towerBuilders, spatialhash, pathtexture }) {
-    eventbus.on('buildspot.focus', function({ spot }) {
+    const listeners = [];
+    const pendingpreemptions = [];
+
+    const on = function(name, handler) {
+        eventbus.on(name, handler);
+        listeners.push({ name, handler });
+    };
+
+    const onBuildspotFocus = function({ spot }) {
         if(spot.tower) {
             towermenu.setPosition(spot.x, spot.y - 20 * worldscale);
         } else {
@@ -11,13 +20,13 @@ export default function({ towermenu, worldscale, state, towerCosts, economy, tow
         }
 
         towermenu.enable(spot);
-    });
+    };
 
-    eventbus.on('buildspot.blur', function() {
+    const onBuildspotBlur = function() {
         towermenu.disable();
-    });
+    };
 
-    eventbus.on('tower.add', function({ spot, type }) {
+    const onTowerAdd = function({ spot, type }) {
         if(spot.tower !== null) {
             return;
         }
@@ -35,27 +44,32 @@ export default function({ towermenu, worldscale, state, towerCosts, economy, tow
         state.coins -= cost;
 
         const tower = towerbuilder({ spot }).addCost(cost);
-        eventbus.emit('tower.added', { spot, tower });
-    });
+        eventbus.emit(EVENTS.TOWER_ADDED, { spot, tower });
+    };
 
-    eventbus.on('tower.sell', function({ spot }) {
+    const onTowerSell = function({ spot }) {
         if(!spot.tower) {
             return;
         }
 
         state.coins += (spot.tower.getTotalCost() * economy.towerSellRefundRate)|0;
         spot.tower.unmount();
-        eventbus.emit('tower.sold', { spot });
-    });
+        eventbus.emit(EVENTS.TOWER_SOLD, { spot });
+    };
 
-    eventbus.on('tower.redeploy', function({ spot }) {
+    const onTowerRedeploy = function({ spot }) {
         if(!spot.tower || !spot.tower.setDeployPoint) {
             return;
         }
 
         towermenu.disable();
 
-        eventbus.once('background.click.preemption', function(e) {
+        const onBackgroundClickPreemption = function(e) {
+            const pendingindex = pendingpreemptions.indexOf(onBackgroundClickPreemption);
+            if(pendingindex !== -1) {
+                pendingpreemptions.splice(pendingindex, 1);
+            }
+
             if(spot.current === false) {
                 return;
             }
@@ -80,7 +94,30 @@ export default function({ towermenu, worldscale, state, towerCosts, economy, tow
                 spot.tower.setDeployPoint({ x: e.data.global.x, y: e.data.global.y });
             }
 
-            eventbus.emit('tower.redeployed', { spot });
-        });
-    });
+            eventbus.emit(EVENTS.TOWER_REDEPLOYED, { spot });
+        };
+
+        pendingpreemptions.push(onBackgroundClickPreemption);
+        eventbus.once(EVENTS.BACKGROUND_CLICK_PREEMPTION, onBackgroundClickPreemption);
+    };
+
+    on(EVENTS.BUILDSPOT_FOCUS, onBuildspotFocus);
+    on(EVENTS.BUILDSPOT_BLUR, onBuildspotBlur);
+    on(EVENTS.TOWER_ADD, onTowerAdd);
+    on(EVENTS.TOWER_SELL, onTowerSell);
+    on(EVENTS.TOWER_REDEPLOY, onTowerRedeploy);
+
+    return {
+        dispose() {
+            for(let i = 0; i < listeners.length; i++) {
+                eventbus.off(listeners[i].name, listeners[i].handler);
+            }
+            listeners.length = 0;
+
+            while(pendingpreemptions.length) {
+                const preemptionhandler = pendingpreemptions.pop();
+                eventbus.off(EVENTS.BACKGROUND_CLICK_PREEMPTION, preemptionhandler);
+            }
+        }
+    };
 }

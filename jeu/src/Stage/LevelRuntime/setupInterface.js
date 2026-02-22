@@ -4,6 +4,7 @@ import { Graphics, Text, Sprite } from 'pixi.js';
 import screenfull from 'screenfull';
 
 import eventbus from '../../Singleton/eventbus';
+import EVENTS from '../../Singleton/events';
 
 export default function({ layers, world, fullscreenButtonTexture, pausebuttonTexture }) {
     const pauseoverlay = new Graphics();
@@ -21,7 +22,7 @@ export default function({ layers, world, fullscreenButtonTexture, pausebuttonTex
     layers.pause.container.interactive = false;
     layers.pause.container.click = layers.pause.container.tap = function(e) {
         e.stopPropagation();
-        eventbus.emit('game.resume');
+        eventbus.emit(EVENTS.GAME_RESUME);
     };
 
     if(screenfull.enabled) {
@@ -33,7 +34,7 @@ export default function({ layers, world, fullscreenButtonTexture, pausebuttonTex
         layers.interface.addChild(fullscreenbutton);
         fullscreenbutton.click = fullscreenbutton.tap = function(e) {
             e.stopPropagation();
-            eventbus.emit('game.fullscreentoggle');
+            eventbus.emit(EVENTS.GAME_FULLSCREEN_TOGGLE);
         };
     }
 
@@ -45,6 +46,6 @@ export default function({ layers, world, fullscreenButtonTexture, pausebuttonTex
     layers.interface.addChild(pausebutton);
     pausebutton.click = pausebutton.tap = function(e) {
         e.stopPropagation();
-        eventbus.emit('game.pausetoggle');
+        eventbus.emit(EVENTS.GAME_PAUSE_TOGGLE);
     };
 }

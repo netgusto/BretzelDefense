@@ -5,6 +5,7 @@
 import { Sprite, Graphics } from 'pixi.js';
 
 import eventbus from '../Singleton/eventbus';
+import EVENTS from '../Singleton/events';
 
 export default function({ rangeslayer, backgroundlayer, buildspots, buildspotHighlightTexture, worldscale }) {
 
@@ -38,15 +39,17 @@ export default function({ rangeslayer, backgroundlayer, buildspots, buildspotHig
         spot.terrain.alpha = 0;
     };
 
-    eventbus.on('background.click', function(/*e*/) {
+    const onBackgroundClick = function(/*e*/) {
         const prevbuildspot = currentbuildspot;
         buildspots.map(disable);
         if(prevbuildspot) {
-            eventbus.emit('buildspot.blur', { spot: prevbuildspot });
+            eventbus.emit(EVENTS.BUILDSPOT_BLUR, { spot: prevbuildspot });
         }
-    });
+    };
 
-    eventbus.on('tower.added', function({ spot, tower }) {
+    eventbus.on(EVENTS.BACKGROUND_CLICK, onBackgroundClick);
+
+    const onTowerAdded = function({ spot, tower }) {
         spot.tower = tower;
 
         // Range viewer
@@ -66,19 +69,23 @@ export default function({ rangeslayer, backgroundlayer, buildspots, buildspotHig
 
         backgroundlayer.addChild(spot.rangeviewer);
 
-        eventbus.emit('buildspot.blur', { spot });
+        eventbus.emit(EVENTS.BUILDSPOT_BLUR, { spot });
         disable(spot);
-    });
+    };
 
-    eventbus.on('tower.redeployed', function({ spot }) {
+    eventbus.on(EVENTS.TOWER_ADDED, onTowerAdded);
+
+    const onTowerRedeployed = function({ spot }) {
         if(spot.current) {
-            eventbus.emit('buildspot.blur', { spot });
+            eventbus.emit(EVENTS.BUILDSPOT_BLUR, { spot });
             disable(spot);
         }
-    });
+    };
 
-    eventbus.on('tower.sold', function({ spot }) {
-        eventbus.emit('buildspot.blur', { spot });
+    eventbus.on(EVENTS.TOWER_REDEPLOYED, onTowerRedeployed);
+
+    const onTowerSold = function({ spot }) {
+        eventbus.emit(EVENTS.BUILDSPOT_BLUR, { spot });
         disable(spot);
 
         delete spot.tower;
@@ -87,7 +94,9 @@ export default function({ rangeslayer, backgroundlayer, buildspots, buildspotHig
         spot.rangeviewer.parent.removeChild(spot.rangeviewer);
         delete spot.rangeviewer;
         spot.rangeviewer = null;
-    });
+    };
+
+    eventbus.on(EVENTS.TOWER_SOLD, onTowerSold);
 
     buildspots.map(function(spot) {
 
@@ -118,26 +127,26 @@ export default function({ rangeslayer, backgroundlayer, buildspots, buildspotHig
                 const hasfocused = (!currentbuildspot || currentbuildspot !== spot);
 
                 if(currentbuildspot) {
-                    eventbus.emit('buildspot.blur', { spot: currentbuildspot });
+                    eventbus.emit(EVENTS.BUILDSPOT_BLUR, { spot: currentbuildspot });
                     disable(currentbuildspot);
                 }
 
                 if(hasfocused) {
                     enable(spot);
-                    eventbus.emit('buildspot.focus', { spot });
+                    eventbus.emit(EVENTS.BUILDSPOT_FOCUS, { spot });
                 }
             } else {
                 if(currentbuildspot === spot) {
-                    eventbus.emit('buildspot.blur', { spot });
+                    eventbus.emit(EVENTS.BUILDSPOT_BLUR, { spot });
                     disable(spot);
                 } else {
                     if(currentbuildspot) {
-                        eventbus.emit('buildspot.blur', { spot: currentbuildspot });
+                        eventbus.emit(EVENTS.BUILDSPOT_BLUR, { spot: currentbuildspot });
                         disable(currentbuildspot);
                     }
 
                     enable(spot);
-                    eventbus.emit('buildspot.focus', { spot });
+                    eventbus.emit(EVENTS.BUILDSPOT_FOCUS, { spot });
                 }
             }
         }
@@ -147,6 +156,12 @@ export default function({ rangeslayer, backgroundlayer, buildspots, buildspotHig
 
     return {
         process() {
+        },
+        destroy() {
+            eventbus.off(EVENTS.BACKGROUND_CLICK, onBackgroundClick);
+            eventbus.off(EVENTS.TOWER_ADDED, onTowerAdded);
+            eventbus.off(EVENTS.TOWER_REDEPLOYED, onTowerRedeployed);
+            eventbus.off(EVENTS.TOWER_SOLD, onTowerSold);
         }
     };
 }

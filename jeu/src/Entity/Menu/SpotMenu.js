@@ -4,6 +4,7 @@ import compose from 'compose-js';
 import { Sprite, Graphics } from 'pixi.js';
 
 import eventbus from '../../Singleton/eventbus';
+import EVENTS from '../../Singleton/events';
 import GenericEntity from '../Generic';
 
 const recursiveremove = function(node) {
@@ -74,19 +75,19 @@ export default compose(GenericEntity, {
                     displayobject: button1,
                     click: function(e) {
                         e.stopPropagation();
-                        eventbus.emit('tower.add', { spot, type: 'ArcherTower' });
+                        eventbus.emit(EVENTS.TOWER_ADD, { spot, type: 'ArcherTower' });
                     }
                 }, {
                     displayobject: button2,
                     click: function(e) {
                         e.stopPropagation();
-                        eventbus.emit('tower.add', { spot, type: 'BarrackTower' });
+                        eventbus.emit(EVENTS.TOWER_ADD, { spot, type: 'BarrackTower' });
                     }
                 }, {
                     displayobject: button3,
                     click: function(e) {
                         e.stopPropagation();
-                        eventbus.emit('tower.add', { spot, type: 'FireballTower' });
+                        eventbus.emit(EVENTS.TOWER_ADD, { spot, type: 'FireballTower' });
                     }
                 }]
             };

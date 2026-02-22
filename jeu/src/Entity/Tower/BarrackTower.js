@@ -7,6 +7,7 @@ import compose from 'compose-js';
 import { Sprite, Graphics } from 'pixi.js';
 
 import eventbus from '../../Singleton/eventbus';
+import EVENTS from '../../Singleton/events';
 import GenericEntity from '../Generic';
 import Soldier from '../Creep/Soldier';
 
@@ -79,7 +80,7 @@ const BarrackTower = compose(GenericEntity).compose({
             this.meleeSystem.repositionHunter(this.soldier2);
         },
         unmount() {
-            eventbus.emit('entity.despawn.batch', {
+            eventbus.emit(EVENTS.ENTITY_DESPAWN_BATCH, {
                 entities: [this, this.soldier1, this.soldier2]
             });
         },
@@ -106,14 +107,14 @@ const BarrackTower = compose(GenericEntity).compose({
                     position: 's',
                     click: function(e) {
                         e.stopPropagation();
-                        eventbus.emit('tower.sell', { spot });
+                        eventbus.emit(EVENTS.TOWER_SELL, { spot });
                     }
                 }, {
                     displayobject: button2,
                     position: 'se',
                     click: function(e) {
                         e.stopPropagation();
-                        eventbus.emit('tower.redeploy', { spot });
+                        eventbus.emit(EVENTS.TOWER_REDEPLOY, { spot });
                     }
                 }
             ] };

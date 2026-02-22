@@ -8,6 +8,7 @@ import compose from 'compose-js';
 import { SCALE_MODES, Sprite, Graphics } from 'pixi.js';
 
 import eventbus from '../../Singleton/eventbus';
+import EVENTS from '../../Singleton/events';
 import timers from '../../Singleton/timers';
 
 import GenericEntity from '../Generic';
@@ -77,7 +78,7 @@ const ArcherTower = compose(GenericEntity).compose({
             return this;
         },
         unmount() {
-            eventbus.emit('entity.despawn.batch', {
+            eventbus.emit(EVENTS.ENTITY_DESPAWN_BATCH, {
                 entities: [this]
             });
         },
@@ -200,7 +201,7 @@ const ArcherTower = compose(GenericEntity).compose({
                     position: 's',
                     click: function(e) {
                         e.stopPropagation();
-                        eventbus.emit('tower.sell', { spot });
+                        eventbus.emit(EVENTS.TOWER_SELL, { spot });
                     }
                 }
             ] };
