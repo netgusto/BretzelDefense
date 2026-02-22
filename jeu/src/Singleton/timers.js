@@ -41,15 +41,14 @@ export default {
     pause(tid) {
         if(!(tid in timers)) return false;
 
-        if(timers[tid].type === 't') {
-            // timeout
-            window.clearTimeout(timers[tid].handle);
-        } else {
-            // interval
-            window.clearInterval(timers[tid].handle);
-        }
+        window.clearTimeout(timers[tid].handle);
+        window.clearInterval(timers[tid].handle);
 
         timers[tid].remaining -= (performance.now() - timers[tid].start);
+        if(timers[tid].remaining < 0) {
+            timers[tid].remaining = 0;
+        }
+
         return timers[tid].remaining;
     },
     resume(tid) {
@@ -60,11 +59,28 @@ export default {
         if(timers[tid].type === 't') {
             // timeout
             window.clearTimeout(timers[tid].handle);
+            window.clearInterval(timers[tid].handle);
             timers[tid].handle = window.setTimeout(timers[tid].func, timers[tid].remaining);
         } else {
             // interval
+            window.clearTimeout(timers[tid].handle);
             window.clearInterval(timers[tid].handle);
-            timers[tid].handle = window.setInterval(timers[tid].func, timers[tid].remaining);
+
+            timers[tid].handle = window.setTimeout(function() {
+                if(!(tid in timers)) {
+                    return;
+                }
+
+                timers[tid].func();
+
+                if(!(tid in timers)) {
+                    return;
+                }
+
+                timers[tid].start = performance.now();
+                timers[tid].remaining = timers[tid].delay;
+                timers[tid].handle = window.setInterval(timers[tid].func, timers[tid].delay);
+            }, timers[tid].remaining);
         }
 
         return timers[tid].remaining;
@@ -72,11 +88,8 @@ export default {
     remove(tid) {
         if(!(tid in timers)) return false;
 
-        if(timers[tid].type === 't') {
-            window.clearTimeout(timers[tid].handle);
-        } else {
-            window.clearInterval(timers[tid].handle);
-        }
+        window.clearTimeout(timers[tid].handle);
+        window.clearInterval(timers[tid].handle);
 
         delete timers[tid];
 

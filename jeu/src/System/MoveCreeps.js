@@ -13,6 +13,7 @@ export default function() {
 
                 const creep = entities[i];
                 if(creep.pixelswalked > creep.lane.pathlength) {
+                    creep.dead = true;
                     eventbus.emit('creep.succeeded', { creep });
                     continue;
                 }

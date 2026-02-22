@@ -57,7 +57,9 @@ export default function({ state, world, timers, layers, economy, onGameOver, onG
 
     eventbus.on('creep.succeeded', function({ creep }) {
         eventbus.emit('life.decrease', economy.creepLifePenalty);
-        creep.remove();
+        creep.dead = true;
+        eventbus.emit('entity.untrack.batch', [creep]);
+        eventbus.emit('entity.remove.batch', [creep]);
     });
 
     eventbus.on('life.decrease', function(amount) {

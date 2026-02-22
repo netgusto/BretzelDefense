@@ -22,6 +22,7 @@ export default class SpatialHash {
         this.grid = new Array(this.nbcellsx * this.nbcellsy);
         this.list = new Uint16Array(this.maxentityid);
         this.stackindex = new Uint16Array(this.maxentityid);
+        this.present = new Uint8Array(this.maxentityid);
 
         for(let k = 0; k < this.nbcellsx * this.nbcellsy; k++) {
             this.grid[k] = [];
@@ -42,6 +43,7 @@ export default class SpatialHash {
         });
         this.list[id] = gridcell;
         this.stackindex[id] = this.grid[gridcell].length - 1;
+        this.present[id] = 1;
     }
 
     iswithinrange(centerx, centery, targetx, targety, range, rangeY) {
@@ -159,6 +161,10 @@ export default class SpatialHash {
 
     update(centerx, centery, id) {
 
+        if(this.present[id] !== 1) {
+            return;
+        }
+
         const previousgridcell = this.list[id];
         //if(previousgridcell === undefined) {
         //    this.insert(x, y, width, height, id, entity);
@@ -199,10 +205,11 @@ export default class SpatialHash {
     }
 
     remove(id) {
-        const gridcell = this.list[id];
-        if(!gridcell) {
+        if(this.present[id] !== 1) {
             return;
         }
+
+        const gridcell = this.list[id];
 
         const cell = this.grid[gridcell];
 
@@ -212,7 +219,8 @@ export default class SpatialHash {
             this.stackindex[item.id] = newindex;
             newindex++;
         });
-        this.list[id] = undefined;
-        this.stackindex[id] = undefined;
+        this.list[id] = 0;
+        this.stackindex[id] = 0;
+        this.present[id] = 0;
     }
 }

@@ -67,6 +67,8 @@ export class GameStage {
         this.entitybyid = {};
         this.systems = new Array();
         this.layers = new Array();
+        this.running = false;
+        this.rafid = null;
     }
 
     addLayer(layer) {
@@ -109,20 +111,48 @@ export class GameStage {
     }
 
     run(renderer, cbk) : void {
+        if(this.running) {
+            return this;
+        }
+
         const self = this;
+        this.running = true;
 
         function animate() {
+            if(!self.running) {
+                return;
+            }
+
             cbk(self);
             renderer.render(self.container);
-            window.requestAnimationFrame(animate);
+
+            if(self.running) {
+                self.rafid = window.requestAnimationFrame(animate);
+            }
         }
 
         animate();
         return this;
     }
 
+    stop() {
+        this.running = false;
+
+        if(this.rafid !== null) {
+            window.cancelAnimationFrame(this.rafid);
+            this.rafid = null;
+        }
+
+        return this;
+    }
+
     destroy() {
-        this.entities.map(entity => entity.remove());
+        this.stop();
+
+        for(let i = this.entities.length - 1; i >= 0; i--) {
+            this.entities[i].remove();
+        }
+
         delete this.entitybyid;
 
         for(let i = this.systems.length - 1; i >= 0; i--) {
