@@ -35,6 +35,7 @@ import SpotMenu from '../../Entity/Menu/SpotMenu';
 import TitleScreen from '../../Stage/TitleScreen';
 
 import { gridcellsize, whratio, lanesprops } from './props';
+import { economy, spawnBalance, startingState, towerCosts, waveSchedule } from './balance';
 
 let loaded = false;
 let buildspotHighlightTexture;
@@ -45,8 +46,8 @@ let compiledlevel;
 export default function({ world, canvas, renderer, swapstage }) {
 
     const state = {
-        life: 20,
-        coins: 100,
+        life: startingState.life,
+        coins: startingState.coins,
         pause: false
     };
 
@@ -238,7 +239,7 @@ export default function({ world, canvas, renderer, swapstage }) {
                 eventbus.emit('entity.untrack.batch', entities);
                 for(let i = entities.length - 1; i >= 0; i--) {
                     entities[i].die();
-                    if(entities[i].creep) state.coins += 4;
+                    if(entities[i].creep) state.coins += economy.creepKillReward;
                 }
             });
 
@@ -278,7 +279,7 @@ export default function({ world, canvas, renderer, swapstage }) {
                 let tower = null;
                 switch(type) {
                     case 'ArcherTower': {
-                        let cost = 40;
+                        let cost = towerCosts.ArcherTower;
                         if(state.coins < cost) return;
                         state.coins -= cost;
                         tower = ArcherTower({ worldscale: world.scale, whratio })
@@ -292,7 +293,7 @@ export default function({ world, canvas, renderer, swapstage }) {
                     }
 
                     case 'BarrackTower': {
-                        let cost = 70;
+                        let cost = towerCosts.BarrackTower;
                         if(state.coins < cost) return;
                         state.coins -= cost;
                         tower = BarrackTower({ worldscale: world.scale, whratio, meleeSystem })
@@ -307,7 +308,7 @@ export default function({ world, canvas, renderer, swapstage }) {
                     }
 
                     case 'FireballTower': {
-                        let cost = 60;
+                        let cost = towerCosts.FireballTower;
                         if(state.coins < cost) return;
                         state.coins -= cost;
                         tower = FireballTower({ worldscale: world.scale, whratio })
@@ -328,7 +329,7 @@ export default function({ world, canvas, renderer, swapstage }) {
 
             eventbus.on('tower.sell', function({ spot }) {
                 console.log('SELLING TOWER !', spot);
-                state.coins += (spot.tower.getTotalCost() * 0.9)|0;
+                state.coins += (spot.tower.getTotalCost() * economy.towerSellRefundRate)|0;
                 spot.tower.unmount();
                 eventbus.emit('tower.sold', { spot });
             });
@@ -410,7 +411,7 @@ export default function({ world, canvas, renderer, swapstage }) {
             });
 
             eventbus.on('creep.succeeded', function({ creep }) {
-                eventbus.emit('life.decrease', 1);
+                eventbus.emit('life.decrease', economy.creepLifePenalty);
                 creep.remove();
                 console.log('Lifetime:', performance.now() - creep.birth);
             });
@@ -461,17 +462,9 @@ export default function({ world, canvas, renderer, swapstage }) {
             };
 
             const waves = function({ layer, spatialhash }) {
-
-                const wavesprops = [
-                    { number: 9, frequency: 800, vps: 20, delay: 0 },
-                    { number: 35, frequency: 400, vps: 23, delay: 20000 },
-                    { number: 500, frequency: 10, vps: 30, delay: 30000 },
-                    { number: 40, frequency: 400, vps: 35, delay: 50000 },
-                    { number: 70, frequency: 400, vps: 38, delay: 75000 }
-                ];
-
                 // Vagues de creeps
                 let mummyindex = 0;
+                let gamewon = false;
 
                 const spawn = function({ vps, frequency, number }) {
                     let count = 0;
@@ -481,7 +474,7 @@ export default function({ world, canvas, renderer, swapstage }) {
                         const mummy = Mummy({
                             worldscale: world.scale
                         })
-                            .setVelocityPerSecond((vps + Math.random() * 50) * world.scale);
+                            .setVelocityPerSecond((vps + Math.random() * spawnBalance.speedVariance) * world.scale);
                         layer.addEntity(mummy);
                         mummy.creep = true;
                         mummy.lane = lanes[mummyindex % lanes.length];
@@ -504,23 +497,40 @@ export default function({ world, canvas, renderer, swapstage }) {
                     }, frequency);
                 };
 
-                let totalcreeps = 0;
+                let totalcreeps = waveSchedule.reduce((total, waveprops) => total + waveprops.number, 0);
 
-                wavesprops.map(waveprops => {
-                    totalcreeps += waveprops.number;
+                waveSchedule.map(waveprops => {
                     timers.addTimeout(function() {
                         spawn(waveprops)
                     }, waveprops.delay / world.timescale);
                 });
 
+                const decreaseTotalCreeps = function(decreaseby) {
+                    if(gamewon || decreaseby <= 0) {
+                        return;
+                    }
+
+                    totalcreeps -= decreaseby;
+                    if(totalcreeps <= 0) {
+                        totalcreeps = 0;
+                        gamewon = true;
+                        eventbus.emit('game.win');
+                    }
+                };
+
                 eventbus.on('entity.death.batch', function(entities) {
-                    totalcreeps -= entities.length;
-                    if(totalcreeps <= 0) eventbus.emit('game.win');
+                    let deadcreeps = 0;
+                    for(let i = 0; i < entities.length; i++) {
+                        if(entities[i].creep) {
+                            deadcreeps++;
+                        }
+                    }
+
+                    decreaseTotalCreeps(deadcreeps);
                 });
 
                 eventbus.on('creep.succeeded', function() {
-                    totalcreeps -= 1;
-                    if(totalcreeps <= 0) eventbus.emit('game.win');
+                    decreaseTotalCreeps(1);
                 });
             };
 

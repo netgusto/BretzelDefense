@@ -87,7 +87,7 @@ const Soldier = compose(GenericEntity).compose({
 
             const now = performance.now();
 
-            if(this.lastfire !== null && (now - this.lastfired) < this.firerate) return;
+            if(this.lastfired !== null && (now - this.lastfired) < this.firerate) return;
 
             this.displayobject.tint = 0xFF0000;
             creep.life -= 7;
