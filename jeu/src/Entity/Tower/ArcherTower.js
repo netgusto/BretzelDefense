@@ -77,8 +77,9 @@ const ArcherTower = compose(GenericEntity).compose({
             return this;
         },
         unmount() {
-            eventbus.emit('entity.untrack.batch', [this]);
-            eventbus.emit('entity.remove.batch', [this]);
+            eventbus.emit('entity.despawn.batch', {
+                entities: [this]
+            });
         },
         addCost(cost) {
             this.totalcost += cost;

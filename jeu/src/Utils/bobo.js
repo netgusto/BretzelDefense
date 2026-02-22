@@ -8,12 +8,15 @@ import { Texture, Rectangle, loader, Container } from 'pixi.js';
 import keyboardjs from 'keyboardjs';
 
 const recursiveremove = function(node) {
-    if(node === undefined) return;
-    for(let i = node.children.length; i >= 0; i--) {
+    if(node === undefined || node === null) return;
+
+    for(let i = node.children.length - 1; i >= 0; i--) {
         recursiveremove(node.children[i]);
     }
-    node.parent.removeChild(node);
-    node = undefined;
+
+    if(node.parent) {
+        node.parent.removeChild(node);
+    }
 };
 
 export class GameLayer {
@@ -28,7 +31,16 @@ export class GameLayer {
         this.stage.entities.push(entity);
         this.stage.entitybyid[entity.id] = entity;
         this.container.addChild(entity.displayobject);
+
+        entity._removed = false;
+        entity._despawned = false;
+
         entity.remove = () => {
+            if(entity._removed === true) {
+                return;
+            }
+
+            entity._removed = true;
 
             recursiveremove(entity.displayobject);
 

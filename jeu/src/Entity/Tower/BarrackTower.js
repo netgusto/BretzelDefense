@@ -79,8 +79,9 @@ const BarrackTower = compose(GenericEntity).compose({
             this.meleeSystem.repositionHunter(this.soldier2);
         },
         unmount() {
-            eventbus.emit('entity.untrack.batch', [this, this.soldier1, this.soldier2]);
-            eventbus.emit('entity.remove.batch', [this, this.soldier1, this.soldier2]);
+            eventbus.emit('entity.despawn.batch', {
+                entities: [this, this.soldier1, this.soldier2]
+            });
         },
         getSpotMenuProps({ spot, linewidth, worldscale }) {
 
