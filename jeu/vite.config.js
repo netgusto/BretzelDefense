@@ -38,23 +38,13 @@ module.exports = defineConfig({
     optimizeDeps: {
         noDiscovery: true,
         include: [
-            'bezier-js',
-            'clone',
             'compose-js',
-            'easystarjs',
-            'gl-matrix',
-            'javascript-astar',
-            'javascript-state-machine',
             'keyboardjs',
-            'merge',
-            'p2',
+            'path-browserify',
             'perfnow',
             'pixi.js',
-            'sat',
             'screenfull',
-            'stampit',
-            'tiny-emitter',
-            'typedarray'
+            'tiny-emitter'
         ],
         esbuildOptions: {
             define: {

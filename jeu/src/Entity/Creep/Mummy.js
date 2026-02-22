@@ -9,7 +9,7 @@ import { loadspritesheet } from '../../Utils/bobo';
 
 import eventbus from '../../Singleton/eventbus';
 import GenericEntity from '../Generic';
-//import Debugable from '../Component/Debugable';
+import Debugable from '../../Component/Debugable';
 import SpatialTrackable from '../../Component/SpatialTrackable';
 
 import world from '../../Singleton/world';
@@ -100,6 +100,6 @@ let Mummy = compose(GenericEntity, SpatialTrackable).compose({
             this.displayobject.animationSpeed = this.displayobject._animationSpeed;
         }
     }
-})/*.compose(Debugable)*/;
+}).compose(Debugable);
 
 export default Mummy;
