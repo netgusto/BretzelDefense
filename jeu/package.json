@@ -2,11 +2,14 @@
   "devDependencies": {
     "@babel/core": "^7.28.5",
     "@babel/plugin-transform-flow-strip-types": "^7.27.1",
-    "vite": "^7.1.12"
+    "jsdom": "^27.0.1",
+    "vite": "^7.1.12",
+    "vitest": "^3.2.4"
   },
   "scripts": {
     "dev": "vite --host 0.0.0.0 --port 8080",
     "serve:dev": "vite --host 0.0.0.0 --port 8080",
+    "test": "vitest run",
     "build": "vite build",
     "preview": "vite preview --host 0.0.0.0 --port 4173"
   },

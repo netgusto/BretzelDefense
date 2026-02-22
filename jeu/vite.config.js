@@ -56,6 +56,10 @@ module.exports = defineConfig({
         host: '0.0.0.0',
         port: 8080
     },
+    test: {
+        environment: 'jsdom',
+        include: ['test/**/*.spec.js']
+    },
     build: {
         outDir: 'dist',
         emptyOutDir: true,
