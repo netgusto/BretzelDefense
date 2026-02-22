@@ -62,6 +62,13 @@ export default compose(GenericEntity, {
 
             const button2 = new Sprite(buttongraphics.generateTexture());
 
+            buttongraphics.clear();
+            buttongraphics.lineStyle(linewidth, 0x00FFFF);
+            buttongraphics.beginFill(0xFF6600);
+            buttongraphics.drawCircle(0, 0, 50 * worldscale);
+
+            const button3 = new Sprite(buttongraphics.generateTexture());
+
             return {
                 buttons: [{
                     displayobject: button1,
@@ -74,6 +81,12 @@ export default compose(GenericEntity, {
                     click: function(e) {
                         e.stopPropagation();
                         eventbus.emit('tower.add', { spot, type: 'BarrackTower' });
+                    }
+                }, {
+                    displayobject: button3,
+                    click: function(e) {
+                        e.stopPropagation();
+                        eventbus.emit('tower.add', { spot, type: 'FireballTower' });
                     }
                 }]
             };

@@ -305,6 +305,19 @@ export default function({ world, canvas, renderer, swapstage }) {
                             .addCost(cost);
                         break;
                     }
+
+                    case 'FireballTower': {
+                        let cost = 60;
+                        if(state.coins < cost) return;
+                        state.coins -= cost;
+                        tower = FireballTower({ worldscale: world.scale, whratio })
+                            .mount({
+                                clickpoint: { x: spot.x, y: spot.y },
+                                creepslayer: layers.creeps
+                            })
+                            .addCost(cost);
+                        break;
+                    }
                 }
 
                 if(tower !== null) {
@@ -440,7 +453,6 @@ export default function({ world, canvas, renderer, swapstage }) {
                     }
                 };
 
-                //creepsautospawn({ layer: creepslayer, resolution, spatialhash, lanes: this.lanes, vps: 20, frequency: 50 });
                 waves({ layer: creepslayer, resolution: world.resolution, spatialhash });
 
                 backgroundlayer.addEntity(background);

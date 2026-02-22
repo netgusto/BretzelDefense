@@ -3,14 +3,14 @@
 /* @flow */
 
 import compose from 'compose-js';
-import { SCALE_MODES, extras as PixiExtras, Sprite } from 'pixi.js';
+import { SCALE_MODES, extras as PixiExtras, Sprite, Graphics } from 'pixi.js';
 
 import { loadspritesheet } from '../../Utils/bobo';
 
+import eventbus from '../../Singleton/eventbus';
 import GenericEntity from '../Generic';
 
 const sort = function(a, b) {
-    //return (a.entity.lane.length - (a.entity.pixelswalked % a.entity.lane.length)) - (b.entity.lane.length - (b.entity.pixelswalked % b.entity.lane.length));
     return b.entity.pixelswalked - a.entity.pixelswalked;
 };
 
@@ -26,30 +26,48 @@ const FireballTower = compose(GenericEntity).compose({
             FireballTower.texture = resources.fireballtower.texture;
         });
     },
-    init: function({ worldscale }) {
+    init: function({ worldscale, whratio }) {
+        const range = 350;
+        this.worldscale = worldscale;
         this.hunter = true;
-        this.rangeX = 500 * worldscale;
+        this.rangeX = range * worldscale;
+        this.rangeY = (range / whratio) * worldscale;
         this.firerate = 1500;
         this.firedamage = 70;
+        this.totalcost = 0;
 
         this.displayobject = new Sprite(FireballTower.texture);
-        this.displayobject.pivot.set(this.displayobject.width / 2, this.displayobject.height);
+        this.displayobject.scale.set(worldscale);
+        this.displayobject.anchor.set(.5, .5);
+        this.displayobject.tint = 0xFF6600;
+
         this.lastfired = performance.now();
     },
     methods: {
-        mount({/* worldscale,*/ clickpoint, creepslayer }) {
+        mount({ clickpoint, creepslayer }) {
             this.setPosition(clickpoint.x, clickpoint.y);
             creepslayer.addEntity(this);
             return this;
         },
+        unmount() {
+            eventbus.emit('entity.untrack.batch', [this]);
+            eventbus.emit('entity.remove.batch', [this]);
+        },
+        addCost(cost) {
+            this.totalcost += cost;
+            return this;
+        },
+        getTotalCost() {
+            return this.totalcost;
+        },
         getRangeCenterPoint() {
             return { x: this.displayobject.x, y: this.displayobject.y };
         },
-        engage(matches, { ballisticSystem }) {
+        engage(matches, { ballisticSystem, timescale }) {
 
             const now = performance.now();
 
-            if((now - this.lastfired) < this.firerate) return;
+            if((now - this.lastfired) * timescale < this.firerate) return;
 
             matches.sort(sort);
             const match = matches[0];
@@ -59,23 +77,21 @@ const FireballTower = compose(GenericEntity).compose({
             fireball.animationSpeed = 0.15;
             fireball.tint = 0XFF0000;
             fireball.pivot.set(fireball.width/2, fireball.height/2);
-            fireball.scale.set(-1);
-            fireball.position.set(this.displayobject.x, this.displayobject.y - this.displayobject.height);
+            fireball.scale.set(this.worldscale * 2);
+            fireball.position.set(this.displayobject.x, this.displayobject.y - (40 * this.worldscale));
             fireball.play();
 
             ballisticSystem.fire({
                 hunter: this,
                 target: entity,
                 distance,
-
-                // TODO: actuellement, la distance est calculée depuis la base de la tour, et pas depuis la position du tir (généralement le sommet de la tour)
-                flightduration: 150 + distance,   // la durée de vol du projectile est fonction de la distance; la durée de vol doit être fixe pour permettre le ciblage prédictif
+                flightduration: 150 + distance,
                 displayobject: fireball,
                 damage: this.firedamage,
                 orient: true,
                 homing: true,
                 parabolic: false,
-                parabolicapex: 135  // -35: visée horizontale (flêche)
+                parabolicapex: 135
             });
 
             this.lastfired = now;
@@ -90,6 +106,27 @@ const FireballTower = compose(GenericEntity).compose({
         },
         ballisticMiss(projectileprops) {
             projectileprops.displayobject.parent.removeChild(projectileprops.displayobject);
+        },
+        getSpotMenuProps({ spot, linewidth, worldscale }) {
+
+            const buttongraphics = new Graphics();
+            buttongraphics.clear();
+            buttongraphics.lineStyle(linewidth, 0x00FFFF);
+            buttongraphics.beginFill(0xFFFF00);
+            buttongraphics.drawCircle(0, 0, 50 * worldscale);
+
+            const button1 = new Sprite(buttongraphics.generateTexture());
+
+            return { buttons: [
+                {
+                    displayobject: button1,
+                    position: 's',
+                    click: function(e) {
+                        e.stopPropagation();
+                        eventbus.emit('tower.sell', { spot });
+                    }
+                }
+            ] };
         }
     }
 });
