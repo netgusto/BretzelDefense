@@ -56,13 +56,20 @@ const mirroredbuildspots = level01basebuildspots.map(function(spot) {
     };
 });
 
+const getMirroredOffsetX = function(world) {
+    const mapbasewidth = 2048;
+    return world.resolution.width - world.resolution.offsetx - (mapbasewidth * world.scale);
+};
+
 const getBuildspots = function({ world }) {
+    const mirroredoffsetx = getMirroredOffsetX(world);
+
     return mirroredbuildspots.map(function(spot) {
         return {
-            x: spot.x * world.scale + world.resolution.offsetx,
+            x: spot.x * world.scale + mirroredoffsetx,
             y: spot.y * world.scale + world.resolution.offsety,
             deploy: [
-                spot.deploy[0] * world.scale + world.resolution.offsetx,
+                spot.deploy[0] * world.scale + mirroredoffsetx,
                 spot.deploy[1] * world.scale + world.resolution.offsety
             ],
             tower: null,
@@ -88,6 +95,9 @@ export default {
         return {
             mirrorX: true
         };
+    },
+    getLaneOffsetX({ world }) {
+        return getMirroredOffsetX(world);
     },
     getCompiledLevelPath({ world }) {
         return '/assets/compiled/level2.' + world.resolution.width + 'x' + world.resolution.height + '.json';

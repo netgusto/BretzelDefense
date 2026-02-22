@@ -72,6 +72,9 @@ export default function(config) {
         getBackgroundProps = function() {
             return {};
         },
+        getLaneOffsetX = function({ world }) {
+            return world.resolution.offsetx;
+        },
         getCompiledLevelPath = function() {
             return null;
         },
@@ -129,7 +132,8 @@ export default function(config) {
             unlockLevels([id]);
         }
 
-        const lanes = lanesprops.map(curveToLane(world.resolution.lanescale, world.scale, world.resolution.offsetx, world.resolution.offsety));
+        const laneoffsetx = getLaneOffsetX({ world, lanesprops });
+        const lanes = lanesprops.map(curveToLane(world.resolution.lanescale, world.scale, laneoffsetx, world.resolution.offsety));
         const buildspots = getBuildspots({ world });
 
         const shouldloadcompiled = !!compiledlevelpath && !(resolutionkey in compiledlevelbyresolution);
