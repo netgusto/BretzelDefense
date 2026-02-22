@@ -1,9 +1,7 @@
 'use strict';
 
-import { Graphics, RenderTexture, Text, Sprite } from 'pixi.js';
-import screenfull from 'screenfull';
-import GenericEntity from '../../Entity/Generic';
-import { GameStage, GameLayer, cursorkeys } from '../../Utils/bobo';
+import { Graphics, RenderTexture } from 'pixi.js';
+import { GameStage, cursorkeys } from '../../Utils/bobo';
 import { drawSVGPath } from '../../Utils/svg';
 
 import eventbus from '../../Singleton/eventbus';
@@ -33,6 +31,12 @@ import BarrackTower from '../../Entity/Tower/BarrackTower';
 import SpotMenu from '../../Entity/Menu/SpotMenu';
 
 import TitleScreen from '../../Stage/TitleScreen';
+import createLayers from '../LevelRuntime/createLayers';
+import setupInterface from '../LevelRuntime/setupInterface';
+import registerEntityLifecycleEvents from '../LevelRuntime/registerEntityLifecycleEvents';
+import registerTowerEvents from '../LevelRuntime/registerTowerEvents';
+import registerGameStateEvents from '../LevelRuntime/registerGameStateEvents';
+import startWaveSchedule from '../LevelRuntime/startWaveSchedule';
 
 import { gridcellsize, whratio, lanesprops } from './props';
 import { economy, spawnBalance, startingState, towerCosts, waveSchedule } from './balance';
@@ -53,21 +57,7 @@ export default function({ world, canvas, renderer, swapstage }) {
 
     const stage = new GameStage(canvas);
     const cursor = cursorkeys();
-
-    const layers = {
-        background: new GameLayer(stage),
-        spots: new GameLayer(stage),
-        lifebar: new GameLayer(stage),
-        ranges: new GameLayer(stage),
-        creeps: new GameLayer(stage),
-        projectiles: new GameLayer(stage),
-        ingamemenus: new GameLayer(stage),
-        interface: new GameLayer(stage),
-        pause: new GameLayer(stage),
-        debug: new GameLayer(stage)
-    };
-
-    Object.values(layers).map(layer => stage.addLayer(layer));
+    const layers = createLayers({ stage });
 
     Background.setTexturePath('/assets/sprites/level-' + world.resolution.width + '-' + world.resolution.height + '.jpg');
 
@@ -176,52 +166,12 @@ export default function({ world, canvas, renderer, swapstage }) {
                 //const graphics = new Graphics(); layers.debug.addEntity(GenericEntity({ displayobject: graphics })); lanes.map(lane => drawSVGPath(graphics, lane.path, lane.color, 0, 0, 5 * world.scale));
             }
 
-            // Pause overlay
-            const pauseoverlay = new Graphics();
-            pauseoverlay.beginFill(0x000000);
-            pauseoverlay.alpha = 0.83;
-            pauseoverlay.drawRect(0, 0, world.resolution.width, world.resolution.height);
-            layers.pause.addChild(pauseoverlay);
-            const pausetext = new Text('Pause - Cliquez pour reprendre', { font: '28px Arial', fill: 'white' });
-            pausetext.pivot.set(0, 0);
-            pausetext.position.set(30, 100);
-            layers.pause.addChild(pausetext);
-            layers.pause.container.renderable = false;
-            layers.pause.container.interactive = false;
-            layers.pause.container.click = layers.pause.container.tap = function(e) {
-                e.stopPropagation();
-                eventbus.emit('game.resume');
-            };
-
-            //
-            // Interface
-            //
-
-            // Fullscreen button
-            if(screenfull.enabled) {
-                const fullscreenbutton = new Sprite(fullscreenButtonTexture);
-                fullscreenbutton.scale.set(world.scale * 0.3);
-                fullscreenbutton.pivot.set(fullscreenbutton.width / 2, fullscreenbutton.height / 2);
-                fullscreenbutton.position.set(world.resolution.effectivewidth - (180 * world.scale) - fullscreenbutton.width, 10 * world.scale);
-                fullscreenbutton.interactive = true;
-                layers.interface.addChild(fullscreenbutton);
-                fullscreenbutton.click = fullscreenbutton.tap = function(e) {
-                    e.stopPropagation();
-                    eventbus.emit('game.fullscreentoggle');
-                };
-            }
-
-            // Pause button
-            const pausebutton = new Sprite(pausebuttonTexture);
-            pausebutton.scale.set(world.scale * 0.09);
-            pausebutton.pivot.set(pausebutton.width / 2, pausebutton.height / 2);
-            pausebutton.position.set(world.resolution.effectivewidth - (90 * world.scale) - pausebutton.width, 19 * world.scale);
-            pausebutton.interactive = true;
-            layers.interface.addChild(pausebutton);
-            pausebutton.click = pausebutton.tap = function(e) {
-                e.stopPropagation();
-                eventbus.emit('game.pausetoggle');
-            };
+            setupInterface({
+                layers,
+                world,
+                fullscreenButtonTexture,
+                pausebuttonTexture
+            });
 
             // Building the path texture to have a testable in path / out path reference
             const pathtexture = new RenderTexture(renderer, world.resolution.width, world.resolution.height);
@@ -235,203 +185,69 @@ export default function({ world, canvas, renderer, swapstage }) {
                 console.log('CLICK COORDS :' + (e.data.global.x|0) + 'x' + (e.data.global.y|0));
             });
 
-            eventbus.on('entity.death.batch', function(entities) {
-                eventbus.emit('entity.untrack.batch', entities);
-                for(let i = entities.length - 1; i >= 0; i--) {
-                    entities[i].die();
-                    if(entities[i].creep) state.coins += economy.creepKillReward;
-                }
-            });
-
-            eventbus.on('entity.untrack.batch', function(entities) {
-                const entityids = entities.map(entity => entity.id);
-                meleeSystem.forfaitbatch(entityids);
-                spatialhash.removebatch(entityids);
-            });
-
-            eventbus.on('entity.remove.batch', function(entities) {
-                for(let i = entities.length - 1; i >= 0; i--) {
-                    entities[i].remove()
-                }
+            registerEntityLifecycleEvents({
+                state,
+                economy,
+                meleeSystem,
+                spatialhash
             });
 
             const towermenu = SpotMenu({ worldscale: world.scale });
             layers.ingamemenus.addEntity(towermenu);
 
-            eventbus.on('buildspot.focus', function({ spot }) {
+            const towerBuilders = {
+                ArcherTower: function({ spot }) {
+                    return ArcherTower({ worldscale: world.scale, whratio })
+                        .mount({
+                            worldscale: world.scale,
+                            clickpoint: { x: spot.x, y: spot.y },
+                            creepslayer: layers.creeps
+                        });
+                },
 
-                if(spot.tower) {
-                    towermenu.setPosition(spot.x, spot.y - 20 * world.scale);
-                } else {
-                    towermenu.setPosition(spot.x, spot.y);
+                BarrackTower: function({ spot }) {
+                    return BarrackTower({ worldscale: world.scale, whratio, meleeSystem })
+                        .mount({
+                            worldscale: world.scale,
+                            clickpoint: { x: spot.x, y: spot.y },
+                            deploypoint: { x: spot.deploy[0], y: spot.deploy[1] },
+                            creepslayer: layers.creeps
+                        });
+                },
+
+                FireballTower: function({ spot }) {
+                    return FireballTower({ worldscale: world.scale, whratio })
+                        .mount({
+                            clickpoint: { x: spot.x, y: spot.y },
+                            creepslayer: layers.creeps
+                        });
                 }
+            };
 
-                towermenu.enable(spot);
+            registerTowerEvents({
+                towermenu,
+                worldscale: world.scale,
+                state,
+                towerCosts,
+                economy,
+                towerBuilders,
+                spatialhash,
+                pathtexture
             });
 
-            eventbus.on('buildspot.blur', function(/*{ spot }*/) {
-                towermenu.disable();
-            });
-
-            eventbus.on('tower.add', function({ spot, type }) {
-                if(spot.tower !== null) return;
-
-                let tower = null;
-                switch(type) {
-                    case 'ArcherTower': {
-                        let cost = towerCosts.ArcherTower;
-                        if(state.coins < cost) return;
-                        state.coins -= cost;
-                        tower = ArcherTower({ worldscale: world.scale, whratio })
-                            .mount({
-                                worldscale: world.scale,
-                                clickpoint: { x: spot.x, y: spot.y },
-                                creepslayer: layers.creeps
-                            })
-                            .addCost(cost);
-                        break;
-                    }
-
-                    case 'BarrackTower': {
-                        let cost = towerCosts.BarrackTower;
-                        if(state.coins < cost) return;
-                        state.coins -= cost;
-                        tower = BarrackTower({ worldscale: world.scale, whratio, meleeSystem })
-                            .mount({
-                                worldscale: world.scale,
-                                clickpoint: { x: spot.x, y: spot.y },
-                                deploypoint: { x: spot.deploy[0], y: spot.deploy[1] },
-                                creepslayer: layers.creeps
-                            })
-                            .addCost(cost);
-                        break;
-                    }
-
-                    case 'FireballTower': {
-                        let cost = towerCosts.FireballTower;
-                        if(state.coins < cost) return;
-                        state.coins -= cost;
-                        tower = FireballTower({ worldscale: world.scale, whratio })
-                            .mount({
-                                clickpoint: { x: spot.x, y: spot.y },
-                                creepslayer: layers.creeps
-                            })
-                            .addCost(cost);
-                        break;
-                    }
+            registerGameStateEvents({
+                state,
+                world,
+                timers,
+                layers,
+                economy,
+                onGameOver: function() {
+                    swapstage(TitleScreen);
+                },
+                onGameWin: function() {
+                    alert('Success !');
+                    swapstage(TitleScreen);
                 }
-
-                if(tower !== null) {
-                    eventbus.emit('tower.added', { spot, tower });
-                }
-
-            });
-
-            eventbus.on('tower.sell', function({ spot }) {
-                console.log('SELLING TOWER !', spot);
-                state.coins += (spot.tower.getTotalCost() * economy.towerSellRefundRate)|0;
-                spot.tower.unmount();
-                eventbus.emit('tower.sold', { spot });
-            });
-
-            eventbus.on('tower.redeploy', function({ spot }) {
-                console.log('REDEPLOYING TOWER !', spot);
-                // 1. Fermeture du menu
-                towermenu.disable();
-
-                // 2. Surveillance du clic sur le background
-                eventbus.once('background.click.preemption', function(e) {
-                    if(spot.current === false) return; // focus has changed since premption was set up; just ignoring the premption, that is now consumed
-                    e.stopPropagation();
-
-                    const rangecenter = spot.tower.getRangeCenterPoint();
-
-                    if(spatialhash.iswithinrange(
-                        rangecenter.x, rangecenter.y,
-                        e.data.global.x, e.data.global.y,
-                        spot.tower.rangeX, spot.tower.rangeY
-                    ) !== false) {
-                        // click is within range; check if it is on the path
-
-                        const pixel = pathtexture.getPixel(e.data.global.x, e.data.global.y);
-                        if(pixel[0] === 255) {
-                            console.log('Dans le chemin !');
-                            spot.tower.setDeployPoint({ x: e.data.global.x, y: e.data.global.y });
-                        } else {
-                            console.log('Hors du chemin !');
-                        }
-
-                        eventbus.emit('tower.redeployed', { spot });
-                    }
-
-                    //towermenu.enable(spot);
-                });
-            });
-
-            eventbus.on('game.blur', function() {
-                eventbus.emit('game.pause');
-            });
-
-            eventbus.on('game.focus', function() {
-                //eventbus.emit('game.resume');
-            });
-
-            eventbus.on('game.pause', function() {
-                state.pause = true;
-                world.set('_timescale', world.timescale);
-                world.set('timescale', 0);
-                timers.pauseAll();
-
-                layers.creeps.entities.map(item => item.pause());
-                layers.pause.container.renderable = true;
-                layers.pause.container.interactive = true;
-            });
-
-            eventbus.on('game.pausetoggle', function() {
-                if(state.pause) {
-                    eventbus.emit('game.resume');
-                } else {
-                    eventbus.emit('game.pause');
-                }
-            });
-
-            eventbus.on('game.resume', function() {
-                state.pause = false;
-                world.set('timescale', 1);
-                world.set('timescale', world._timescale);
-                timers.resumeAll();
-
-                layers.creeps.entities.map(item => item.resume());
-                layers.pause.container.renderable = false;
-                layers.pause.container.interactive = false;
-            });
-
-            eventbus.on('game.fullscreentoggle', function() {
-                screenfull.toggle();
-            });
-
-            eventbus.on('creep.succeeded', function({ creep }) {
-                eventbus.emit('life.decrease', economy.creepLifePenalty);
-                creep.remove();
-                console.log('Lifetime:', performance.now() - creep.birth);
-            });
-
-            eventbus.on('life.decrease', function(amount) {
-                state.life -= amount;
-                if(state.life <= 0) {
-                    state.life = 0;
-                    eventbus.emit('game.over');
-                }
-            });
-
-            eventbus.on('game.over', function() {
-                //alert('Game over !');
-                swapstage(TitleScreen);
-            });
-
-            eventbus.on('game.win', function() {
-                alert('Success !');
-                swapstage(TitleScreen);
             });
 
             /*****************************************************************/
@@ -454,7 +270,7 @@ export default function({ world, canvas, renderer, swapstage }) {
                     }
                 };
 
-                waves({ layer: creepslayer, resolution: world.resolution, spatialhash });
+                waves({ layer: creepslayer, spatialhash });
 
                 backgroundlayer.addEntity(background);
 
@@ -464,7 +280,6 @@ export default function({ world, canvas, renderer, swapstage }) {
             const waves = function({ layer, spatialhash }) {
                 // Vagues de creeps
                 let mummyindex = 0;
-                let gamewon = false;
 
                 const spawn = function({ vps, frequency, number }) {
                     let count = 0;
@@ -497,48 +312,21 @@ export default function({ world, canvas, renderer, swapstage }) {
                     }, frequency);
                 };
 
-                let totalcreeps = waveSchedule.reduce((total, waveprops) => total + waveprops.number, 0);
-
-                waveSchedule.map(waveprops => {
-                    timers.addTimeout(function() {
-                        spawn(waveprops)
-                    }, waveprops.delay / world.timescale);
-                });
-
-                const decreaseTotalCreeps = function(decreaseby) {
-                    if(gamewon || decreaseby <= 0) {
-                        return;
+                startWaveSchedule({
+                    timers,
+                    waveSchedule,
+                    scheduleTimescale: world.timescale,
+                    spawnWave: spawn,
+                    isCountedDeath: function(entity) {
+                        return entity.creep === true;
                     }
-
-                    totalcreeps -= decreaseby;
-                    if(totalcreeps <= 0) {
-                        totalcreeps = 0;
-                        gamewon = true;
-                        eventbus.emit('game.win');
-                    }
-                };
-
-                eventbus.on('entity.death.batch', function(entities) {
-                    let deadcreeps = 0;
-                    for(let i = 0; i < entities.length; i++) {
-                        if(entities[i].creep) {
-                            deadcreeps++;
-                        }
-                    }
-
-                    decreaseTotalCreeps(deadcreeps);
-                });
-
-                eventbus.on('creep.succeeded', function() {
-                    decreaseTotalCreeps(1);
                 });
             };
 
             return setup({
                 backgroundlayer: layers.background,
                 creepslayer: layers.creeps,
-                spatialhash,
-                resolution: world.resolution
+                spatialhash
             })
             .then(() => stage);
         })
