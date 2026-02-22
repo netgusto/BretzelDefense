@@ -7,11 +7,8 @@ export default function() {
 
     let normalizedresolution;
 
-    let dpr = window.devicePixelRatio || 1;
-    if(dpr < 1) dpr = 1;    // zoomed out browser
-
-    let screenwidth = Math.max(window.screen.width) * dpr;
-    let screenheight = Math.max(window.screen.height) * dpr;
+    let screenwidth = window.innerWidth || document.documentElement.clientWidth || window.screen.width;
+    let screenheight = window.innerHeight || document.documentElement.clientHeight || window.screen.height;
 
     if(screenheight > screenwidth) {
         let tmp = screenwidth;
@@ -42,7 +39,7 @@ export default function() {
             if(
                 bestres === null || (
                     thisres.height > bestres.height &&
-                    Math.abs(thisres.height - screenheight) < Math.abs(bestres.height - screenwidth)
+                    Math.abs(thisres.height - screenheight) < Math.abs(bestres.height - screenheight)
                 )
             ) {
                 bestres = thisres;

@@ -104,7 +104,7 @@ export default class SpatialHash {
         let firstcelly = (rangeboundy / this.cellheight)|0;
 
         if(firstcellx < 0) firstcellx = 0;
-        if(lastcellx < 0) lastcellx = 0;
+        if(firstcelly < 0) firstcelly = 0;
 
         let lastcellx = (rangeboundxend / this.cellwidth)|0;
         let lastcelly = (rangeboundyend / this.cellheight)|0;

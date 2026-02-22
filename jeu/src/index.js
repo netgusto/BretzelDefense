@@ -1,11 +1,11 @@
 'use strict';
 
 // Polyfills (imports with side effect)
-import 'babel-polyfill';
 import 'perfnow';
 
-if(!('Uint8Array' in global)) global.Uint8Array = Array;
-if(!('Uint16Array' in global)) global.Uint16Array = Array;
+const globalscope = typeof globalThis !== 'undefined' ? globalThis : window;
+if(!('Uint8Array' in globalscope)) globalscope.Uint8Array = Array;
+if(!('Uint16Array' in globalscope)) globalscope.Uint16Array = Array;
 
 import { Container, autoDetectRenderer } from 'pixi.js';
 
@@ -38,12 +38,14 @@ import timers from './Singleton/timers';
     console.log('Screen: ' + resolution.screenwidth + 'x' + resolution.screenheight + '; Res: ' + resolution.width + 'x' + resolution.height + '@' + dpr + 'X; ', resolution);
 
     const renderer = autoDetectRenderer(resolution.effectivewidth, resolution.effectiveheight, { resolution: dpr });
+    renderer.view.style.width = resolution.effectivewidth + 'px';
+    renderer.view.style.height = resolution.effectiveheight + 'px';
     mountnode.appendChild(renderer.view);
 
     let previousstage = null;
 
     const swapstage = function(newstage) {
-        window.setImmediate(function() {    // allow pixi mouse events triggering swapstage to complete before tearing the stage down
+        window.setTimeout(function() {    // allow pixi mouse events triggering swapstage to complete before tearing the stage down
             const canvas = new Container(0xFF0000, true);   // true: interactive
 
             timers.removeAll();
@@ -52,7 +54,7 @@ import timers from './Singleton/timers';
             newstage({ world, canvas, swapstage, renderer })
                 .then(stage => stage.run(renderer, gameloop({ world })))
                 .then(stage => previousstage = stage);
-        });
+        }, 0);
     };
 
     swapstage(Stage);

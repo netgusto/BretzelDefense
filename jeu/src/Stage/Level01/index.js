@@ -453,7 +453,7 @@ export default function({ world, canvas, renderer, swapstage }) {
                 const wavesprops = [
                     { number: 9, frequency: 800, vps: 20, delay: 0 },
                     { number: 35, frequency: 400, vps: 23, delay: 20000 },
-                    { number: 2500, frequency: 10, vps: 30, delay: 30000 },
+                    { number: 500, frequency: 10, vps: 30, delay: 30000 },
                     { number: 40, frequency: 400, vps: 35, delay: 50000 },
                     { number: 70, frequency: 400, vps: 38, delay: 75000 }
                 ];

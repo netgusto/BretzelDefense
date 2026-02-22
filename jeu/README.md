@@ -1,22 +1,31 @@
-# void
-Simplest webpack setup for dev + dist
+# Bretzel Defense - Frontend
 
-## install
+This project uses a modern Vite workflow.
+
+## Install
 
 ```bash
-$ npm install
+npm install
 ```
 
-## develop
+## Develop (Vite)
 
 ```bash
-$ npm run serve:dev
-# Navigate to http://localhost:8080; says "Hello, World" in the console !
+npm run dev
+# Or: npm run serve:dev
 ```
 
-## build
+Open the URL printed by Vite (default: `http://localhost:8080`). If the port is busy, Vite will pick the next one.
+
+## Build (Vite)
 
 ```bash
-$ npm run build
-# Built file is dist/bundle.js
+npm run build
+# Output: dist/
+```
+
+## Preview production build
+
+```bash
+npm run preview
 ```
