@@ -7,12 +7,14 @@ const levels = [
     {
         id: 'level01',
         label: 'Level 1',
-        stage: Level01
+        stage: Level01,
+        unlocks: ['level02']
     },
     {
         id: 'level02',
         label: 'Level 2',
-        stage: Level02
+        stage: Level02,
+        unlocks: []
     }
 ];
 

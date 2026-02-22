@@ -13,17 +13,29 @@ const Background = compose(GenericEntity).compose({
         Background.texturepath = texturepath;
     },
     loadAssets(loader) {
-        loader.add('background', Background.texturepath);
+        const resourcekey = 'background:' + Background.texturepath;
+
+        if(loader.resources && loader.resources[resourcekey]) {
+            Background.texture = loader.resources[resourcekey].texture;
+            return;
+        }
+
+        loader.add(resourcekey, Background.texturepath);
         loader.once('complete', (_, resources) => {
-            Background.texture = resources.background.texture;
+            Background.texture = resources[resourcekey].texture;
         });
     },
-    init: function({ viewwidth, viewheight, onclick = null }) {
+    init: function({ viewwidth, viewheight, onclick = null, mirrorX = false }) {
 
         // using scaled bg as texture
         // Fixes incorrect mouse event coordinates
         const scaledbg = new Sprite(Background.texture);
         scaledbg.scale.set(viewwidth / Background.texture.width, viewheight / Background.texture.height);
+
+        if(mirrorX) {
+            scaledbg.scale.x *= -1;
+            scaledbg.position.set(viewwidth, 0);
+        }
 
         this.displayobject = new Container();
         this.displayobject.addChild(scaledbg);

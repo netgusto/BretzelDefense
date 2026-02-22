@@ -6,6 +6,7 @@ import screenfull from 'screenfull';
 import { GameStage, GameLayer } from '../Utils/bobo';
 
 import levels, { defaultLevel } from './levels';
+import { isLevelUnlocked } from './progression';
 import GenericEntity from '../Entity/Generic';
 import isportrait from '../Utils/isportrait';
 
@@ -40,26 +41,38 @@ export default function({ world, canvas, swapstage, renderer }) {
     levelscontainer.position.set(0, 80);
     container.addChild(levelscontainer);
 
+    const firstunlockedlevel = levels.find(function(level) {
+        return isLevelUnlocked(level.id);
+    }) || defaultLevel;
+
     const spacing = 190;
     const startx = ((levels.length - 1) * spacing) / -2;
 
     levels.map(function(level, index) {
+        const unlocked = isLevelUnlocked(level.id);
         const button = new Graphics();
-        button.beginFill(0x2A3348, 0.95);
-        button.lineStyle(2, 0x7E90C7, 1);
+        button.beginFill(unlocked ? 0x2A3348 : 0x2D2F33, 0.95);
+        button.lineStyle(2, unlocked ? 0x7E90C7 : 0x646A72, 1);
         button.drawRoundedRect(-76, -24, 152, 48, 10);
         button.endFill();
 
-        const label = new Text(level.label, { font: '24px Arial', fill: '#f0f4ff' });
+        const label = new Text(unlocked ? level.label : level.label + ' (locked)', {
+            font: '20px Arial',
+            fill: unlocked ? '#f0f4ff' : '#9ea6af'
+        });
         label.anchor.set(0.5);
         button.addChild(label);
 
         button.position.set(startx + (index * spacing), 0);
-        button.interactive = true;
-        button.click = button.tap = function(e) {
-            e.stopPropagation();
-            startgame(level.stage);
-        };
+        button.interactive = unlocked;
+        button.alpha = unlocked ? 1 : 0.75;
+
+        if(unlocked) {
+            button.click = button.tap = function(e) {
+                e.stopPropagation();
+                startgame(level.stage);
+            };
+        }
 
         levelscontainer.addChild(button);
     });
@@ -93,7 +106,7 @@ export default function({ world, canvas, swapstage, renderer }) {
     };
 
     title.displayobject.click = title.displayobject.tap = layer.container.click = layer.container.tap = function() {
-        startgame(defaultLevel.stage);
+        startgame(firstunlockedlevel.stage);
     };
 
     layer.addEntity(title);

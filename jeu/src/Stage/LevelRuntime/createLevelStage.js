@@ -7,6 +7,7 @@ import { drawSVGPath } from '../../Utils/svg';
 import eventbus from '../../Singleton/eventbus';
 import EVENTS from '../../Singleton/events';
 import timers from '../../Singleton/timers';
+import { unlockLevels } from '../progression';
 
 import SpatialHash from '../../Utils/spatialhash';
 import { curveToLane } from '../../Utils/lane';
@@ -33,17 +34,47 @@ import registerTowerEvents from './registerTowerEvents';
 import registerGameStateEvents from './registerGameStateEvents';
 import startWaveSchedule from './startWaveSchedule';
 
+const memoizeLaneFromPath = function(lane) {
+    const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+    path.setAttribute('d', lane.path);
+
+    const length = Math.ceil(path.getTotalLength());
+    const points = [];
+
+    for(let step = 0; step <= length; step++) {
+        const point = path.getPointAtLength(step);
+        points.push([point.x, point.y]);
+    }
+
+    lane.memoizePrecalc({ length, points });
+};
+
+const runtimeassets = {
+    sharedassetsloaded: false,
+    interfaceassets: null
+};
+
 export default function(config) {
     const {
+        id = null,
+        unlocks = [],
         gridcellsize,
         whratio,
         lanesprops,
         balance,
         titleStage,
         backgroundEntity,
-        loadEntityAssets,
+        loadBackgroundAsset = function({ loader }) {
+            backgroundEntity.loadAssets(loader);
+        },
+        loadSharedAssets = function() {},
         getBackgroundTexturePath,
-        getCompiledLevelPath,
+        getBackgroundProps = function() {
+            return {};
+        },
+        getCompiledLevelPath = function() {
+            return null;
+        },
         getBuildspots,
         createTowerBuilders,
         spawnCreep,
@@ -65,11 +96,11 @@ export default function(config) {
 
     const { economy, spawnBalance, startingState, towerCosts, waveSchedule } = balance;
 
-    let staticassetsloaded = false;
     let buildspotHighlightTexture;
     let fullscreenButtonTexture;
     let pausebuttonTexture;
     const compiledlevelbyresolution = {};
+    const levelresourceprefix = id || 'level';
 
     return function({ world, canvas, renderer, swapstage }) {
         const state = {
@@ -83,57 +114,87 @@ export default function(config) {
         const layers = createLayers({ stage });
 
         const resolutionkey = world.resolution.width + 'x' + world.resolution.height;
-        const compiledresourcekey = 'compiledlevel-' + resolutionkey;
+        const compiledresourcekey = 'compiledlevel-' + levelresourceprefix + '-' + resolutionkey;
+        const compiledlevelpath = getCompiledLevelPath({ world });
 
         backgroundEntity.setTexturePath(getBackgroundTexturePath({ world }));
+
+        if(runtimeassets.interfaceassets) {
+            buildspotHighlightTexture = runtimeassets.interfaceassets.buildspotHighlightTexture;
+            fullscreenButtonTexture = runtimeassets.interfaceassets.fullscreenButtonTexture;
+            pausebuttonTexture = runtimeassets.interfaceassets.pausebuttonTexture;
+        }
+
+        if(id) {
+            unlockLevels([id]);
+        }
 
         const lanes = lanesprops.map(curveToLane(world.resolution.lanescale, world.scale, world.resolution.offsetx, world.resolution.offsety));
         const buildspots = getBuildspots({ world });
 
-        const shouldloadcompiled = !(resolutionkey in compiledlevelbyresolution);
-        const shouldloadstatic = !staticassetsloaded;
+        const shouldloadcompiled = !!compiledlevelpath && !(resolutionkey in compiledlevelbyresolution);
+        const shouldloadsharedassets = !runtimeassets.sharedassetsloaded;
+        const shouldloadinterfaceassets = !runtimeassets.interfaceassets;
 
-        const loadpromise = (!shouldloadcompiled && !shouldloadstatic)
-            ? Promise.resolve()
-            : stage
-                .require({
-                    loadAssets(loader) {
-                        if(shouldloadstatic) {
-                            loadEntityAssets({ loader, world });
+        const loadpromise = stage
+            .require({
+                loadAssets(loader) {
+                    loadBackgroundAsset({ loader, world, backgroundEntity });
 
-                            loader.add('buildspothighlight', '/assets/sprites/buildspot-highlight.png');
-                            loader.add('fullscreenbutton', '/assets/sprites/button-fullscreen.png');
-                            loader.add('pausebutton', '/assets/sprites/pausebutton.png');
+                    if(shouldloadsharedassets) {
+                        loadSharedAssets({ loader, world });
+                    }
+
+                    if(shouldloadinterfaceassets) {
+                        loader.add('buildspothighlight', '/assets/sprites/buildspot-highlight.png');
+                        loader.add('fullscreenbutton', '/assets/sprites/button-fullscreen.png');
+                        loader.add('pausebutton', '/assets/sprites/pausebutton.png');
+                    }
+
+                    if(shouldloadcompiled) {
+                        loader.add(compiledresourcekey, compiledlevelpath);
+                    }
+
+                    loader.once('complete', (_, resources) => {
+                        if(shouldloadsharedassets) {
+                            runtimeassets.sharedassetsloaded = true;
+                        }
+
+                        if(shouldloadinterfaceassets) {
+                            buildspotHighlightTexture = resources.buildspothighlight.texture;
+                            fullscreenButtonTexture = resources.fullscreenbutton.texture;
+                            pausebuttonTexture = resources.pausebutton.texture;
+
+                            runtimeassets.interfaceassets = {
+                                buildspotHighlightTexture,
+                                fullscreenButtonTexture,
+                                pausebuttonTexture
+                            };
                         }
 
                         if(shouldloadcompiled) {
-                            loader.add(compiledresourcekey, getCompiledLevelPath({ world }));
+                            compiledlevelbyresolution[resolutionkey] = resources[compiledresourcekey].data;
                         }
-
-                        loader.once('complete', (_, resources) => {
-                            if(shouldloadstatic) {
-                                staticassetsloaded = true;
-                                buildspotHighlightTexture = resources.buildspothighlight.texture;
-                                fullscreenButtonTexture = resources.fullscreenbutton.texture;
-                                pausebuttonTexture = resources.pausebutton.texture;
-                            }
-
-                            if(shouldloadcompiled) {
-                                compiledlevelbyresolution[resolutionkey] = resources[compiledresourcekey].data;
-                            }
-                        });
-                    }
-                })
-                .load({
-                    onbegin() { console.log('begin'); },
-                    oncomplete() { console.log('end'); }
-                });
+                    });
+                }
+            })
+            .load({
+                onbegin() { console.log('begin'); },
+                oncomplete() { console.log('end'); }
+            });
 
         return loadpromise
             .then(function() {
                 const compiledlevel = compiledlevelbyresolution[resolutionkey];
-                for(let laneindex in compiledlevel) {
-                    lanes[laneindex].memoizePrecalc(compiledlevel[laneindex]);
+
+                if(compiledlevel) {
+                    for(let laneindex in compiledlevel) {
+                        lanes[laneindex].memoizePrecalc(compiledlevel[laneindex]);
+                    }
+                } else {
+                    lanes.map(function(lane) {
+                        memoizeLaneFromPath(lane);
+                    });
                 }
 
                 return Promise.resolve();
@@ -270,16 +331,22 @@ export default function(config) {
                         onGameOver({ world, state, swapstage, titleStage });
                     },
                     onGameWin: function() {
+                        if(unlocks.length) {
+                            unlockLevels(unlocks);
+                        }
+
                         disposeRuntime();
                         onGameWin({ world, state, swapstage, titleStage });
                     }
                 }));
 
                 const setup = function({ spatialhash, backgroundlayer, creepslayer }) {
+                    const backgroundprops = getBackgroundProps({ world, state });
                     const background = backgroundEntity({
                         viewwidth: world.resolution.effectivewidth,
                         viewheight: world.resolution.effectiveheight,
-                        renderer
+                        renderer,
+                        ...backgroundprops
                     });
 
                     background.displayobject.interactive = true;

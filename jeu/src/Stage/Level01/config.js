@@ -32,6 +32,8 @@ const getBuildspots = function({ world }) {
 };
 
 export default {
+    id: 'level01',
+    unlocks: ['level02'],
     gridcellsize,
     whratio,
     lanesprops,
@@ -45,8 +47,10 @@ export default {
     getCompiledLevelPath({ world }) {
         return '/assets/compiled/level1.' + world.resolution.width + 'x' + world.resolution.height + '.json';
     },
-    loadEntityAssets({ loader }) {
+    loadBackgroundAsset({ loader }) {
         Background.loadAssets(loader);
+    },
+    loadSharedAssets({ loader }) {
         Mummy.loadAssets(loader);
         FireballTower.loadAssets(loader);
         ArcherTower.loadAssets(loader);
@@ -100,7 +104,7 @@ export default {
         swapstage(titleStage);
     },
     onGameWin({ swapstage, titleStage }) {
-        alert('Success !');
+        alert('Level 1 clear !');
         swapstage(titleStage);
     }
 };
